@@ -2,7 +2,7 @@ Feature: Game Management
 
   Scenario Outline: Game is created that did not exist before
     Given the server is up
-    When the user creates a game named "<name>" with bundle id of "<bundle_id>"
+    When a game named "<name>" is created with bundle id of "<bundle_id>"
     Then the game "<name>" exists
     And the game "<name>" has bundle id of "<bundle_id>"
 
@@ -13,7 +13,7 @@ Feature: Game Management
 
   Scenario Outline: Game is updated, created if not exists
     Given the server is up
-    When the user updates a game named "<name>" with bundle id of "<bundle_id>"
+    When a game named "<name>" is updated with bundle id of "<bundle_id>"
     Then the game "<name>" exists
     And the game "<name>" has bundle id of "<bundle_id>"
 
@@ -25,7 +25,7 @@ Feature: Game Management
 
   Scenario Outline: The game is not created with invalid information
     Given the server is up
-    When the user updates a game named "<name>" with bundle id of "<bundle_id>"
+    When a game named "<name>" is updated with bundle id of "<bundle_id>"
     Then the last request returned status code <status>
     And the last error is "<error_code>" with message "<error_message>"
     And the game "<name>" does not exist
