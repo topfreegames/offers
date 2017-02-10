@@ -2,4 +2,4 @@ setup:
 	@glide install
 
 acceptance acc:
-	@go test -tags=acceptance
+	@go test $(go list ./... | grep -v /vendor/) -tags=acceptance
