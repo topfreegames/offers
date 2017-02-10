@@ -53,3 +53,18 @@ Feature: Request offers for a player
       | 23           | christine | -     | popup     |
       | 23           | christine | -     | store     |
       | 83           | christine | or4   | store     |
+
+
+  Scenario Outline: After a player has seen an offer there is a track of it
+    Given the following offer templates exist in the "offer-request-game" game:
+      | game | name | product_id     | contents   | placement | period             | frequency       | trigger                   |
+      | org  | ot1  | com.tfg.sample | { "x": 1 } | popup     | { "type": "once" } | { "every": 60 } | { "from": 0, "to": 5 }    |
+      | org  | ot2  | com.tfg.sample | { "x": 2 } | popup     | { "type": "once" } | { "every": 60 } | { "from": 6, "to": 10 }   |
+    When the current time is <current_time>
+    And the game "offer-request-game" requests offers for player "<player_id>" in "popup"
+    Then player "<player_id>" has seen offer "<seen_offer>"
+    And player "<player_id"> has not seen offer "<unseen_offer>"
+
+    Examples:
+      | current_time | player_id | seen_offer | unseen_offer |
+      | 3            | joseph    | ot1        | ot2          |
