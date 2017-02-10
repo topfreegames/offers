@@ -1,0 +1,4 @@
+package: github.com/topfreegames/offers
+import:
+- package: github.com/DATA-DOG/godog
+  version: ^0.6.2

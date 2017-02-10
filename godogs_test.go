@@ -1,3 +1,5 @@
+// +build acceptance
+
 /*
  * Copyright (c) 2017 TFG Co <backend@tfgco.com>
  * Author: TFG Co <backend@tfgco.com>
@@ -23,79 +25,22 @@
 package main
 
 import (
+	"os"
+	"testing"
+
 	"github.com/DATA-DOG/godog"
-	"github.com/DATA-DOG/godog/gherkin"
 )
 
-func theServerIsUp() error {
-	return godog.ErrPending
-}
+func TestMain(m *testing.M) {
+	status := godog.RunWithOptions("godogs", func(s *godog.Suite) {
+		FeatureContext(s)
+	}, godog.Options{
+		Format: "pretty",
+		Paths:  []string{"features"},
+	})
 
-func theUserCreatesAGameNamedWithBundleIDOf(arg1, arg2 string) error {
-	return godog.ErrPending
-}
-
-func theGameExists(arg1 string) error {
-	return godog.ErrPending
-}
-
-func theGameHasBundleIDOf(arg1, arg2 string) error {
-	return godog.ErrPending
-}
-
-func theUserUpdatesAGameNamedWithBundleIDOf(arg1, arg2 string) error {
-	return godog.ErrPending
-}
-
-func theLastRequestReturnedStatusCode(arg1 int) error {
-	return godog.ErrPending
-}
-
-func theLastErrorIsWithMessage(arg1, arg2 string) error {
-	return godog.ErrPending
-}
-
-func theGameDoesNotExist(arg1 string) error {
-	return godog.ErrPending
-}
-
-func theServerIs(arg1 string) error {
-	return godog.ErrPending
-}
-
-func theHealthCheckIsDone() error {
-	return godog.ErrPending
-}
-
-func theLastRequestReturnedStatusCodeAndBody(arg1 int, arg2 string) error {
-	return godog.ErrPending
-}
-
-func aGameWithNameExists(arg1 string) error {
-	return godog.ErrPending
-}
-
-func anOfferIsCreatedWith(arg1 *gherkin.DataTable) error {
-	return godog.ErrPending
-}
-
-func anOfferWithNameExists(arg1 string) error {
-	return godog.ErrPending
-}
-
-func FeatureContext(s *godog.Suite) {
-	s.Step(`^the server is up$`, theServerIsUp)
-	s.Step(`^the user creates a game named "([^"]*)" with bundle id of "([^"]*)"$`, theUserCreatesAGameNamedWithBundleIDOf)
-	s.Step(`^the game "([^"]*)" exists$`, theGameExists)
-	s.Step(`^the game "([^"]*)" has bundle id of "([^"]*)"$`, theGameHasBundleIDOf)
-	s.Step(`^the user updates a game named "([^"]*)" with bundle id of "([^"]*)"$`, theUserUpdatesAGameNamedWithBundleIDOf)
-	s.Step(`^the last request returned status code (\d+)$`, theLastRequestReturnedStatusCode)
-	s.Step(`^the last error is "([^"]*)" with message "([^"]*)"$`, theLastErrorIsWithMessage)
-	s.Step(`^the game "([^"]*)" does not exist$`, theGameDoesNotExist)
-	s.Step(`^the server is "([^"]*)"$`, theServerIs)
-	s.Step(`^the health check is done$`, theHealthCheckIsDone)
-	s.Step(`^the last request returned status code (\d+) and body "([^"]*)"$`, theLastRequestReturnedStatusCodeAndBody)
-	s.Step(`^a game with name "([^"]*)" exists$`, aGameWithNameExists)
-	s.Step(`^an offer is created with:$`, anOfferIsCreatedWith)
-	s.Step(`^an offer with name "([^"]*)" exists$`, anOfferWithNameExists)
+	if st := m.Run(); st > status {
+		status = st
+	}
+	os.Exit(status)
 }

@@ -7,10 +7,10 @@ Feature: Request offers for a player
   Scenario Outline: A player requests offers that can be bought only once to be shown every minute
     Given the following offer templates exist in the "offer-request-game" game:
       | game | name | product_id     | contents   | placement | period             | frequency       | trigger                   |
-      | org  | or1  | com.tfg.sample | { "x": 1 } | popup     | { "type": "once" } | { "every": 60 } | { "from": 0, "to": 5 }    |
-      | org  | or2  | com.tfg.sample | { "x": 2 } | popup     | { "type": "once" } | { "every": 60 } | { "from": 6, "to": 10 }   |
-      | org  | or3  | com.tfg.sample | { "x": 3 } | popup     | { "type": "once" } | { "every": 60 } | { "from": 20, "to": 800 } |
-      | org  | or4  | com.tfg.sample | { "x": 4 } | store     | { "type": "once" } | { "every": 60 } | { "from": 20, "to": 800 } |
+      | org  | or1  | com.tfg.sample | { 'x': 1 } | popup     | { 'type': 'once' } | { 'every': 60 } | { 'from': 0, 'to': 5 }    |
+      | org  | or2  | com.tfg.sample | { 'x': 2 } | popup     | { 'type': 'once' } | { 'every': 60 } | { 'from': 6, 'to': 10 }   |
+      | org  | or3  | com.tfg.sample | { 'x': 3 } | popup     | { 'type': 'once' } | { 'every': 60 } | { 'from': 20, 'to': 800 } |
+      | org  | or4  | com.tfg.sample | { 'x': 4 } | store     | { 'type': 'once' } | { 'every': 60 } | { 'from': 20, 'to': 800 } |
     And the following players exist in the "offer-request-game" game:
       | id        | claimed-offers | last-seen-offer-at |
       | joseph    | -              | -, -, -, -         |
@@ -58,8 +58,8 @@ Feature: Request offers for a player
   Scenario Outline: After a player has seen an offer there is a track of it
     Given the following offer templates exist in the "offer-request-game" game:
       | game | name | product_id     | contents   | placement | period             | frequency       | trigger                   |
-      | org  | ot1  | com.tfg.sample | { "x": 1 } | popup     | { "type": "once" } | { "every": 60 } | { "from": 0, "to": 5 }    |
-      | org  | ot2  | com.tfg.sample | { "x": 2 } | popup     | { "type": "once" } | { "every": 60 } | { "from": 6, "to": 10 }   |
+      | org  | ot1  | com.tfg.sample | { 'x': 1 } | popup     | { 'type': 'once' } | { 'every': 60 } | { 'from': 0, 'to': 5 }    |
+      | org  | ot2  | com.tfg.sample | { 'x': 2 } | popup     | { 'type': 'once' } | { 'every': 60 } | { 'from': 6, 'to': 10 }   |
     When the current time is <current_time>
     And the game "offer-request-game" requests offers for player "<player_id>" in "popup"
     Then player "<player_id>" has seen offer "<seen_offer>"

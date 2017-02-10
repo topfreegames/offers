@@ -15,13 +15,13 @@ Feature: Claiming an offer for a given player
       | john      |            oc1 |
     When the current time is <time>
     And player "<player>" claims offer "<offer>" in game "offer-claim-game"
-    Then the last request returned status code "<code>" and body "<body>"
+    Then the last request returned status code <status> and body "<body>"
 
     Examples:
       | time | player | offer | code | body                                                                            |
-      | 3    | joseph | oc1   | 200  | { "claimedAt": 3, "contents": { "x": 1 } }                                      |
-      | 6    | joseph | oc1   | 200  | { "claimedAt": 6, "contents": { "x": 1 } }                                      |
-      | 7d   | joseph | oc1   | 200  | { "claimedAt": 6, "contents": { "x": 1 } }                                      |
-      | 0    | joseph | oc2   | 200  | { "claimedAt": 0, "contents": { "x": 2 } }                                      |
-      | 3    | john   | oc1   | 409  | { "code": "OFF-05", "reason": "Offer oc1 has already been claimed by player." } |
-      | 3    | joseph | oc1   | 200  | { "claimedAt": 3, "contents": { "x": 1 } }                                      |
+      | 3    | joseph | oc1   | 200  | { 'claimedAt': 3, 'contents': { 'x': 1 } }                                      |
+      | 6    | joseph | oc1   | 200  | { 'claimedAt': 6, 'contents': { 'x': 1 } }                                      |
+      | 7d   | joseph | oc1   | 200  | { 'claimedAt': 6, 'contents': { 'x': 1 } }                                      |
+      | 0    | joseph | oc2   | 200  | { 'claimedAt': 0, 'contents': { 'x': 2 } }                                      |
+      | 3    | john   | oc1   | 409  | { 'code': 'OFF-05', 'reason': 'Offer oc1 has already been claimed by player.' } |
+      | 3    | joseph | oc1   | 200  | { 'claimedAt': 3, 'contents': { 'x': 1 } }                                      |
