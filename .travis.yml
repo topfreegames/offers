@@ -10,7 +10,7 @@ services:
   - docker
 
 install:
- - make setup
+ - make setup-ci
 
 before_script:
   - sleep 10

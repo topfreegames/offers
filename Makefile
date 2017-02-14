@@ -4,8 +4,13 @@ TEST_PACKAGES = $(shell glide novendor | egrep -v features | egrep -v '^[.]$$' |
 
 setup:
 	@go get -u github.com/Masterminds/glide/...
-	@go get github.com/jteeuwen/go-bindata
+	@go get -u github.com/jteeuwen/go-bindata/...
 	@glide install
+
+setup-ci:
+	@go get github.com/mattn/goveralls
+	@go get github.com/onsi/ginkgo/ginkgo
+	@${MAKE} setup
 
 build:
 	@go build $(PACKAGES)
