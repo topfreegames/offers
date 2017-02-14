@@ -51,7 +51,7 @@ start-deps:
 stop-deps:
 	@env MY_IP=${MY_IP} docker-compose --project-name offers down
 
-test: deps drop-test unit integration acceptance test-coverage-func
+test: deps drop-test migrate-test unit integration acceptance test-coverage-func
 
 clear-coverage-profiles:
 	@find . -name '*.coverprofile' -delete
@@ -59,50 +59,36 @@ clear-coverage-profiles:
 unit: clear-coverage-profiles unit-run gather-unit-profiles
 
 unit-run:
-	@echo 'Before unit'
 	@ginkgo -cover -r -randomizeAllSpecs -randomizeSuites -skipMeasurements ${TEST_PACKAGES}
-	@echo 'After unit'
 
 gather-unit-profiles:
-	@echo 'Before gather unit profiles'
 	@mkdir -p _build
 	@echo "mode: count" > _build/coverage-unit.out
 	@bash -c 'for f in $$(find . -name "*.coverprofile"); do tail -n +2 $$f >> _build/coverage-unit.out; done'
-	@echo 'After gather unit profiles'
 
 integration int: clear-coverage-profiles integration-run gather-integration-profiles
 
 integration-run:
-	@echo 'Before integration'
 	@ginkgo -tags integration -cover -r -randomizeAllSpecs -randomizeSuites -skipMeasurements ${TEST_PACKAGES}
-	@echo 'After integration'
 
 gather-integration-profiles:
-	@echo 'Before gather integration profiles'
 	@mkdir -p _build
 	@echo "mode: count" > _build/coverage-integration.out
 	@bash -c 'for f in $$(find . -name "*.coverprofile"); do tail -n +2 $$f >> _build/coverage-integration.out; done'
-	@echo 'After gather integration profiles'
 
 acceptance acc: clear-coverage-profiles acceptance-run
 
 acceptance-run:
-	@echo 'Before acceptance'
 	@mkdir -p _build
 	@rm -f _build/coverage-acceptance.out
 	@cd features && go test -cover -covermode=count -coverprofile=../_build/coverage-acceptance.out
-	@echo 'After acceptance'
 
 merge-profiles:
-	@echo 'Before merge profiles'
 	@mkdir -p _build
 	@gocovmerge _build/*.out > _build/coverage-all.out
-	@echo 'After merge profiles'
 
 test-coverage-func coverage-func: merge-profiles
-	@echo 'Before coverage func'
 	@go tool cover -func=_build/coverage-all.out
-	@echo 'After coverage func'
 
 test-coverage-html coverage-html: merge-profiles
 	@go tool cover -html=_build/coverage-all.out

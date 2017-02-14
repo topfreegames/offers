@@ -8,13 +8,32 @@
 package models_test
 
 import (
+	runner "github.com/mgutz/dat/sqlx-runner"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
 	"testing"
+
+	oTesting "github.com/topfreegames/offers/testing"
 )
+
+var db *runner.DB
 
 func TestApi(t *testing.T) {
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "Offers API - Models Suite")
 }
+
+var _ = BeforeSuite(func() {
+	var err error
+	db, err = oTesting.GetTestDB()
+	Expect(err).NotTo(HaveOccurred())
+
+	err = oTesting.LoadFixtures(db)
+	Expect(err).NotTo(HaveOccurred())
+})
+
+var _ = AfterSuite(func() {
+	err := db.DB.Close()
+	Expect(err).NotTo(HaveOccurred())
+})

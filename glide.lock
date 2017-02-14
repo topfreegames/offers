@@ -1,5 +1,5 @@
-hash: 102432896fbc3a7ed4a8af29231a519681ad3a41b870761ee97a62f202088a96
-updated: 2017-02-14T14:44:19.883340221-02:00
+hash: 2bb0d0dd56666d4cc452878482db154ec6937b944d451b327a753777d881486e
+updated: 2017-02-14T16:05:46.614703825-02:00
 imports:
 - name: github.com/cenkalti/backoff
   version: 32cd0c5b3aef12c76ed64aaf678f6c79736be7dc
@@ -15,6 +15,8 @@ imports:
   subpackages:
   - internal
   - redis
+- name: github.com/go-testfixtures/testfixtures
+  version: b9ef14dc461bf934d8df2dfc6f1f456be5664cca
 - name: github.com/GuiaBolso/darwin
   version: 86919dfcf80873d58ea2e527c15b1e02a5636ead
 - name: github.com/hashicorp/hcl
