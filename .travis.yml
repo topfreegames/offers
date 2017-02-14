@@ -17,11 +17,8 @@ services:
 install:
  - make setup-ci
 
-before_script:
-  - sleep 10
-
 script:
-  - make test
+  - make deps drop-test unit integration test-coverage-func
 
 after_success:
   - $HOME/gopath/bin/goveralls -coverprofile _build/coverage-all.out -service=travis-ci
