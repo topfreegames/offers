@@ -18,7 +18,7 @@ var (
 )
 
 //GetTestDB returns a connection to the test database
-func GetTestDB() (*runner.DB, error) {
+func GetTestDB() (runner.Connection, error) {
 	return models.GetDB(
 		"localhost", "offers_test", 8585, "disable",
 		"offers_test", "",

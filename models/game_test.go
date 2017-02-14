@@ -8,7 +8,7 @@
 package models_test
 
 import (
-	"github.com/jmoiron/sqlx/types"
+	"github.com/mgutz/dat"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	uuid "github.com/satori/go.uuid"
@@ -25,14 +25,17 @@ var _ = Describe("Games Model", func() {
 				Where("id = $1", "3393cd15-5b5a-4cfb-9725-ddbde660a727").
 				QueryStruct(&game)
 
+			Expect(err).NotTo(HaveOccurred())
 			Expect(game.ID).To(Equal("3393cd15-5b5a-4cfb-9725-ddbde660a727"))
 			Expect(game.Name).To(Equal("game-1"))
-			Expect(game.Metadata.String()).To(BeEquivalentTo("{}"))
+
+			obj, err := game.GetMetadata()
 			Expect(err).NotTo(HaveOccurred())
+			Expect(obj).To(BeEquivalentTo(map[string]interface{}{}))
 		})
 
 		It("Should create game", func() {
-			meta := types.JSONText(
+			meta := dat.JSON(
 				[]byte(`
 					{"qwe": 123}
 				`),
@@ -50,6 +53,31 @@ var _ = Describe("Games Model", func() {
 				QueryStruct(&game)
 
 			Expect(err).NotTo(HaveOccurred())
+			Expect(game.ID).NotTo(Equal(""))
+
+			var game2 models.Game
+			err = db.
+				Select("*").
+				From("games").
+				Where("id = $1", game.ID).
+				QueryStruct(&game2)
+
+			obj, err := game2.GetMetadata()
+			Expect(err).NotTo(HaveOccurred())
+			Expect(obj.(map[string]interface{})["qwe"]).To(BeEquivalentTo(123))
+		})
+	})
+
+	Describe("Get game by id", func() {
+		It("Should load game by id", func() {
+			game, err := models.GetGameByID(db, "3393cd15-5b5a-4cfb-9725-ddbde660a727")
+			Expect(err).NotTo(HaveOccurred())
+			Expect(game.ID).To(Equal("3393cd15-5b5a-4cfb-9725-ddbde660a727"))
+			Expect(game.Name).To(Equal("game-1"))
+
+			obj, err := game.GetMetadata()
+			Expect(err).NotTo(HaveOccurred())
+			Expect(obj).To(BeEquivalentTo(map[string]interface{}{}))
 		})
 	})
 })

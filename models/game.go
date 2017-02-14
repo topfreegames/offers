@@ -9,15 +9,33 @@ package models
 
 import (
 	"github.com/mgutz/dat"
-
-	"github.com/jmoiron/sqlx/types"
+	runner "github.com/mgutz/dat/sqlx-runner"
 )
 
 //Game represents a tenant in offers API
 type Game struct {
-	ID        string         `db:"id"`
-	Name      string         `db:"name"`
-	Metadata  types.JSONText `db:"metadata"`
-	CreatedAt dat.NullTime   `db:"created_at"`
-	UpdatedAt dat.NullTime   `db:"updated_at"`
+	ID        string       `db:"id"`
+	Name      string       `db:"name"`
+	Metadata  dat.JSON     `db:"metadata"`
+	CreatedAt dat.NullTime `db:"created_at"`
+	UpdatedAt dat.NullTime `db:"updated_at"`
+}
+
+//GetMetadata for game
+func (g *Game) GetMetadata() (interface{}, error) {
+	var obj interface{}
+	err := g.Metadata.Unmarshal(&obj)
+	return obj, err
+}
+
+//GetGameByID returns a game by it's pk
+func GetGameByID(db runner.Connection, id string) (*Game, error) {
+	var game Game
+	err := db.
+		Select("*").
+		From("games").
+		Where("id = $1", id).
+		QueryStruct(&game)
+
+	return &game, err
 }

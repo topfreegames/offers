@@ -22,7 +22,7 @@ func GetDB(
 	host string, user string, port int, sslmode string,
 	dbName string, password string,
 	maxIdleConns, maxOpenConns int,
-) (*runner.DB, error) {
+) (runner.Connection, error) {
 	connStr := fmt.Sprintf(
 		"host=%s user=%s port=%d sslmode=%s dbname=%s",
 		host, user, port, sslmode, dbName,

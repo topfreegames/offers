@@ -19,6 +19,7 @@ import (
 	"strings"
 
 	"github.com/GuiaBolso/darwin"
+	runner "github.com/mgutz/dat/sqlx-runner"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	migrations "github.com/topfreegames/offers/migrations"
@@ -94,7 +95,7 @@ func getDB() (*sql.DB, error) {
 	if err != nil {
 		return nil, err
 	}
-	return db.DB.DB, nil
+	return db.(*runner.DB).DB.DB, nil
 }
 
 func printStatus(d darwin.Darwin) error {
