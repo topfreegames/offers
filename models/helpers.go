@@ -10,12 +10,19 @@ package models
 import (
 	"database/sql"
 	"fmt"
+	"time"
 
 	_ "github.com/lib/pq" //This is required to use postgres with database/sql
+	"github.com/mgutz/dat"
+	runner "github.com/mgutz/dat/sqlx-runner"
 )
 
 //GetDB Connection using the given properties
-func GetDB(host string, user string, port int, sslmode string, dbName string, password string, maxIdleConns, maxOpenConns int) (*sql.DB, error) {
+func GetDB(
+	host string, user string, port int, sslmode string,
+	dbName string, password string,
+	maxIdleConns, maxOpenConns int,
+) (*runner.DB, error) {
 	connStr := fmt.Sprintf(
 		"host=%s user=%s port=%d sslmode=%s dbname=%s",
 		host, user, port, sslmode, dbName,
@@ -31,5 +38,18 @@ func GetDB(host string, user string, port int, sslmode string, dbName string, pa
 	db.SetMaxIdleConns(maxIdleConns)
 	db.SetMaxOpenConns(maxOpenConns)
 
-	return db, nil
+	// ensures the database can be pinged with an exponential backoff (15 min)
+	runner.MustPing(db)
+
+	// set this to enable interpolation
+	dat.EnableInterpolation = true
+
+	// set to check things like sessions closing.
+	// Should be disabled in production/release builds.
+	dat.Strict = false
+
+	// Log any query over 10ms as warnings. (optional)
+	runner.LogQueriesThreshold = 10 * time.Millisecond
+
+	return runner.NewDB(db, "postgres"), nil
 }

@@ -90,7 +90,11 @@ func getDB() (*sql.DB, error) {
 	maxIdleConns := viper.GetInt("postgres.maxIdleConns")
 	maxOpenConns := viper.GetInt("postgres.maxOpenConns")
 
-	return models.GetDB(host, user, port, sslMode, dbName, password, maxIdleConns, maxOpenConns)
+	db, err := models.GetDB(host, user, port, sslMode, dbName, password, maxIdleConns, maxOpenConns)
+	if err != nil {
+		return nil, err
+	}
+	return db.DB.DB, nil
 }
 
 func printStatus(d darwin.Darwin) error {

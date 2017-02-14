@@ -47,8 +47,38 @@ start-deps:
 stop-deps:
 	@env MY_IP=${MY_IP} docker-compose --project-name offers down
 
-test: deps drop-test unit
+test: deps drop-test unit integration test-coverage test-coverage-func
 
-unit:
-	@echo ${TEST_PACKAGES}
+unit: clear-coverage-profiles unit-run gather-unit-profiles
+
+integration int: clear-coverage-profiles integration-run gather-integration-profiles
+
+clear-coverage-profiles:
+	@find . -name '*.coverprofile' -delete
+
+gather-unit-profiles:
+	@mkdir -p '_build'
+	@echo "mode: count" > _build/coverage-unit.out
+	@bash -c 'for f in $$(find . -name "*.coverprofile"); do tail -n +2 $$f >> _build/coverage-unit.out; done'
+
+unit-run:
 	@ginkgo -cover -r -randomizeAllSpecs -randomizeSuites -skipMeasurements ${TEST_PACKAGES}
+
+gather-integration-profiles:
+	@mkdir -p '_build'
+	@echo "mode: count" > _build/coverage-integration.out
+	@bash -c 'for f in $$(find . -name "*.coverprofile"); do tail -n +2 $$f >> _build/coverage-integration.out; done'
+
+integration-run:
+	@ginkgo -tags integration -cover -r -randomizeAllSpecs -randomizeSuites -skipMeasurements ${TEST_PACKAGES}
+
+merge-profiles:
+	@mkdir -p '_build'
+	@echo "mode: count" > _build/coverage-all.out
+	@bash -c 'for f in $$(find . -name "*.out"); do tail -n +2 $$f >> _build/coverage-all.out; done'
+
+test-coverage-func coverage-func: merge-profiles
+	@go tool cover -func=_build/coverage-all.out
+
+test-coverage-html coverage-html: merge-profiles
+	@go tool cover -html=_build/coverage-all.out

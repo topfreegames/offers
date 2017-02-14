@@ -1,6 +1,8 @@
-hash: 0472edb5c09dc8f24f0905c9c2a9cca59e8b8eca1db9594d862ca616f6f33152
-updated: 2017-02-14T13:29:00.543047492-02:00
+hash: 102432896fbc3a7ed4a8af29231a519681ad3a41b870761ee97a62f202088a96
+updated: 2017-02-14T14:44:19.883340221-02:00
 imports:
+- name: github.com/cenkalti/backoff
+  version: 32cd0c5b3aef12c76ed64aaf678f6c79736be7dc
 - name: github.com/DATA-DOG/godog
   version: c3f5ce27930fff8efffaaf0acab7f24d5deecdbc
   subpackages:
@@ -8,6 +10,11 @@ imports:
   - gherkin
 - name: github.com/fsnotify/fsnotify
   version: fd9ec7deca8bf46ecd2a795baaacf2b3a9be1197
+- name: github.com/garyburd/redigo
+  version: 80f7de34463b0ed3d7c61303e5619efe1b227f92
+  subpackages:
+  - internal
+  - redis
 - name: github.com/GuiaBolso/darwin
   version: 86919dfcf80873d58ea2e527c15b1e02a5636ead
 - name: github.com/hashicorp/hcl
@@ -23,6 +30,10 @@ imports:
   - json/token
 - name: github.com/inconshreveable/mousetrap
   version: 76626ae9c91c4f2a10f34cad8ce83ea42c93bb75
+- name: github.com/jmoiron/sqlx
+  version: f980a91bdc37abef88269b8f122d7de6352102f5
+  subpackages:
+  - reflectx
 - name: github.com/kr/fs
   version: 2788f0dbd16903de03cb8186e5c7d97b69ad387b
 - name: github.com/lib/pq
@@ -31,8 +42,22 @@ imports:
   - oid
 - name: github.com/magiconair/properties
   version: 0723e352fa358f9322c938cc2dadda874e9151a9
+- name: github.com/mattn/go-colorable
+  version: 6c903ff4aa50920ca86087a280590b36b3152b9c
+- name: github.com/mattn/go-isatty
+  version: 66b8e73f3f5cda9f96b69efd03dd3d7fc4a5cdb8
+- name: github.com/mgutz/ansi
+  version: 9520e82c474b0a04dd04f8a40959027271bab992
 - name: github.com/mgutz/dat
   version: c2a5759ae4b0303a8bf640d01a85ae3acc02455d
+  subpackages:
+  - sqlx-runner
+- name: github.com/mgutz/logxi
+  version: aebf8a7d67ab4625e0fd4a665766fef9a709161b
+  subpackages:
+  - v1
+- name: github.com/mgutz/str
+  version: 968bf66e3da857419e4f6e71b2d5c9ae95682dc4
 - name: github.com/mitchellh/mapstructure
   version: f3009df150dadf309fdee4a54ed65c124afad715
 - name: github.com/onsi/ginkgo
@@ -73,6 +98,10 @@ imports:
   version: 248dadf4e9068a0b3e79f02ed0a610d935de5302
 - name: github.com/pkg/sftp
   version: 4d0e916071f68db74f8a73926335f809396d6b42
+- name: github.com/pmylund/go-cache
+  version: e7a9def80f35fe1b170b7b8b68871d59dea117e1
+- name: github.com/satori/go.uuid
+  version: 879c5887cd475cd7864858769793b2ceb0d44feb
 - name: github.com/spf13/afero
   version: 52e4a6cfac46163658bd4f123c49b6ee7dc75f78
   subpackages:
@@ -104,6 +133,14 @@ imports:
   subpackages:
   - transform
   - unicode/norm
+- name: gopkg.in/mgutz/dat.v1
+  version: c2a5759ae4b0303a8bf640d01a85ae3acc02455d
+  subpackages:
+  - common
+  - kvs
+  - postgres
+  - reflectx
+  - sqlx-runner
 - name: gopkg.in/yaml.v2
   version: a5b47d31c556af34a302ce5d659e6fea44d90de0
 testImports: []

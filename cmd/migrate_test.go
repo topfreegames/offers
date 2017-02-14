@@ -1,3 +1,5 @@
+// +build integration
+
 // offers api
 // https://github.com/topfreegames/offers
 //
