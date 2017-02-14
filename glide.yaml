@@ -2,3 +2,13 @@ package: github.com/topfreegames/offers
 import:
 - package: github.com/DATA-DOG/godog
   version: ^0.6.2
+- package: github.com/mgutz/dat
+  version: ^1.1.10
+- package: github.com/spf13/cobra
+- package: github.com/spf13/viper
+- package: github.com/GuiaBolso/darwin
+- package: github.com/lib/pq
+- package: github.com/onsi/ginkgo
+  version: ^1.2.0
+- package: github.com/onsi/gomega
+  version: ^1.0.0
