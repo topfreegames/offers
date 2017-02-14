@@ -1,5 +1,3 @@
-// +build acceptance
-
 /*
  * Copyright (c) 2017 TFG Co <backend@tfgco.com>
  * Author: TFG Co <backend@tfgco.com>

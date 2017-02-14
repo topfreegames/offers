@@ -8,19 +8,29 @@
 package cmd_test
 
 import (
-	"fmt"
 	"os/exec"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	. "github.com/topfreegames/offers/cmd"
+	"github.com/topfreegames/offers/testing"
 )
 
 func dropDB() error {
 	cmd := exec.Command("make", "drop-test")
 	cmd.Dir = "../"
-	out, err := cmd.CombinedOutput()
-	fmt.Println(string(out))
+	_, err := cmd.CombinedOutput()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func migrateDB() error {
+	cmd := exec.Command("make", "migrate-test")
+	cmd.Dir = "../"
+	_, err := cmd.CombinedOutput()
 	if err != nil {
 		return err
 	}
@@ -38,15 +48,43 @@ var _ = Describe("Migrate Command", func() {
 		It("Should run migrations", func() {
 			ConfigFile = "../config/test.yaml"
 			InitConfig()
-			err := RunMigrations(false)
+
+			w, outC := testing.MockStdout()
+
+			err := RunMigrations(false, w)
+			Expect(err).NotTo(HaveOccurred())
+
+			w.Close()
+			out := <-outC
+
+			Expect(out).To(ContainSubstring("Migrating database to latest version..."))
+			Expect(out).To(ContainSubstring("Current database migration status"))
+			Expect(out).To(ContainSubstring("APPLIED"))
+			Expect(out).To(ContainSubstring("CreateGamesTable.sql"))
+			Expect(out).To(ContainSubstring("Database migrated successfully."))
+		})
+	})
+
+	Describe("Migrate Info Cmd", func() {
+		BeforeEach(func() {
+			err := migrateDB()
 			Expect(err).NotTo(HaveOccurred())
 		})
 
 		It("Should show migrations info", func() {
 			ConfigFile = "../config/test.yaml"
 			InitConfig()
-			err := RunMigrations(true)
+
+			w, outC := testing.MockStdout()
+			err := RunMigrations(true, w)
 			Expect(err).NotTo(HaveOccurred())
+
+			w.Close()
+			out := <-outC
+
+			Expect(out).To(ContainSubstring("Current database migration status"))
+			Expect(out).To(ContainSubstring("APPLIED"))
+			Expect(out).To(ContainSubstring("CreateGamesTable.sql"))
 		})
 	})
 })

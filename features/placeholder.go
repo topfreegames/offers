@@ -1,5 +1,3 @@
-// +build acceptance
-
 /*
  * Copyright (c) 2017 TFG Co <backend@tfgco.com>
  * Author: TFG Co <backend@tfgco.com>
@@ -23,24 +21,3 @@
  */
 
 package main
-
-import (
-	"os"
-	"testing"
-
-	"github.com/DATA-DOG/godog"
-)
-
-func TestMain(m *testing.M) {
-	status := godog.RunWithOptions("godogs", func(s *godog.Suite) {
-		FeatureContext(s)
-	}, godog.Options{
-		Format: "pretty",
-		Paths:  []string{"features"},
-	})
-
-	if st := m.Run(); st > status {
-		status = st
-	}
-	os.Exit(status)
-}
