@@ -3,12 +3,13 @@ PACKAGES = $(shell glide novendor)
 TEST_PACKAGES = $(shell glide novendor | egrep -v features | egrep -v '^[.]$$' | sed 's@\/[.][.][.]@@')
 
 setup:
+	@go get -u github.com/Masterminds/glide/...
 	@go get github.com/jteeuwen/go-bindata
 	@glide install
 
 build:
 	@go build $(PACKAGES)
-	@go build -o ./bin/khan main.go
+	@go build -o ./bin/offers main.go
 
 assets:
 	@go-bindata -o migrations/migrations.go -pkg migrations migrations/*.sql
