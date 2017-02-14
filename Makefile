@@ -47,7 +47,7 @@ start-deps:
 stop-deps:
 	@env MY_IP=${MY_IP} docker-compose --project-name offers down
 
-test: deps drop-test unit integration test-coverage test-coverage-func
+test: deps drop-test unit integration test-coverage-func
 
 unit: clear-coverage-profiles unit-run gather-unit-profiles
 
