@@ -30,9 +30,6 @@ drop-test:
 	@psql -d postgres -h localhost -p 8585 -U postgres -f scripts/drop-test.sql > /dev/null
 	@echo "Test Database created successfully!"
 
-acceptance acc:
-	@cd features && go test
-
 wait-for-pg:
 	@until docker exec offers_postgres_1 pg_isready; do echo 'Waiting for Postgres...' && sleep 1; done
 	@sleep 2
@@ -48,7 +45,7 @@ start-deps:
 stop-deps:
 	@env MY_IP=${MY_IP} docker-compose --project-name offers down
 
-test: deps drop-test unit integration test-coverage-func
+test: deps drop-test unit integration test-coverage-func acceptance
 
 unit: clear-coverage-profiles unit-run gather-unit-profiles
 
@@ -58,7 +55,7 @@ clear-coverage-profiles:
 	@find . -name '*.coverprofile' -delete
 
 gather-unit-profiles:
-	@mkdir -p '_build'
+	@mkdir -p _build
 	@echo "mode: count" > _build/coverage-unit.out
 	@bash -c 'for f in $$(find . -name "*.coverprofile"); do tail -n +2 $$f >> _build/coverage-unit.out; done'
 
@@ -66,15 +63,22 @@ unit-run:
 	@ginkgo -cover -r -randomizeAllSpecs -randomizeSuites -skipMeasurements ${TEST_PACKAGES}
 
 gather-integration-profiles:
-	@mkdir -p '_build'
+	@mkdir -p _build
 	@echo "mode: count" > _build/coverage-integration.out
 	@bash -c 'for f in $$(find . -name "*.coverprofile"); do tail -n +2 $$f >> _build/coverage-integration.out; done'
 
 integration-run:
 	@ginkgo -tags integration -cover -r -randomizeAllSpecs -randomizeSuites -skipMeasurements ${TEST_PACKAGES}
 
+acceptance acc: clear-coverage-profiles acceptance-run
+
+acceptance-run:
+	@mkdir -p _build
+	@rm -f _build/coverage-acceptance.out
+	@cd features && go test -cover -covermode=count -coverprofile=../_build/coverage-acceptance.out
+
 merge-profiles:
-	@mkdir -p '_build'
+	@mkdir -p _build
 	@echo "mode: count" > _build/coverage-all.out
 	@bash -c 'for f in $$(find . -name "*.out"); do tail -n +2 $$f >> _build/coverage-all.out; done'
 
