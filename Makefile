@@ -5,6 +5,7 @@ TEST_PACKAGES = $(shell glide novendor | egrep -v features | egrep -v '^[.]$$' |
 setup:
 	@go get -u github.com/Masterminds/glide/...
 	@go get -u github.com/jteeuwen/go-bindata/...
+	@go get -u github.com/wadey/gocovmerge
 	@glide install
 
 setup-ci:
@@ -95,8 +96,7 @@ acceptance-run:
 merge-profiles:
 	@echo 'Before merge profiles'
 	@mkdir -p _build
-	@echo "mode: count" > _build/coverage-all.out
-	@bash -c 'for f in $$(find . -name "*.out"); do tail -n +2 $$f >> _build/coverage-all.out; done'
+	@gocovmerge _build/*.out > _build/coverage-all.out
 	@echo 'After merge profiles'
 
 test-coverage-func coverage-func: merge-profiles
