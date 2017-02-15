@@ -40,7 +40,7 @@ func GetDB(
 	db.SetMaxIdleConns(maxIdleConns)
 	db.SetMaxOpenConns(maxOpenConns)
 
-	mustPing(db, time.Duration(connectionTimeoutMS)*time.Millisecond)
+	shouldPing(db, time.Duration(connectionTimeoutMS)*time.Millisecond)
 
 	// set this to enable interpolation
 	dat.EnableInterpolation = true
@@ -60,7 +60,7 @@ func IsNoRowsInResultSetError(err error) bool {
 	return err.Error() == "sql: no rows in result set"
 }
 
-func mustPing(db *sql.DB, timeout time.Duration) error {
+func shouldPing(db *sql.DB, timeout time.Duration) error {
 	var err error
 	b := backoff.NewExponentialBackOff()
 	b.MaxElapsedTime = timeout

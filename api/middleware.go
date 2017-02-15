@@ -7,59 +7,32 @@
 
 package api
 
-import (
-	"log"
-	"net/http"
-	"time"
-)
+import "net/http"
 
-//Middleware represents an intermediate function to a handler
-type Middleware func(*App, http.HandlerFunc) http.HandlerFunc
-
-// Logging logs all requests with its path and the time it took to process
-func Logging() Middleware {
-
-	// Create a new Middleware
-	return func(app *App, f http.HandlerFunc) http.HandlerFunc {
-
-		// Define the http.HandlerFunc
-		return func(w http.ResponseWriter, r *http.Request) {
-
-			// Do middleware things
-			start := time.Now()
-			defer func() { log.Println(r.URL.Path, time.Since(start)) }()
-
-			// Call the next middleware/handler in chain
-			f(w, r)
-		}
-	}
-}
-
-// Method ensures that only a url can be requested with a specific method, else returns a 400 Bad Request
-func Method(m string) Middleware {
-
-	// Create a new Middleware
-	return func(app *App, f http.HandlerFunc) http.HandlerFunc {
-
-		// Define the http.HandlerFunc
-		return func(w http.ResponseWriter, r *http.Request) {
-
-			// Do middleware things
-			if r.Method != m {
-				http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
-				return
-			}
-
-			// Call the next middleware/handler in chain
-			f(w, r)
-		}
-	}
+//Middleware contract
+type Middleware interface {
+	SetNext(http.Handler)
+	http.Handler
 }
 
 // Chain applies middlewares to a http.HandlerFunc
-func Chain(app *App, f http.HandlerFunc, middlewares ...Middleware) http.HandlerFunc {
-	for _, m := range middlewares {
-		f = m(app, f)
+func Chain(f http.Handler, middlewares ...Middleware) http.Handler {
+	if len(middlewares) == 0 {
+		return f
 	}
-	return f
+
+	var last Middleware
+	for i, m := range middlewares {
+		if i == len(middlewares)-1 {
+			m.SetNext(f)
+		}
+
+		if i > 0 {
+			last.SetNext(m)
+		}
+
+		last = m
+	}
+
+	return middlewares[0]
 }

@@ -47,6 +47,7 @@ Feature: Request offers for a player
       | 8            | mary      | -     | popup     |
       | 18           | mary      | -     | popup     |
       | 23           | mary      | -     | popup     |
+      | 23           | mary      | or4   | store     |
       | 3            | christine | -     | popup     |
       | 8            | christine | -     | popup     |
       | 18           | christine | -     | popup     |
@@ -67,4 +68,17 @@ Feature: Request offers for a player
 
     Examples:
       | current_time | player_id | seen_offer | unseen_offer |
-      | 3            | joseph    | ot1        | ot2          |
+      | 3            | jack      | ot1        | ot2          |
+      | 8            | jenniffer | ot2        | ot1          |
+
+  Scenario: When a player sees offers subsequently they are both tracked
+    Given the following offer templates exist in the "offer-request-game" game:
+      | game | name   | product_id     | contents   | placement | period             | frequency       | trigger                 |
+      | org  | oseen1 | com.tfg.sample | { 'x': 1 } | popup     | { 'type': 'once' } | { 'every': 60 } | { 'from': 0, 'to': 5 }  |
+      | org  | oseen2 | com.tfg.sample | { 'x': 2 } | popup     | { 'type': 'once' } | { 'every': 60 } | { 'from': 6, 'to': 10 } |
+    When the current time is 3
+    And the game "offer-request-game" requests offers for player "Henry" in "popup"
+    And the current time is 8
+    And the game "offer-request-game" requests offers for player "Henry" in "popup"
+    Then player "Henry" has seen offer "oseen1"
+    And player "Henry" has seen offer "oseen2"

@@ -57,8 +57,7 @@ func getVersion(migName string) float64 {
 }
 
 func getDescription(migName string) string {
-	parts := strings.Split(filepath.Base(migName), "-")
-	return parts[1]
+	return filepath.Base(migName)
 }
 
 func getMigrations() []darwin.Migration {

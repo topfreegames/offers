@@ -1,5 +1,5 @@
-hash: 55523a2ab5c210d6275a47f7d2e4acf53e0621a5a94bdc965b90a6646a28d4f4
-updated: 2017-02-15T09:12:52.224190822-02:00
+hash: bf59c3ef874c1a4c0e53d3553d5aa5560c561534d74f8e7e8f94ab55b1aea5a3
+updated: 2017-02-15T15:52:04.160816118-02:00
 imports:
 - name: github.com/cenkalti/backoff
   version: 32cd0c5b3aef12c76ed64aaf678f6c79736be7dc
@@ -17,6 +17,8 @@ imports:
   - redis
 - name: github.com/go-testfixtures/testfixtures
   version: b9ef14dc461bf934d8df2dfc6f1f456be5664cca
+- name: github.com/gorilla/context
+  version: 08b5f424b9271eedf6f9f0ce86cb9396ed337a42
 - name: github.com/gorilla/mux
   version: 392c28fe23e1c45ddba891b0320b3b5df220beea
 - name: github.com/GuiaBolso/darwin
@@ -106,6 +108,8 @@ imports:
   version: e7a9def80f35fe1b170b7b8b68871d59dea117e1
 - name: github.com/satori/go.uuid
   version: 879c5887cd475cd7864858769793b2ceb0d44feb
+- name: github.com/Sirupsen/logrus
+  version: c078b1e43f58d563c74cebe63c85789e76ddb627
 - name: github.com/spf13/afero
   version: 52e4a6cfac46163658bd4f123c49b6ee7dc75f78
   subpackages:

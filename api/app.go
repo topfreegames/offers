@@ -12,9 +12,11 @@ import (
 	"net"
 	"net/http"
 
+	"github.com/Sirupsen/logrus"
 	"github.com/gorilla/mux"
 	runner "github.com/mgutz/dat/sqlx-runner"
 	"github.com/spf13/viper"
+	"github.com/topfreegames/offers/metadata"
 	"github.com/topfreegames/offers/models"
 )
 
@@ -25,6 +27,7 @@ type App struct {
 	Server  *http.Server
 	Config  *viper.Viper
 	DB      runner.Connection
+	Logger  logrus.FieldLogger
 }
 
 //NewApp ctor
@@ -42,7 +45,18 @@ func NewApp(config *viper.Viper) (*App, error) {
 func (a *App) getRouter() *mux.Router {
 	r := mux.NewRouter()
 
-	r.Handle("/healthcheck", &HealthcheckHandler{a}).Name("healthcheck")
+	r.Handle("/healthcheck", Chain(
+		&HealthcheckHandler{App: a},
+		&LoggingMiddleware{App: a},
+		&VersionMiddleware{},
+		AllowedMethods("GET"),
+	)).Name("healthcheck")
+
+	r.Handle("/game/upsert", Chain(
+		&GameHandler{App: a},
+		&LoggingMiddleware{App: a},
+		&VersionMiddleware{},
+	)).Name("game")
 
 	return r
 }
@@ -52,6 +66,7 @@ func (a *App) configureApp() error {
 	if err != nil {
 		return err
 	}
+	a.configureLogger()
 	a.configureServer()
 	return nil
 }
@@ -86,6 +101,13 @@ func (a *App) getDB() (runner.Connection, error) {
 		return nil, err
 	}
 	return db, nil
+}
+
+func (a *App) configureLogger() {
+	a.Logger = logrus.New().WithFields(logrus.Fields{
+		"app":     "offers-api",
+		"version": metadata.Version,
+	})
 }
 
 func (a *App) configureServer() {
