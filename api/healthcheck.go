@@ -16,5 +16,9 @@ type HealthcheckHandler struct {
 
 //ServeHTTP method
 func (h *HealthcheckHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	l := loggerFromContext(r.Context())
+
+	l.Debug("Performing healthcheck...")
 	w.Write([]byte("WORKING"))
+	l.Debug("Healthcheck done.")
 }

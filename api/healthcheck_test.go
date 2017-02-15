@@ -39,6 +39,11 @@ var _ = Describe("Healthcheck Handler", func() {
 				app.Router.ServeHTTP(recorder, request)
 				Expect(recorder.Body.String()).To(Equal("WORKING"))
 			})
+
+			It("returns the version as a header", func() {
+				app.Router.ServeHTTP(recorder, request)
+				Expect(recorder.Header().Get("X-Offers-Version")).To(Equal("0.1.0"))
+			})
 		})
 	})
 })
