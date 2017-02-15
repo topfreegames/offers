@@ -53,3 +53,8 @@ func GetDB(
 
 	return runner.NewDB(db, "postgres"), nil
 }
+
+//IsNoRowsInResultSetError returns true if the error is a sqlx error stating that now rows were found
+func IsNoRowsInResultSetError(err error) bool {
+	return err.Error() == "sql: no rows in result set"
+}

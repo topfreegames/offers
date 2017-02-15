@@ -10,6 +10,7 @@ package models
 import (
 	"github.com/mgutz/dat"
 	runner "github.com/mgutz/dat/sqlx-runner"
+	"github.com/topfreegames/offers/errors"
 )
 
 //Game represents a tenant in offers API
@@ -37,5 +38,14 @@ func GetGameByID(db runner.Connection, id string) (*Game, error) {
 		Where("id = $1", id).
 		QueryStruct(&game)
 
-	return &game, err
+	if err != nil {
+		if IsNoRowsInResultSetError(err) {
+			return nil, errors.NewGameNotFoundError(map[string]interface{}{
+				"ID": id,
+			})
+		}
+		return nil, err
+	}
+
+	return &game, nil
 }

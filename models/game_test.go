@@ -12,6 +12,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	uuid "github.com/satori/go.uuid"
+	"github.com/topfreegames/offers/errors"
 	"github.com/topfreegames/offers/models"
 )
 
@@ -78,6 +79,22 @@ var _ = Describe("Games Model", func() {
 			obj, err := game.GetMetadata()
 			Expect(err).NotTo(HaveOccurred())
 			Expect(obj).To(BeEquivalentTo(map[string]interface{}{}))
+		})
+
+		It("Should return error if game not found", func() {
+			gameID := uuid.NewV4().String()
+			expectedError := errors.NewGameNotFoundError(map[string]interface{}{
+				"ID": gameID,
+			})
+			game, err := models.GetGameByID(db, gameID)
+			Expect(game).To(BeNil())
+			Expect(err).To(HaveOccurred())
+			Expect(err).To(MatchError(expectedError))
+		})
+	})
+
+	Describe("Upsert game", func() {
+		It("Should upsert game", func() {
 		})
 	})
 })
