@@ -22,11 +22,11 @@ func (h *HealthcheckHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	_, err := h.App.DB.Exec("select 1")
 	if err != nil {
-		w.Write([]byte("Database if offline"))
+		Write(w, http.StatusInternalServerError, "Database is offline")
 		l.WithError(err).Error("Database is offline")
 		return
 	}
 
-	w.Write([]byte("WORKING"))
+	Write(w, http.StatusOK, "WORKING")
 	l.Debug("Healthcheck done.")
 }
