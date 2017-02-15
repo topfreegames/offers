@@ -22,7 +22,7 @@ func GetTestDB() (runner.Connection, error) {
 	return models.GetDB(
 		"localhost", "offers_test", 8585, "disable",
 		"offers_test", "",
-		10, 10,
+		10, 10, 100,
 	)
 }
 

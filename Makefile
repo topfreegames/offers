@@ -51,12 +51,12 @@ start-deps:
 stop-deps:
 	@env MY_IP=${MY_IP} docker-compose --project-name offers down
 
-test: deps drop-test migrate-test unit integration acceptance test-coverage-func
+test: deps unit integration acceptance test-coverage-func
 
 clear-coverage-profiles:
 	@find . -name '*.coverprofile' -delete
 
-unit: clear-coverage-profiles unit-run gather-unit-profiles
+unit: drop-test migrate-test clear-coverage-profiles unit-run gather-unit-profiles
 
 unit-run:
 	@ginkgo -cover -r -randomizeAllSpecs -randomizeSuites -skipMeasurements ${TEST_PACKAGES}

@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/cenkalti/backoff"
 	_ "github.com/lib/pq" //This is required to use postgres with database/sql
 	"github.com/mgutz/dat"
 	runner "github.com/mgutz/dat/sqlx-runner"
@@ -22,9 +23,10 @@ func GetDB(
 	host string, user string, port int, sslmode string,
 	dbName string, password string,
 	maxIdleConns, maxOpenConns int,
+	connectionTimeoutMS int,
 ) (runner.Connection, error) {
 	connStr := fmt.Sprintf(
-		"host=%s user=%s port=%d sslmode=%s dbname=%s",
+		"host=%s user=%s port=%d sslmode=%s dbname=%s connect_timeout=2",
 		host, user, port, sslmode, dbName,
 	)
 	if password != "" {
@@ -38,8 +40,7 @@ func GetDB(
 	db.SetMaxIdleConns(maxIdleConns)
 	db.SetMaxOpenConns(maxOpenConns)
 
-	// ensures the database can be pinged with an exponential backoff (15 min)
-	runner.MustPing(db)
+	mustPing(db, time.Duration(connectionTimeoutMS)*time.Millisecond)
 
 	// set this to enable interpolation
 	dat.EnableInterpolation = true
@@ -57,4 +58,24 @@ func GetDB(
 //IsNoRowsInResultSetError returns true if the error is a sqlx error stating that now rows were found
 func IsNoRowsInResultSetError(err error) bool {
 	return err.Error() == "sql: no rows in result set"
+}
+
+func mustPing(db *sql.DB, timeout time.Duration) error {
+	var err error
+	b := backoff.NewExponentialBackOff()
+	b.MaxElapsedTime = timeout
+	ticker := backoff.NewTicker(b)
+
+	// Ticks will continue to arrive when the previous operation is still running,
+	// so operations that take a while to fail could run in quick succession.
+	for range ticker.C {
+		if err = db.Ping(); err != nil {
+			continue
+		}
+
+		ticker.Stop()
+		return nil
+	}
+
+	return fmt.Errorf("Could not ping database!")
 }

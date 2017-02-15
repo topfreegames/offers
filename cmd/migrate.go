@@ -90,8 +90,13 @@ func getDB() (*sql.DB, error) {
 	sslMode := viper.GetString("postgres.sslMode")
 	maxIdleConns := viper.GetInt("postgres.maxIdleConns")
 	maxOpenConns := viper.GetInt("postgres.maxOpenConns")
+	connectionTimeoutMS := viper.GetInt("postgres.connectionTimeoutMS")
 
-	db, err := models.GetDB(host, user, port, sslMode, dbName, password, maxIdleConns, maxOpenConns)
+	db, err := models.GetDB(
+		host, user, port, sslMode, dbName,
+		password, maxIdleConns, maxOpenConns,
+		connectionTimeoutMS,
+	)
 	if err != nil {
 		return nil, err
 	}
