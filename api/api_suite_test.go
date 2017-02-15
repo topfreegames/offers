@@ -9,7 +9,9 @@ package api_test
 
 import (
 	"io"
+	"time"
 
+	"github.com/Sirupsen/logrus"
 	runner "github.com/mgutz/dat/sqlx-runner"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -17,6 +19,7 @@ import (
 	"testing"
 
 	"github.com/topfreegames/offers/api"
+	"github.com/topfreegames/offers/models"
 	oTesting "github.com/topfreegames/offers/testing"
 )
 
@@ -30,21 +33,22 @@ func TestApi(t *testing.T) {
 }
 
 var _ = BeforeSuite(func() {
+	l := logrus.New()
+	l.Level = logrus.FatalLevel
+
 	var err error
 	db, err = oTesting.GetTestDB()
 	Expect(err).NotTo(HaveOccurred())
 	Expect(db).NotTo(BeNil())
 
-	runner.MustPing(db.(*runner.DB).DB.DB)
-	//err = db.(*runner.DB).DB.Ping()
-	//Expect(err).NotTo(HaveOccurred())
+	models.ShouldPing(db.(*runner.DB).DB.DB, 50*time.Millisecond)
 
 	err = oTesting.LoadFixtures(db.(*runner.DB))
 	Expect(err).NotTo(HaveOccurred())
 
 	config, err := oTesting.GetDefaultConfig()
 	Expect(err).NotTo(HaveOccurred())
-	app, err = api.NewApp(config)
+	app, err = api.NewApp("0.0.0.0", 8889, config, false, l)
 	Expect(err).NotTo(HaveOccurred())
 })
 

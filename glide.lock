@@ -1,5 +1,5 @@
-hash: bf59c3ef874c1a4c0e53d3553d5aa5560c561534d74f8e7e8f94ab55b1aea5a3
-updated: 2017-02-15T15:52:04.160816118-02:00
+hash: 72da711ffc0ccc674e4862b3e9a351a29b85757e8f1b81ac1a83f3489b37ade3
+updated: 2017-02-15T17:17:12.489598096-02:00
 imports:
 - name: github.com/cenkalti/backoff
   version: 32cd0c5b3aef12c76ed64aaf678f6c79736be7dc
@@ -66,6 +66,8 @@ imports:
   version: 968bf66e3da857419e4f6e71b2d5c9ae95682dc4
 - name: github.com/mitchellh/mapstructure
   version: f3009df150dadf309fdee4a54ed65c124afad715
+- name: github.com/newrelic/go-agent
+  version: 71ae6edf91a40f8bb740c2438eef209b11c2f87c
 - name: github.com/onsi/ginkgo
   version: 462326b1628e124b23f42e87a8f2750e3c4e2d24
   subpackages:

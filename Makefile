@@ -66,7 +66,7 @@ gather-unit-profiles:
 	@echo "mode: count" > _build/coverage-unit.out
 	@bash -c 'for f in $$(find . -name "*.coverprofile"); do tail -n +2 $$f >> _build/coverage-unit.out; done'
 
-integration int: clear-coverage-profiles integration-run gather-integration-profiles
+integration int: drop-test migrate-test clear-coverage-profiles integration-run gather-integration-profiles
 
 integration-run:
 	@ginkgo -tags integration -cover -r -randomizeAllSpecs -randomizeSuites -skipMeasurements ${TEST_PACKAGES}
@@ -76,7 +76,7 @@ gather-integration-profiles:
 	@echo "mode: count" > _build/coverage-integration.out
 	@bash -c 'for f in $$(find . -name "*.coverprofile"); do tail -n +2 $$f >> _build/coverage-integration.out; done'
 
-acceptance acc: clear-coverage-profiles acceptance-run
+acceptance acc: drop-test migrate-test clear-coverage-profiles acceptance-run
 
 acceptance-run:
 	@mkdir -p _build

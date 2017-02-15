@@ -25,6 +25,9 @@ func GetDB(
 	maxIdleConns, maxOpenConns int,
 	connectionTimeoutMS int,
 ) (runner.Connection, error) {
+	if connectionTimeoutMS <= 0 {
+		connectionTimeoutMS = 100
+	}
 	connStr := fmt.Sprintf(
 		"host=%s user=%s port=%d sslmode=%s dbname=%s connect_timeout=2",
 		host, user, port, sslmode, dbName,
@@ -40,7 +43,7 @@ func GetDB(
 	db.SetMaxIdleConns(maxIdleConns)
 	db.SetMaxOpenConns(maxOpenConns)
 
-	shouldPing(db, time.Duration(connectionTimeoutMS)*time.Millisecond)
+	ShouldPing(db, time.Duration(connectionTimeoutMS)*time.Millisecond)
 
 	// set this to enable interpolation
 	dat.EnableInterpolation = true
@@ -60,7 +63,8 @@ func IsNoRowsInResultSetError(err error) bool {
 	return err.Error() == "sql: no rows in result set"
 }
 
-func shouldPing(db *sql.DB, timeout time.Duration) error {
+//ShouldPing the database
+func ShouldPing(db *sql.DB, timeout time.Duration) error {
 	var err error
 	b := backoff.NewExponentialBackOff()
 	b.MaxElapsedTime = timeout

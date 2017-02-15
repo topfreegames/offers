@@ -21,7 +21,6 @@ import (
 	"github.com/GuiaBolso/darwin"
 	runner "github.com/mgutz/dat/sqlx-runner"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	migrations "github.com/topfreegames/offers/migrations"
 	"github.com/topfreegames/offers/models"
 )
@@ -81,16 +80,17 @@ func getMigrations() []darwin.Migration {
 }
 
 func getDB() (*sql.DB, error) {
-	host := viper.GetString("postgres.host")
-	user := viper.GetString("postgres.user")
-	dbName := viper.GetString("postgres.dbname")
-	password := viper.GetString("postgres.password")
-	port := viper.GetInt("postgres.port")
-	sslMode := viper.GetString("postgres.sslMode")
-	maxIdleConns := viper.GetInt("postgres.maxIdleConns")
-	maxOpenConns := viper.GetInt("postgres.maxOpenConns")
-	connectionTimeoutMS := viper.GetInt("postgres.connectionTimeoutMS")
+	host := config.GetString("postgres.host")
+	user := config.GetString("postgres.user")
+	dbName := config.GetString("postgres.dbname")
+	password := config.GetString("postgres.password")
+	port := config.GetInt("postgres.port")
+	sslMode := config.GetString("postgres.sslMode")
+	maxIdleConns := config.GetInt("postgres.maxIdleConns")
+	maxOpenConns := config.GetInt("postgres.maxOpenConns")
+	connectionTimeoutMS := config.GetInt("postgres.connectionTimeoutMS")
 
+	fmt.Println(host, port, user, dbName)
 	db, err := models.GetDB(
 		host, user, port, sslMode, dbName,
 		password, maxIdleConns, maxOpenConns,

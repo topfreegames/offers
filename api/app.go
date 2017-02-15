@@ -8,6 +8,7 @@
 package api
 
 import (
+	"fmt"
 	"io"
 	"net"
 	"net/http"
@@ -15,6 +16,7 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/gorilla/mux"
 	runner "github.com/mgutz/dat/sqlx-runner"
+	newrelic "github.com/newrelic/go-agent"
 	"github.com/spf13/viper"
 	"github.com/topfreegames/offers/metadata"
 	"github.com/topfreegames/offers/models"
@@ -22,18 +24,23 @@ import (
 
 //App is our API application
 type App struct {
-	Address string
-	Router  *mux.Router
-	Server  *http.Server
-	Config  *viper.Viper
-	DB      runner.Connection
-	Logger  logrus.FieldLogger
+	Address  string
+	Debug    bool
+	Router   *mux.Router
+	Server   *http.Server
+	Config   *viper.Viper
+	DB       runner.Connection
+	Logger   logrus.FieldLogger
+	NewRelic newrelic.Application
 }
 
 //NewApp ctor
-func NewApp(config *viper.Viper) (*App, error) {
+func NewApp(host string, port int, config *viper.Viper, debug bool, logger logrus.FieldLogger) (*App, error) {
 	a := &App{
-		Config: config,
+		Config:  config,
+		Address: fmt.Sprintf("%s:%d", host, port),
+		Debug:   debug,
+		Logger:  logger,
 	}
 	err := a.configureApp()
 	if err != nil {
@@ -55,11 +62,11 @@ func (a *App) getRouter() *mux.Router {
 }
 
 func (a *App) configureApp() error {
+	a.configureLogger()
 	err := a.configureDatabase()
 	if err != nil {
 		return err
 	}
-	a.configureLogger()
 	a.configureServer()
 	return nil
 }
@@ -85,22 +92,47 @@ func (a *App) getDB() (runner.Connection, error) {
 	maxOpenConns := a.Config.GetInt("postgres.maxOpenConns")
 	connectionTimeoutMS := viper.GetInt("postgres.connectionTimeoutMS")
 
+	l := a.Logger.WithFields(logrus.Fields{
+		"postgres.host":    host,
+		"postgres.user":    user,
+		"postgres.dbName":  dbName,
+		"postgres.port":    port,
+		"postgres.sslMode": sslMode,
+	})
+
+	l.Debug("Connecting to DB...")
 	db, err := models.GetDB(
 		host, user, port, sslMode, dbName,
 		password, maxIdleConns, maxOpenConns,
 		connectionTimeoutMS,
 	)
 	if err != nil {
+		l.WithError(err).Error("Connection to database failed.")
 		return nil, err
 	}
+	l.Debug("Successful connection to database.")
 	return db, nil
 }
 
 func (a *App) configureLogger() {
-	a.Logger = logrus.New().WithFields(logrus.Fields{
-		"app":     "offers-api",
-		"version": metadata.Version,
+	a.Logger = a.Logger.WithFields(logrus.Fields{
+		"source":    "offers-api",
+		"operation": "initializeApp",
+		"version":   metadata.Version,
 	})
+}
+
+func (a *App) configureNewRelic() error {
+	appName := a.Config.GetString("newrelic.app")
+	key := a.Config.GetString("newrelic.key")
+
+	config := newrelic.NewConfig(appName, key)
+	app, err := newrelic.NewApplication(config)
+	if err != nil {
+		return err
+	}
+	a.NewRelic = app
+	return nil
 }
 
 func (a *App) configureServer() {
