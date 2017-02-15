@@ -49,12 +49,7 @@ var _ = Describe("Games Model", func() {
 				Name:     uuid.NewV4().String(),
 				Metadata: meta,
 			}
-			err := db.
-				InsertInto("games").
-				Columns("name", "metadata").
-				Record(&game).
-				Returning("id", "created_at", "updated_at").
-				QueryStruct(&game)
+			err := models.UpsertGame(db, &game)
 
 			Expect(err).NotTo(HaveOccurred())
 			Expect(game.ID).NotTo(Equal(""))

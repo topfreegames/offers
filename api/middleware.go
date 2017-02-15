@@ -35,7 +35,7 @@ func Logging() Middleware {
 	}
 }
 
-// Method ensures that only a url can me requested with a specific method, else returns a 400 Bad Request
+// Method ensures that only a url can be requested with a specific method, else returns a 400 Bad Request
 func Method(m string) Middleware {
 
 	// Create a new Middleware

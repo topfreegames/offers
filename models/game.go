@@ -50,3 +50,13 @@ func GetGameByID(db runner.Connection, id uuid.UUID) (*Game, error) {
 
 	return &game, nil
 }
+
+//UpsertGame updates a game with new meta or insert with the new UUID
+func UpsertGame(db runner.Connection, game *Game) error {
+	return db.
+		InsertInto("games").
+		Columns("name", "metadata").
+		Record(game).
+		Returning("id", "created_at", "updated_at").
+		QueryStruct(game)
+}
