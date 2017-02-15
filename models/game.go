@@ -10,12 +10,13 @@ package models
 import (
 	"github.com/mgutz/dat"
 	runner "github.com/mgutz/dat/sqlx-runner"
+	uuid "github.com/satori/go.uuid"
 	"github.com/topfreegames/offers/errors"
 )
 
 //Game represents a tenant in offers API
 type Game struct {
-	ID        string       `db:"id"`
+	ID        uuid.UUID    `db:"id"`
 	Name      string       `db:"name"`
 	Metadata  dat.JSON     `db:"metadata"`
 	CreatedAt dat.NullTime `db:"created_at"`
@@ -30,7 +31,7 @@ func (g *Game) GetMetadata() (interface{}, error) {
 }
 
 //GetGameByID returns a game by it's pk
-func GetGameByID(db runner.Connection, id string) (*Game, error) {
+func GetGameByID(db runner.Connection, id uuid.UUID) (*Game, error) {
 	var game Game
 	err := db.
 		Select("*").

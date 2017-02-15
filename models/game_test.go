@@ -19,15 +19,18 @@ import (
 var _ = Describe("Games Model", func() {
 	Describe("Game Instance", func() {
 		It("Shoud load a game", func() {
+			gameID, err := uuid.FromString("3393cd15-5b5a-4cfb-9725-ddbde660a727")
+			Expect(err).NotTo(HaveOccurred())
+
 			var game models.Game
-			err := db.
+			err = db.
 				Select("*").
 				From("games").
-				Where("id = $1", "3393cd15-5b5a-4cfb-9725-ddbde660a727").
+				Where("id = $1", gameID).
 				QueryStruct(&game)
 
 			Expect(err).NotTo(HaveOccurred())
-			Expect(game.ID).To(Equal("3393cd15-5b5a-4cfb-9725-ddbde660a727"))
+			Expect(game.ID).To(Equal(gameID))
 			Expect(game.Name).To(Equal("game-1"))
 
 			obj, err := game.GetMetadata()
@@ -71,9 +74,12 @@ var _ = Describe("Games Model", func() {
 
 	Describe("Get game by id", func() {
 		It("Should load game by id", func() {
-			game, err := models.GetGameByID(db, "3393cd15-5b5a-4cfb-9725-ddbde660a727")
+			gameID, err := uuid.FromString("3393cd15-5b5a-4cfb-9725-ddbde660a727")
 			Expect(err).NotTo(HaveOccurred())
-			Expect(game.ID).To(Equal("3393cd15-5b5a-4cfb-9725-ddbde660a727"))
+
+			game, err := models.GetGameByID(db, gameID)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(game.ID).To(Equal(gameID))
 			Expect(game.Name).To(Equal("game-1"))
 
 			obj, err := game.GetMetadata()
@@ -82,7 +88,7 @@ var _ = Describe("Games Model", func() {
 		})
 
 		It("Should return error if game not found", func() {
-			gameID := uuid.NewV4().String()
+			gameID := uuid.NewV4()
 			expectedError := errors.NewGameNotFoundError(map[string]interface{}{
 				"ID": gameID,
 			})
