@@ -9,9 +9,12 @@ package api
 
 import "net/http"
 
-//HealthcheckHandler function
-func HealthcheckHandler(a *App) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("WORKING"))
-	}
+//HealthcheckHandler handler
+type HealthcheckHandler struct {
+	App *App
+}
+
+//ServeHTTP method
+func (h *HealthcheckHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("WORKING"))
 }

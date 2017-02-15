@@ -42,7 +42,7 @@ func NewApp(config *viper.Viper) (*App, error) {
 func (a *App) getRouter() *mux.Router {
 	r := mux.NewRouter()
 
-	r.HandleFunc("/healthcheck", HealthcheckHandler(a)).Name("healthcheck")
+	r.Handle("/healthcheck", &HealthcheckHandler{a}).Name("healthcheck")
 
 	return r
 }
