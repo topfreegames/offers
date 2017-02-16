@@ -8,8 +8,10 @@
 package api
 
 import (
-	"fmt"
+	"encoding/json"
 	"net/http"
+
+	"github.com/topfreegames/offers/models"
 )
 
 //GameHandler handler
@@ -19,7 +21,15 @@ type GameHandler struct {
 
 //ServeHTTP method
 func (g *GameHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if r.Method == "POST" {
-		fmt.Printf("%v", r.URL)
+	decoder := json.NewDecoder(r.Body)
+	defer r.Body.Close()
+
+	var game models.Game
+	err := decoder.Decode(&game)
+
+	if err != nil {
+		http.Error(w, "empty parameter", 400)
+	} else if err = models.UpsertGame(g.App.DB, &game); err != nil {
+		http.Error(w, "upsert error", 400)
 	}
 }

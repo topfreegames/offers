@@ -44,12 +44,19 @@ var _ = Describe("Games Model", func() {
 					{"qwe": 123}
 				`),
 			)
+			id := uuid.NewV4().String()
 
-			game := models.Game{
-				Name:     uuid.NewV4().String(),
+			game := &models.Game{
+				Name:     id,
 				Metadata: meta,
+				BundleID: "com.topfreegames.example",
 			}
-			err := models.UpsertGame(db, &game)
+			err := db.
+				InsertInto("games").
+				Columns("name", "metadata", "bundle_id").
+				Record(game).
+				Returning("id", "created_at", "updated_at").
+				QueryStruct(game)
 
 			Expect(err).NotTo(HaveOccurred())
 			Expect(game.ID).NotTo(Equal(""))

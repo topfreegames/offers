@@ -55,7 +55,7 @@ func (a *App) getRouter() *mux.Router {
 		&GameHandler{App: a},
 		&LoggingMiddleware{App: a},
 		&VersionMiddleware{},
-	)).Name("game")
+	)).Methods("POST").Name("game")
 
 	return r
 }

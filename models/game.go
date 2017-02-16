@@ -18,6 +18,7 @@ import (
 type Game struct {
 	ID        uuid.UUID    `db:"id"`
 	Name      string       `db:"name"`
+	BundleID  string       `db:"bundle_id"`
 	Metadata  dat.JSON     `db:"metadata"`
 	CreatedAt dat.NullTime `db:"created_at"`
 	UpdatedAt dat.NullTime `db:"updated_at"`
@@ -55,7 +56,7 @@ func GetGameByID(db runner.Connection, id uuid.UUID) (*Game, error) {
 func UpsertGame(db runner.Connection, game *Game) error {
 	return db.
 		InsertInto("games").
-		Columns("name", "metadata").
+		Columns("name", "bundle_id").
 		Record(game).
 		Returning("id", "created_at", "updated_at").
 		QueryStruct(game)
