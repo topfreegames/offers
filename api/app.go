@@ -54,6 +54,8 @@ func (a *App) getRouter() *mux.Router {
 
 	r.Handle("/healthcheck", Chain(
 		&HealthcheckHandler{App: a},
+		&MetricsReporterMiddleware{App: a},
+		&NewRelicMiddleware{App: a},
 		&LoggingMiddleware{App: a},
 		&VersionMiddleware{},
 	)).Methods("GET").Name("healthcheck")
@@ -63,10 +65,17 @@ func (a *App) getRouter() *mux.Router {
 
 func (a *App) configureApp() error {
 	a.configureLogger()
+
 	err := a.configureDatabase()
 	if err != nil {
 		return err
 	}
+
+	err = a.configureNewRelic()
+	if err != nil {
+		return err
+	}
+
 	a.configureServer()
 	return nil
 }
@@ -126,9 +135,14 @@ func (a *App) configureNewRelic() error {
 	appName := a.Config.GetString("newrelic.app")
 	key := a.Config.GetString("newrelic.key")
 
+	if key == "" {
+		return nil
+	}
+
 	config := newrelic.NewConfig(appName, key)
 	app, err := newrelic.NewApplication(config)
 	if err != nil {
+		a.Logger.WithError(err).Error("Failed to configure new relic.")
 		return err
 	}
 	a.NewRelic = app

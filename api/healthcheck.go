@@ -7,7 +7,11 @@
 
 package api
 
-import "net/http"
+import (
+	"net/http"
+
+	"github.com/topfreegames/offers/models"
+)
 
 //HealthcheckHandler handler
 type HealthcheckHandler struct {
@@ -17,16 +21,23 @@ type HealthcheckHandler struct {
 //ServeHTTP method
 func (h *HealthcheckHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	l := loggerFromContext(r.Context())
+	mr := metricsReporterFromCtx(r.Context())
 
 	l.Debug("Performing healthcheck...")
 
-	_, err := h.App.DB.Exec("select 1")
+	err := mr.WithSegment(models.NewRelicSegmentPostgres, func() error {
+		_, err := h.App.DB.Exec("select 1")
+		return err
+	})
 	if err != nil {
 		Write(w, http.StatusInternalServerError, "Database is offline")
 		l.WithError(err).Error("Database is offline")
 		return
 	}
 
-	Write(w, http.StatusOK, "WORKING")
+	mr.WithSegment(models.NewRelicSegmentSerialization, func() error {
+		Write(w, http.StatusOK, "WORKING")
+		return nil
+	})
 	l.Debug("Healthcheck done.")
 }

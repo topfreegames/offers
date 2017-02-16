@@ -92,3 +92,6 @@ test-coverage-func coverage-func: merge-profiles
 
 test-coverage-html coverage-html: merge-profiles
 	@go tool cover -html=_build/coverage-all.out
+
+run:
+	@go run main.go start -v3 -c ./config/local.yaml

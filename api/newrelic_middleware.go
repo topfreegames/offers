@@ -9,6 +9,7 @@ package api
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 
 	newrelic "github.com/newrelic/go-agent"
@@ -27,14 +28,26 @@ func newContextWithNewRelicTransaction(txn newrelic.Transaction, ctx context.Con
 	return c
 }
 
-func newrelicTransactionFromContext(ctx context.Context) newrelic.Transaction {
+func newrelicTransactionFromCtx(ctx context.Context) newrelic.Transaction {
 	return ctx.Value(newRelicTransactionKey).(newrelic.Transaction)
 }
 
 func (m *NewRelicMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	txn := m.App.NewRelic.StartTransaction(r.URL.Path, w, r)
-	defer txn.End()
-	ctx := newContextWithNewRelicTransaction(txn, r.Context(), r)
+	ctx := r.Context()
+
+	if m.App.NewRelic != nil {
+		txn := m.App.NewRelic.StartTransaction(fmt.Sprintf("%s %s", r.Method, r.URL.Path), w, r)
+		defer txn.End()
+		ctx = newContextWithNewRelicTransaction(txn, r.Context(), r)
+
+		mr := metricsReporterFromCtx(ctx)
+		if mr != nil {
+			mr.AddReporter(&NewRelicMetricsReporter{
+				App:         m.App,
+				Transaction: txn,
+			})
+		}
+	}
 
 	// Call the next middleware/handler in chain
 	m.Next.ServeHTTP(w, r.WithContext(ctx))
