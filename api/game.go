@@ -8,7 +8,6 @@
 package api
 
 import (
-	"encoding/json"
 	"net/http"
 
 	"github.com/topfreegames/offers/models"
@@ -21,15 +20,17 @@ type GameHandler struct {
 
 //ServeHTTP method
 func (g *GameHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	decoder := json.NewDecoder(r.Body)
-	defer r.Body.Close()
+	mr := metricsReporterFromCtx(r.Context())
+	game := gameFromCtx(r.Context())
 
-	var game models.Game
-	err := decoder.Decode(&game)
+	err := mr.WithSegment(models.NewRelicSegmentModel, func() error {
+		return models.UpsertGame(g.App.DB, game, mr)
+	})
 
 	if err != nil {
-		http.Error(w, "empty parameter", 400)
-	} else if err = models.UpsertGame(g.App.DB, &game); err != nil {
-		http.Error(w, "upsert error", 400)
+		Write(w, http.StatusBadRequest, "Creating game failed.")
+		return
 	}
+
+	Write(w, http.StatusOK, game.ID.String())
 }

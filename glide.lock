@@ -1,6 +1,8 @@
-hash: 72da711ffc0ccc674e4862b3e9a351a29b85757e8f1b81ac1a83f3489b37ade3
-updated: 2017-02-15T17:17:12.489598096-02:00
+hash: 1d56798c4476c04e33cf54fe9a5b4b6f880cdfc0953f1b62601d0169c5eefd2b
+updated: 2017-02-16T13:24:01.997227177-02:00
 imports:
+- name: github.com/asaskevich/govalidator
+  version: 7b3beb6df3c42abd3509abfc3bcacc0fbfb7c877
 - name: github.com/cenkalti/backoff
   version: 32cd0c5b3aef12c76ed64aaf678f6c79736be7dc
 - name: github.com/DATA-DOG/godog
@@ -68,6 +70,12 @@ imports:
   version: f3009df150dadf309fdee4a54ed65c124afad715
 - name: github.com/newrelic/go-agent
   version: 71ae6edf91a40f8bb740c2438eef209b11c2f87c
+  subpackages:
+  - internal
+  - internal/jsonx
+  - internal/logger
+  - internal/sysinfo
+  - internal/utilization
 - name: github.com/onsi/ginkgo
   version: 462326b1628e124b23f42e87a8f2750e3c4e2d24
   subpackages:

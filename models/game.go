@@ -16,12 +16,14 @@ import (
 
 //Game represents a tenant in offers API
 type Game struct {
-	ID        uuid.UUID    `db:"id"`
-	Name      string       `db:"name"`
-	BundleID  string       `db:"bundle_id"`
-	Metadata  dat.JSON     `db:"metadata"`
-	CreatedAt dat.NullTime `db:"created_at"`
-	UpdatedAt dat.NullTime `db:"updated_at"`
+	ID       uuid.UUID `db:"id" valid:"uuidv4"`
+	Name     string    `db:"name" valid:"stringlength(1|255),required"`
+	BundleID string    `db:"bundle_id" valid:"stringlength(1|255),required"`
+	Metadata dat.JSON  `db:"metadata" valid:"json"`
+
+	//TODO: Validate dates
+	CreatedAt dat.NullTime `db:"created_at" valid:""`
+	UpdatedAt dat.NullTime `db:"updated_at" valid:""`
 }
 
 //GetMetadata for game
@@ -53,11 +55,13 @@ func GetGameByID(db runner.Connection, id uuid.UUID) (*Game, error) {
 }
 
 //UpsertGame updates a game with new meta or insert with the new UUID
-func UpsertGame(db runner.Connection, game *Game) error {
-	return db.
-		InsertInto("games").
-		Columns("name", "bundle_id").
-		Record(game).
-		Returning("id", "created_at", "updated_at").
-		QueryStruct(game)
+func UpsertGame(db runner.Connection, game *Game, mr *MixedMetricsReporter) error {
+	return mr.WithSegment(SegmentInsert, func() error {
+		return db.
+			InsertInto("games").
+			Columns("name", "bundle_id").
+			Record(game).
+			Returning("id", "created_at", "updated_at").
+			QueryStruct(game)
+	})
 }

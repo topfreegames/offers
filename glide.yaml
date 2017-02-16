@@ -26,3 +26,5 @@ import:
   version: ^0.11.2
 - package: github.com/newrelic/go-agent
   version: ^1.6.0
+- package: github.com/asaskevich/govalidator
+  version: ^5.0.0

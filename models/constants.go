@@ -12,3 +12,9 @@ const NewRelicSegmentPostgres = "PostgreSQL"
 
 //NewRelicSegmentSerialization represents a segment
 const NewRelicSegmentSerialization = "Serialization"
+
+//NewRelicSegmentModel represents a segment
+const NewRelicSegmentModel = "Model"
+
+//SegmentInsert represents a segment
+const SegmentInsert = "Database/Insert"

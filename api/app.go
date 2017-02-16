@@ -60,11 +60,14 @@ func (a *App) getRouter() *mux.Router {
 		&VersionMiddleware{},
 	)).Methods("GET").Name("healthcheck")
 
-	r.Handle("/game/upsert", Chain(
+	r.Handle("/games", Chain(
 		&GameHandler{App: a},
+		&MetricsReporterMiddleware{App: a},
+		&NewRelicMiddleware{App: a},
 		&LoggingMiddleware{App: a},
 		&VersionMiddleware{},
-	)).Methods("POST").Name("game")
+		&ValidationMiddleware{GetPayload: func() interface{} { return &models.Game{} }},
+	)).Methods("PUT").Name("game")
 
 	return r
 }
