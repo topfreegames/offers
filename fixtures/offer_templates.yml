@@ -1,0 +1,17 @@
+#offers api
+#https://github.com/topfreegames/offers
+
+#Licensed under the MIT license:
+#http://www.opensource.org/licenses/mit-license
+#Copyright © 2017 Top Free Games <backend@tfgco.com>
+
+-
+    id: template-id
+    name: template-1
+    pid: com.tfg.sample
+    gameid: awesome game
+    contents: '{"gems": 5, "gold": 100}'
+    metadata: '{}'
+    period: '{"type": "once"}'
+    frequency: '{"every": 12, "unit": "hour"}'
+    trigger: '{"from": 1486678078, "to": 1486678079}'

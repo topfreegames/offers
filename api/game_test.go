@@ -86,5 +86,39 @@ var _ = Describe("Game Handler", func() {
 			Expect(recorder.Code).To(Equal(http.StatusBadRequest))
 			Expect(recorder.Body.String()).To(ContainSubstring("Payload is invalid: BundleID:"))
 		})
+
+		It("should return status code of 400 if invalid id", func() {
+			id := "abc123!@#xyz456"
+			name := "Game Awesome Name"
+			bundleID := "com.tfg.example"
+			gameReader := JSONFor(JSON{
+				"ID":       id,
+				"Name":     name,
+				"BundleID": bundleID,
+			})
+			request, _ := http.NewRequest("PUT", "/games", gameReader)
+
+			app.Router.ServeHTTP(recorder, request)
+
+			Expect(recorder.Code).To(Equal(http.StatusBadRequest))
+			Expect(recorder.Body.String()).To(ContainSubstring("Payload is invalid: ID:"))
+		})
+
+		It("should return status code of 400 if empty id", func() {
+			id := ""
+			name := "Game Awesome Name"
+			bundleID := "com.tfg.example"
+			gameReader := JSONFor(JSON{
+				"ID":       id,
+				"Name":     name,
+				"BundleID": bundleID,
+			})
+			request, _ := http.NewRequest("PUT", "/games", gameReader)
+
+			app.Router.ServeHTTP(recorder, request)
+
+			Expect(recorder.Code).To(Equal(http.StatusBadRequest))
+			Expect(recorder.Body.String()).To(ContainSubstring("Payload is invalid: ID:"))
+		})
 	})
 })
