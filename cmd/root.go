@@ -16,6 +16,8 @@ import (
 	"github.com/spf13/viper"
 )
 
+var config *viper.Viper
+
 // ConfigFile is the configuration file used for running a command
 var ConfigFile string
 
@@ -51,17 +53,18 @@ func init() {
 
 // InitConfig reads in config file and ENV variables if set.
 func InitConfig() {
+	config = viper.New()
 	if ConfigFile != "" { // enable ability to specify config file via flag
-		viper.SetConfigFile(ConfigFile)
+		config.SetConfigFile(ConfigFile)
 	}
-	viper.SetConfigType("yaml")
-	viper.SetEnvPrefix("offers")
-	viper.AddConfigPath(".")
-	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
-	viper.AutomaticEnv()
+	config.SetConfigType("yaml")
+	config.SetEnvPrefix("offers")
+	config.AddConfigPath(".")
+	config.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+	config.AutomaticEnv()
 
 	// If a config file is found, read it in.
-	if err := viper.ReadInConfig(); err != nil {
+	if err := config.ReadInConfig(); err != nil {
 		fmt.Printf("Config file %s failed to load: %s.\n", ConfigFile, err.Error())
 		panic("Failed to load config file")
 	}

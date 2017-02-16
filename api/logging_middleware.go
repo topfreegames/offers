@@ -50,7 +50,7 @@ func (m *LoggingMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		l := loggerFromContext(ctx)
 		l.WithFields(logrus.Fields{
 			"path":            r.URL.Path,
-			"requestDuration": time.Since(start),
+			"requestDuration": time.Since(start).Nanoseconds(),
 		}).Info("Request completed.")
 	}()
 
