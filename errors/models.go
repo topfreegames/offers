@@ -41,3 +41,32 @@ func (e *ModelNotFoundError) Serialize() []byte {
 
 	return g
 }
+
+//InvalidModelError happens when a model could not be saved/updated/deleted
+type InvalidModelError struct {
+	Model   string
+	Message string
+}
+
+//NewInvalidModelError ctor
+func NewInvalidModelError(model, message string) *InvalidModelError {
+	return &InvalidModelError{
+		Model:   model,
+		Message: message,
+	}
+}
+
+func (e *InvalidModelError) Error() string {
+	return fmt.Sprintf("%s could not be saved due to: %s", e.Model, e.Message)
+}
+
+//Serialize returns the error serialized
+func (e *InvalidModelError) Serialize() []byte {
+	g, _ := json.Marshal(map[string]interface{}{
+		"code":        "OFF-003",
+		"error":       fmt.Sprintf("Invalid%sError", e.Model),
+		"description": e.Error(),
+	})
+
+	return g
+}

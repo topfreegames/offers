@@ -124,5 +124,28 @@ var _ = Describe("Offers Model", func() {
 			Expect(offerFromDB.PlayerID).To(Equal("player-4"))
 			Expect(offerFromDB.OfferTemplateID.String()).To(Equal(offerTemplateID.String()))
 		})
+
+		It("should fail if game does not exist", func() {
+			offer := &models.Offer{
+				GameID:          "invalid-game",
+				OfferTemplateID: uuid.NewV4(),
+				PlayerID:        "player-3",
+			}
+
+			err := models.UpsertOffer(db, offer, nil)
+			Expect(err).To(HaveOccurred())
+			expectedError := errors.NewInvalidModelError(
+				"Offer",
+				"insert or update on table \"offers\" violates foreign key constraint \"offers_game_id_fkey\"",
+			)
+			Expect(err).To(MatchError(expectedError))
+
+			//Test that after error our connection is still usable
+			offerID, _ := uuid.FromString("56fc0477-39f1-485c-898e-4909e9155eb1")
+			dbOffer, err := models.GetOfferByID(db, offerID, nil)
+
+			Expect(err).NotTo(HaveOccurred())
+			Expect(dbOffer.ID.String()).To(Equal(offerID.String()))
+		})
 	})
 })

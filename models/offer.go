@@ -52,7 +52,7 @@ func GetOfferByID(db runner.Connection, id uuid.UUID, mr *MixedMetricsReporter) 
 
 //UpsertOffer updates a offer with new meta or insert with the new UUID
 func UpsertOffer(db runner.Connection, offer *Offer, mr *MixedMetricsReporter) error {
-	return mr.WithDatastoreSegment("offers", "upsert", func() error {
+	err := mr.WithDatastoreSegment("offers", "upsert", func() error {
 		return db.
 			Upsert("offers").
 			Columns("game_id", "offer_template_id", "player_id").
@@ -61,4 +61,14 @@ func UpsertOffer(db runner.Connection, offer *Offer, mr *MixedMetricsReporter) e
 			Returning("id", "created_at", "updated_at", "claimed_at").
 			QueryStruct(offer)
 	})
+
+	if pqErr, ok := IsForeignKeyViolationError(err); ok {
+		return errors.NewInvalidModelError("Offer", pqErr.Message)
+	}
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
