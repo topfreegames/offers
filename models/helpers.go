@@ -53,7 +53,7 @@ func GetDB(
 	dat.Strict = false
 
 	// Log any query over 10ms as warnings. (optional)
-	runner.LogQueriesThreshold = 10 * time.Millisecond
+	runner.LogQueriesThreshold = 100 * time.Millisecond
 
 	return runner.NewDB(db, "postgres"), nil
 }
@@ -81,5 +81,5 @@ func ShouldPing(db *sql.DB, timeout time.Duration) error {
 		return nil
 	}
 
-	return fmt.Errorf("Could not ping database!")
+	return fmt.Errorf("could not ping database")
 }

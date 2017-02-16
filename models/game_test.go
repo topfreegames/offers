@@ -19,11 +19,10 @@ import (
 var _ = Describe("Games Model", func() {
 	Describe("Game Instance", func() {
 		It("Shoud load a game", func() {
-			gameID, err := uuid.FromString("3393cd15-5b5a-4cfb-9725-ddbde660a727")
-			Expect(err).NotTo(HaveOccurred())
+			gameID := "game-id"
 
 			var game models.Game
-			err = db.
+			err := db.
 				Select("*").
 				From("games").
 				Where("id = $1", gameID).
@@ -39,23 +38,18 @@ var _ = Describe("Games Model", func() {
 		})
 
 		It("Should create game", func() {
-			meta := dat.JSON(
-				[]byte(`
-					{"qwe": 123}
-				`),
-			)
-			id := uuid.NewV4().String()
-
+			meta := dat.JSON([]byte(`{"qwe": 123}`))
 			game := &models.Game{
-				Name:     id,
-				Metadata: meta,
+				Name:     "Game Awesome Name",
+				ID:       "game-id-2",
 				BundleID: "com.topfreegames.example",
+				Metadata: meta,
 			}
 			err := db.
 				InsertInto("games").
-				Columns("name", "metadata", "bundle_id").
+				Columns("name", "id", "bundle_id", "metadata").
 				Record(game).
-				Returning("id", "created_at", "updated_at").
+				Returning("created_at", "updated_at").
 				QueryStruct(game)
 
 			Expect(err).NotTo(HaveOccurred())
@@ -76,9 +70,7 @@ var _ = Describe("Games Model", func() {
 
 	Describe("Get game by id", func() {
 		It("Should load game by id", func() {
-			gameID, err := uuid.FromString("3393cd15-5b5a-4cfb-9725-ddbde660a727")
-			Expect(err).NotTo(HaveOccurred())
-
+			gameID := "game-id"
 			game, err := models.GetGameByID(db, gameID)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(game.ID).To(Equal(gameID))
@@ -90,7 +82,7 @@ var _ = Describe("Games Model", func() {
 		})
 
 		It("Should return error if game not found", func() {
-			gameID := uuid.NewV4()
+			gameID := uuid.NewV4().String()
 			expectedError := errors.NewGameNotFoundError(map[string]interface{}{
 				"ID": gameID,
 			})
@@ -102,7 +94,38 @@ var _ = Describe("Games Model", func() {
 	})
 
 	Describe("Upsert game", func() {
-		It("Should upsert game", func() {
+		It("should insert game with new id", func() {
+			id := uuid.NewV4().String()
+			game := models.Game{
+				ID:       id,
+				Name:     "Game Awesome Name",
+				BundleID: "com.tfg.example",
+			}
+			err := models.UpsertGame(db, &game, nil)
+			Expect(err).NotTo(HaveOccurred())
+
+			gameFromDB, err := models.GetGameByID(db, id)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(gameFromDB.ID).To(Equal(id))
+		})
+
+		It("should update game with existing id", func() {
+			id := "upsert-game-id"
+			name := "Game Awesome Name"
+			bundleID := "com.tfg.example"
+			game := models.Game{
+				ID:       id,
+				Name:     name,
+				BundleID: bundleID,
+			}
+			err := models.UpsertGame(db, &game, nil)
+			Expect(err).NotTo(HaveOccurred())
+
+			gameFromDB, err := models.GetGameByID(db, id)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(gameFromDB.ID).To(Equal(id))
+			Expect(gameFromDB.Name).To(Equal(name))
+			Expect(gameFromDB.BundleID).To(Equal(bundleID))
 		})
 	})
 })

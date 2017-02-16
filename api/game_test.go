@@ -1,5 +1,5 @@
 // offers api
-// https://github.com/topfreegames/offers
+// https://github.com/topfree/ames/offers
 //
 // Licensed under the MIT license:
 // http://www.opensource.org/licenses/mit-license
@@ -24,28 +24,29 @@ var _ = Describe("Game Handler", func() {
 		recorder = httptest.NewRecorder()
 	})
 
-	Describe("POST /game", func() {
+	Describe("PUT /games", func() {
 		It("should return status code of 200", func() {
 			gameReader := JSONFor(JSON{
-				"Name":     uuid.NewV4().String(),
+				"ID":       uuid.NewV4().String(),
+				"Name":     "Game Awesome Name",
 				"BundleID": "com.topfreegames.example",
 			})
-			request, _ := http.NewRequest("POST", "/game/upsert", gameReader)
+			request, _ := http.NewRequest("PUT", "/games", gameReader)
 
 			app.Router.ServeHTTP(recorder, request)
 
-			Expect(recorder.Code).To(Equal(200))
+			Expect(recorder.Code).To(Equal(http.StatusOK))
 		})
 
 		It("should return status code of 400 if missing parameter", func() {
 			gameReader := JSONFor(JSON{
-				"Name": uuid.NewV4().String(),
+				"Name": "Game Awesome Name",
 			})
-			request, _ := http.NewRequest("POST", "/game/upsert", gameReader)
+			request, _ := http.NewRequest("PUT", "/games", gameReader)
 
 			app.Router.ServeHTTP(recorder, request)
 
-			Expect(recorder.Code).To(Equal(400))
+			Expect(recorder.Code).To(Equal(http.StatusBadRequest))
 		})
 
 		It("should return status code of 400 if invalid name", func() {
@@ -55,14 +56,15 @@ var _ = Describe("Game Handler", func() {
 			}
 
 			gameReader := JSONFor(JSON{
+				"ID":       "game-id",
 				"Name":     reallyBigName,
 				"BundleID": "com.topfreegames.example",
 			})
-			request, _ := http.NewRequest("POST", "/game/upsert", gameReader)
+			request, _ := http.NewRequest("PUT", "/games", gameReader)
 
 			app.Router.ServeHTTP(recorder, request)
 
-			Expect(recorder.Code).To(Equal(400))
+			Expect(recorder.Code).To(Equal(http.StatusBadRequest))
 			Expect(recorder.Body.String()).To(ContainSubstring("Payload is invalid: Name:"))
 		})
 
@@ -73,16 +75,16 @@ var _ = Describe("Game Handler", func() {
 			}
 
 			gameReader := JSONFor(JSON{
+				"ID":       "game-id",
 				"Name":     uuid.NewV4().String(),
 				"BundleID": reallyBigName,
 			})
-			request, _ := http.NewRequest("POST", "/game/upsert", gameReader)
+			request, _ := http.NewRequest("PUT", "/games", gameReader)
 
 			app.Router.ServeHTTP(recorder, request)
 
-			Expect(recorder.Code).To(Equal(400))
+			Expect(recorder.Code).To(Equal(http.StatusBadRequest))
 			Expect(recorder.Body.String()).To(ContainSubstring("Payload is invalid: BundleID:"))
 		})
-
 	})
 })

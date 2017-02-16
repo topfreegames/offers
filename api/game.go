@@ -32,5 +32,5 @@ func (g *GameHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	Write(w, http.StatusOK, game.ID.String())
+	Write(w, http.StatusOK, game.ID)
 }

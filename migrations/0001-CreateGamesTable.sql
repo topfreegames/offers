@@ -1,7 +1,7 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 CREATE TABLE games (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v1(),
+    id varchar(255) PRIMARY KEY,
     name varchar(255) NOT NULL,
     metadata JSONB NOT NULL DEFAULT '{}'::JSONB,
     bundle_id varchar(255) NOT NULL,

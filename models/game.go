@@ -10,16 +10,15 @@ package models
 import (
 	"github.com/mgutz/dat"
 	runner "github.com/mgutz/dat/sqlx-runner"
-	uuid "github.com/satori/go.uuid"
 	"github.com/topfreegames/offers/errors"
 )
 
 //Game represents a tenant in offers API
 type Game struct {
-	ID       uuid.UUID `db:"id" valid:"uuidv4"`
-	Name     string    `db:"name" valid:"stringlength(1|255),required"`
-	BundleID string    `db:"bundle_id" valid:"stringlength(1|255),required"`
-	Metadata dat.JSON  `db:"metadata" valid:"json"`
+	ID       string   `db:"id" valid:"matches(^[a-z0-9]+(\\-[a-z0-9]+)*$),stringlength(1|255),required"`
+	Name     string   `db:"name" valid:"ascii,stringlength(1|255),required"`
+	BundleID string   `db:"bundle_id" valid:"stringlength(1|255),required"`
+	Metadata dat.JSON `db:"metadata" valid:"json"`
 
 	//TODO: Validate dates
 	CreatedAt dat.NullTime `db:"created_at" valid:""`
@@ -34,7 +33,7 @@ func (g *Game) GetMetadata() (interface{}, error) {
 }
 
 //GetGameByID returns a game by it's pk
-func GetGameByID(db runner.Connection, id uuid.UUID) (*Game, error) {
+func GetGameByID(db runner.Connection, id string) (*Game, error) {
 	var game Game
 	err := db.
 		Select("*").
@@ -58,10 +57,11 @@ func GetGameByID(db runner.Connection, id uuid.UUID) (*Game, error) {
 func UpsertGame(db runner.Connection, game *Game, mr *MixedMetricsReporter) error {
 	return mr.WithSegment(SegmentInsert, func() error {
 		return db.
-			InsertInto("games").
-			Columns("name", "bundle_id").
+			Upsert("games").
+			Columns("id", "name", "bundle_id").
 			Record(game).
-			Returning("id", "created_at", "updated_at").
+			Where("id=$1", game.ID).
+			Returning("created_at", "updated_at").
 			QueryStruct(game)
 	})
 }
