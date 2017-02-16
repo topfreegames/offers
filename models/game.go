@@ -45,7 +45,7 @@ func GetGameByID(db runner.Connection, id string, mr *MixedMetricsReporter) (*Ga
 
 	if err != nil {
 		if IsNoRowsInResultSetError(err) {
-			return nil, errors.NewGameNotFoundError(map[string]interface{}{
+			return nil, errors.NewModelNotFoundError("Game", map[string]interface{}{
 				"ID": id,
 			})
 		}

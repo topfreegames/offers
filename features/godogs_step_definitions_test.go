@@ -150,7 +150,7 @@ func theGameDoesNotExist(id string) error {
 
 	game, err := models.GetGameByID(app.DB, id, nil)
 	if err != nil {
-		if _, ok := err.(*errors.GameNotFoundError); ok {
+		if _, ok := err.(*errors.ModelNotFoundError); ok {
 			return nil
 		}
 		return err
