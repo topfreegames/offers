@@ -71,7 +71,8 @@ var _ = Describe("Games Model", func() {
 	Describe("Get game by id", func() {
 		It("Should load game by id", func() {
 			gameID := "game-id"
-			game, err := models.GetGameByID(db, gameID)
+			game, err := models.GetGameByID(db, gameID, nil)
+
 			Expect(err).NotTo(HaveOccurred())
 			Expect(game.ID).To(Equal(gameID))
 			Expect(game.Name).To(Equal("game-1"))
@@ -86,7 +87,7 @@ var _ = Describe("Games Model", func() {
 			expectedError := errors.NewGameNotFoundError(map[string]interface{}{
 				"ID": gameID,
 			})
-			game, err := models.GetGameByID(db, gameID)
+			game, err := models.GetGameByID(db, gameID, nil)
 			Expect(game).To(BeNil())
 			Expect(err).To(HaveOccurred())
 			Expect(err).To(MatchError(expectedError))
@@ -104,7 +105,7 @@ var _ = Describe("Games Model", func() {
 			err := models.UpsertGame(db, &game, nil)
 			Expect(err).NotTo(HaveOccurred())
 
-			gameFromDB, err := models.GetGameByID(db, id)
+			gameFromDB, err := models.GetGameByID(db, id, nil)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(gameFromDB.ID).To(Equal(id))
 		})
@@ -121,7 +122,7 @@ var _ = Describe("Games Model", func() {
 			err := models.UpsertGame(db, &game, nil)
 			Expect(err).NotTo(HaveOccurred())
 
-			gameFromDB, err := models.GetGameByID(db, id)
+			gameFromDB, err := models.GetGameByID(db, id, nil)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(gameFromDB.ID).To(Equal(id))
 			Expect(gameFromDB.Name).To(Equal(name))

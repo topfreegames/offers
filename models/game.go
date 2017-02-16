@@ -33,13 +33,15 @@ func (g *Game) GetMetadata() (interface{}, error) {
 }
 
 //GetGameByID returns a game by it's pk
-func GetGameByID(db runner.Connection, id string) (*Game, error) {
+func GetGameByID(db runner.Connection, id string, mr *MixedMetricsReporter) (*Game, error) {
 	var game Game
-	err := db.
-		Select("*").
-		From("games").
-		Where("id = $1", id).
-		QueryStruct(&game)
+	err := mr.WithDatastoreSegment("games", "select by id", func() error {
+		return db.
+			Select("*").
+			From("games").
+			Where("id = $1", id).
+			QueryStruct(&game)
+	})
 
 	if err != nil {
 		if IsNoRowsInResultSetError(err) {
@@ -55,7 +57,7 @@ func GetGameByID(db runner.Connection, id string) (*Game, error) {
 
 //UpsertGame updates a game with new meta or insert with the new UUID
 func UpsertGame(db runner.Connection, game *Game, mr *MixedMetricsReporter) error {
-	return mr.WithSegment(SegmentInsert, func() error {
+	return mr.WithDatastoreSegment("games", "upsert", func() error {
 		return db.
 			Upsert("games").
 			Columns("id", "name", "bundle_id").

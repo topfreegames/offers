@@ -144,16 +144,24 @@ func (a *App) configureNewRelic() error {
 	appName := a.Config.GetString("newrelic.app")
 	key := a.Config.GetString("newrelic.key")
 
+	l := a.Logger.WithFields(logrus.Fields{
+		"appName":   appName,
+		"operation": "configureNewRelic",
+	})
+
 	if key == "" {
+		l.Warning("New Relic key not found. No data will be sent to New Relic.")
 		return nil
 	}
 
+	l.Debug("Configuring new relic...")
 	config := newrelic.NewConfig(appName, key)
 	app, err := newrelic.NewApplication(config)
 	if err != nil {
-		a.Logger.WithError(err).Error("Failed to configure new relic.")
+		l.WithError(err).Error("Failed to configure new relic.")
 		return err
 	}
+	l.Debug("New Relic configured successfully.")
 	a.NewRelic = app
 	return nil
 }

@@ -34,3 +34,57 @@ func (r *NewRelicMetricsReporter) EndSegment(data map[string]interface{}, name s
 
 	data["segment"].(newrelic.Segment).End()
 }
+
+//StartDatastoreSegment starts segment
+func (r *NewRelicMetricsReporter) StartDatastoreSegment(datastore, table, operation string) map[string]interface{} {
+	if r.Transaction == nil {
+		return nil
+	}
+
+	db := newrelic.DatastoreProduct(datastore)
+
+	s := newrelic.DatastoreSegment{
+		Product:    db,
+		Collection: table,
+		Operation:  operation,
+	}
+	s.StartTime = newrelic.StartSegmentNow(r.Transaction)
+
+	return map[string]interface{}{
+		"segment": s,
+	}
+}
+
+//EndDatastoreSegment stops segment
+func (r *NewRelicMetricsReporter) EndDatastoreSegment(data map[string]interface{}) {
+	if r.Transaction == nil {
+		return
+	}
+
+	data["segment"].(newrelic.DatastoreSegment).End()
+}
+
+//StartExternalSegment starts segment
+func (r *NewRelicMetricsReporter) StartExternalSegment(url string) map[string]interface{} {
+	if r.Transaction == nil {
+		return nil
+	}
+
+	s := newrelic.ExternalSegment{
+		StartTime: newrelic.StartSegmentNow(r.Transaction),
+		URL:       url,
+	}
+
+	return map[string]interface{}{
+		"segment": s,
+	}
+}
+
+//EndExternalSegment stops segment
+func (r *NewRelicMetricsReporter) EndExternalSegment(data map[string]interface{}) {
+	if r.Transaction == nil {
+		return
+	}
+
+	data["segment"].(newrelic.ExternalSegment).End()
+}

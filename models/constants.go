@@ -7,14 +7,14 @@
 
 package models
 
-//NewRelicSegmentPostgres represents a segment
-const NewRelicSegmentPostgres = "PostgreSQL"
+//SegmentPostgres represents a segment
+const SegmentPostgres = "PostgreSQL"
 
-//NewRelicSegmentSerialization represents a segment
-const NewRelicSegmentSerialization = "Serialization"
+//SegmentSerialization represents a segment
+const SegmentSerialization = "Serialization"
 
-//NewRelicSegmentModel represents a segment
-const NewRelicSegmentModel = "Model"
+//SegmentModel represents a segment
+const SegmentModel = "Model"
 
 //SegmentInsert represents a segment
 const SegmentInsert = "Database/Insert"

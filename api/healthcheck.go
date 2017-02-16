@@ -25,7 +25,7 @@ func (h *HealthcheckHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	l.Debug("Performing healthcheck...")
 
-	err := mr.WithSegment(models.NewRelicSegmentPostgres, func() error {
+	err := mr.WithSegment(models.SegmentPostgres, func() error {
 		_, err := h.App.DB.Exec("select 1")
 		return err
 	})
@@ -35,7 +35,7 @@ func (h *HealthcheckHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	mr.WithSegment(models.NewRelicSegmentSerialization, func() error {
+	mr.WithSegment(models.SegmentSerialization, func() error {
 		Write(w, http.StatusOK, "WORKING")
 		return nil
 	})

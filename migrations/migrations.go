@@ -83,7 +83,7 @@ func migrations0001CreategamestableSql() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "migrations/0001-CreateGamesTable.sql", size: 296, mode: os.FileMode(420), modTime: time.Unix(1487265034, 0)}
+	info := bindataFileInfo{name: "migrations/0001-CreateGamesTable.sql", size: 296, mode: os.FileMode(420), modTime: time.Unix(1487268957, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
