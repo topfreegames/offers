@@ -9,11 +9,6 @@ package errors
 
 import "encoding/json"
 
-//SerializableError means that an error can be transformed to JSON
-type SerializableError interface {
-	Serialize() []byte
-}
-
 //GameNotFoundError happens when game could not be found with specified arguments
 type GameNotFoundError struct {
 	Filters map[string]interface{}
@@ -33,7 +28,7 @@ func (e *GameNotFoundError) Error() string {
 //Serialize returns the error serialized
 func (e *GameNotFoundError) Serialize() []byte {
 	g, _ := json.Marshal(map[string]interface{}{
-		"code":        "OFF-01",
+		"code":        "OFF-001",
 		"error":       "GameNotFoundError",
 		"description": "Game was not found with specified filters.",
 		"filters":     e.Filters,

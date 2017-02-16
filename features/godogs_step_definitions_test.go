@@ -23,52 +23,139 @@
 package features
 
 import (
+	"encoding/json"
+	"fmt"
+	"strings"
+
 	"github.com/DATA-DOG/godog"
 	"github.com/DATA-DOG/godog/gherkin"
+	"github.com/Sirupsen/logrus"
+	"github.com/spf13/viper"
+	"github.com/topfreegames/offers/api"
+	"github.com/topfreegames/offers/errors"
+	"github.com/topfreegames/offers/models"
 )
 
+var app *api.App
+var logger logrus.Logger
+var lastStatus int
+var lastBody string
+
 func theServerIsUp() error {
-	return godog.ErrPending
+	configFile := "../config/acc.yaml"
+	config := viper.New()
+	config.SetConfigFile(configFile)
+	config.SetConfigType("yaml")
+	config.SetEnvPrefix("offers")
+	config.AddConfigPath(".")
+	config.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+	config.AutomaticEnv()
+
+	// If a config file is found, read it in.
+	if err := config.ReadInConfig(); err != nil {
+		return err
+	}
+
+	logger := logrus.New()
+	logger.Formatter = &logrus.JSONFormatter{}
+	logger.Level = logrus.FatalLevel
+
+	var err error
+	app, err = api.NewApp("localhost", 9999, config, true, logger)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
-func aGameNamedIsCreatedWithBundleIDOf(arg1, arg2 string) error {
-	return godog.ErrPending
+func requestGameWithIDAndBundleID(id, bundleID string) error {
+	var err error
+	lastStatus, lastBody, err = performRequest(app, "PUT", "/games", map[string]interface{}{
+		"ID":       replaceString(id),
+		"Name":     "Game Awesome Name",
+		"BundleID": replaceString(bundleID),
+	})
+
+	return err
 }
 
-func theGameExists(arg1 string) error {
-	return godog.ErrPending
+//ALIAS to update
+func aGameNamedIsCreatedWithBundleIDOf(id, bundleID string) error {
+	return requestGameWithIDAndBundleID(id, bundleID)
 }
 
-func theGameHasBundleIDOf(arg1, arg2 string) error {
-	return godog.ErrPending
+func aGameNamedIsUpdatedWithBundleIDOf(id, bundleID string) error {
+	return requestGameWithIDAndBundleID(id, bundleID)
 }
 
-func aGameNamedIsUpdatedWithBundleIDOf(arg1, arg2 string) error {
-	return godog.ErrPending
+func theGameExists(id string) error {
+	_, err := models.GetGameByID(app.DB, id, nil)
+	return err
 }
 
-func theLastRequestReturnedStatusCode(arg1 int) error {
-	return godog.ErrPending
+func theGameHasBundleIDOf(id, bundleID string) error {
+	game, err := models.GetGameByID(app.DB, id, nil)
+	if err != nil {
+		return err
+	}
+	if game.BundleID != bundleID {
+		return fmt.Errorf("Expected game to have bundle ID of %s, but it has %s.", bundleID, game.BundleID)
+	}
+	return nil
 }
 
-func theLastErrorIsWithMessage(arg1, arg2 string) error {
-	return godog.ErrPending
+func theLastRequestReturnedStatusCode(statusCode int) error {
+	if lastStatus != statusCode {
+		return fmt.Errorf("Expected last request to have status code of %d but it had %d.", statusCode, lastStatus)
+	}
+	return nil
 }
 
-func theGameDoesNotExist(arg1 string) error {
-	return godog.ErrPending
+func theLastErrorIsWithMessage(code, description string) error {
+	var data map[string]string
+	err := json.Unmarshal([]byte(lastBody), &data)
+	if err != nil {
+		return err
+	}
+
+	if actualCode, ok := data["code"]; !ok || actualCode != code {
+		return fmt.Errorf("Expected status code to be %s, but it was %s", code, actualCode)
+	}
+
+	if actualDescription, ok := data["description"]; !ok {
+		if !ok {
+			return fmt.Errorf("Expected description to be %s, but it was null", description)
+		}
+
+		matches := false
+		if strings.HasPrefix(description, "*") {
+			matches = strings.Contains(actualDescription, description[1:])
+		} else {
+			matches = actualDescription == description
+		}
+		if !matches {
+			return fmt.Errorf("Expected description to be %s, but it was %s", description, actualDescription)
+		}
+	}
+
+	return nil
 }
 
-func theServerIs(arg1 string) error {
-	return godog.ErrPending
-}
+func theGameDoesNotExist(id string) error {
+	id = replaceString(id)
+	if id == "" {
+		return nil
+	}
 
-func theHealthCheckIsDone() error {
-	return godog.ErrPending
-}
-
-func theLastRequestReturnedStatusCodeAndBody(arg1 int, arg2 string) error {
-	return godog.ErrPending
+	game, err := models.GetGameByID(app.DB, id, nil)
+	if err != nil {
+		if _, ok := err.(*errors.GameNotFoundError); ok {
+			return nil
+		}
+		return err
+	}
+	return fmt.Errorf("The game %s should not exist but it does.", game.ID)
 }
 
 func aGameWithNameExists(arg1 string) error {
@@ -140,9 +227,6 @@ func FeatureContext(s *godog.Suite) {
 	s.Step(`^the last request returned status code (\d+)$`, theLastRequestReturnedStatusCode)
 	s.Step(`^the last error is "([^"]*)" with message "([^"]*)"$`, theLastErrorIsWithMessage)
 	s.Step(`^the game "([^"]*)" does not exist$`, theGameDoesNotExist)
-	s.Step(`^the server is "([^"]*)"$`, theServerIs)
-	s.Step(`^the health check is done$`, theHealthCheckIsDone)
-	s.Step(`^the last request returned status code (\d+) and body "([^"]*)"$`, theLastRequestReturnedStatusCodeAndBody)
 	s.Step(`^a game with name "([^"]*)" exists$`, aGameWithNameExists)
 	s.Step(`^the following offer templates exist in the "([^"]*)" game:$`, theFollowingOfferTemplatesExistInTheGame)
 	s.Step(`^the following players exist in the "([^"]*)" game:$`, theFollowingPlayersExistInTheGame)

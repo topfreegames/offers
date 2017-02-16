@@ -31,6 +31,8 @@ Feature: Game Management
     And the game "<name>" does not exist
 
     Examples:
-      | name  | bundle_id                | status | error_code  | error_message                                             |
-      |       | com.topfreegames.example | 400    | OFF-001     | A name is required in order to create/update a game.      |
-      | game5 |                          | 400    | OFF-001     | A bundle id is required in order to create/update a game. |
+      | name          | bundle_id                | status | error_code | error_message                               |
+      |               | com.topfreegames.example | 400    | OFF-002    | ID: non zero value required;                |
+      | game5         |                          | 400    | OFF-002    | BundleID: non zero value required;          |
+      | asd*@!3[1249  | com.topfreegames.example | 400    | OFF-002    | ID: non zero value required;                |
+      | @VeryBigText@ | com.topfreegames.example | 400    | OFF-002    | *does not validate as stringlength(1\|255); |

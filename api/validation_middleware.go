@@ -10,10 +10,10 @@ package api
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 
 	"github.com/asaskevich/govalidator"
+	"github.com/topfreegames/offers/errors"
 	"github.com/topfreegames/offers/models"
 )
 
@@ -49,14 +49,16 @@ func (m *ValidationMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	err := decoder.Decode(payload)
 	if err != nil {
 		l.WithError(err).Error("Payload could not be decoded.")
-		Write(w, http.StatusBadRequest, "Payload not understood.")
+		vErr := errors.NewValidationFailedError(err)
+		WriteBytes(w, http.StatusBadRequest, vErr.Serialize())
 		return
 	}
 
 	_, err = govalidator.ValidateStruct(payload)
 	if err != nil {
 		l.WithError(err).Error("Payload is invalid.")
-		Write(w, http.StatusBadRequest, fmt.Sprintf("Payload is invalid: %s", err.Error()))
+		vErr := errors.NewValidationFailedError(err)
+		WriteBytes(w, http.StatusBadRequest, vErr.Serialize())
 		return
 	}
 

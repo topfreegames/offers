@@ -23,19 +23,27 @@
 package features
 
 import (
+	"flag"
 	"os"
 	"testing"
 
 	"github.com/DATA-DOG/godog"
 )
 
+var focus = flag.Bool("focus", false, "focus feature")
+
 func TestMain(m *testing.M) {
-	status := godog.RunWithOptions("godogs", func(s *godog.Suite) {
-		FeatureContext(s)
-	}, godog.Options{
+	flag.Parse()
+	opts := godog.Options{
 		Format: "pretty",
 		Paths:  []string{"."},
-	})
+	}
+	if *focus {
+		opts.Tags = "focus"
+	}
+	status := godog.RunWithOptions("offers", func(s *godog.Suite) {
+		FeatureContext(s)
+	}, opts)
 
 	if st := m.Run(); st > status {
 		status = st

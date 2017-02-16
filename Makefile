@@ -77,11 +77,17 @@ gather-integration-profiles:
 	@bash -c 'for f in $$(find . -name "*.coverprofile"); do tail -n +2 $$f >> _build/coverage-integration.out; done'
 
 acceptance acc: drop-test migrate-test clear-coverage-profiles acceptance-run
+acceptance-focus acc-focus: drop-test migrate-test clear-coverage-profiles acceptance-run-focus
 
 acceptance-run:
 	@mkdir -p _build
 	@rm -f _build/coverage-acceptance.out
 	@cd features && go test -cover -covermode=count -coverprofile=../_build/coverage-acceptance.out
+
+acceptance-run-focus:
+	@mkdir -p _build
+	@rm -f _build/coverage-acceptance.out
+	@cd features && go test -cover -covermode=count -coverprofile=../_build/coverage-acceptance.out --focus
 
 merge-profiles:
 	@mkdir -p _build
