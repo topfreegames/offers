@@ -9,5 +9,6 @@ package models
 
 //MetricsReporter is a contract for reporters of metrics
 type MetricsReporter interface {
-	WithSegment(string, func() error) error
+	StartSegment(string) map[string]interface{}
+	EndSegment(map[string]interface{}, string)
 }

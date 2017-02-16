@@ -15,12 +15,22 @@ type NewRelicMetricsReporter struct {
 	Transaction newrelic.Transaction
 }
 
-//WithSegment starts a segment in the transaction
-func (r *NewRelicMetricsReporter) WithSegment(name string, f func() error) error {
+//StartSegment starts segment
+func (r *NewRelicMetricsReporter) StartSegment(name string) map[string]interface{} {
 	if r.Transaction == nil {
-		return f()
+		return nil
 	}
 
-	defer newrelic.StartSegment(r.Transaction, name).End()
-	return f()
+	return map[string]interface{}{
+		"segment": newrelic.StartSegment(r.Transaction, name),
+	}
+}
+
+//EndSegment stops segment
+func (r *NewRelicMetricsReporter) EndSegment(data map[string]interface{}, name string) {
+	if r.Transaction == nil {
+		return
+	}
+
+	data["segment"].(newrelic.Segment).End()
 }

@@ -10,6 +10,7 @@ package models
 //MixedMetricsReporter calls other metrics reporters
 type MixedMetricsReporter struct {
 	MetricsReporters []MetricsReporter
+	Func             func(name string, f func() error) error
 }
 
 //NewMixedMetricsReporter ctor
@@ -25,14 +26,12 @@ func (m *MixedMetricsReporter) WithSegment(name string, f func() error) error {
 		return f()
 	}
 
-	ff := f
 	for _, mr := range m.MetricsReporters {
-		ff = func() error {
-			return mr.WithSegment(name, ff)
-		}
+		data := mr.StartSegment(name)
+		defer mr.EndSegment(data, name)
 	}
 
-	return ff()
+	return f()
 }
 
 //AddReporter to metrics reporter
