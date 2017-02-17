@@ -8,6 +8,7 @@
 package api_test
 
 import (
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 
@@ -65,7 +66,11 @@ var _ = Describe("Game Handler", func() {
 			app.Router.ServeHTTP(recorder, request)
 
 			Expect(recorder.Code).To(Equal(http.StatusBadRequest))
-			Expect(recorder.Body.String()).To(ContainSubstring("Payload is invalid: Name:"))
+			var obj map[string]interface{}
+			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(obj["code"]).To(BeEquivalentTo("OFF-002"))
+			Expect(obj["description"]).To(ContainSubstring("does not validate as stringlength(1|255);"))
 		})
 
 		It("should return status code of 400 if invalid bundle id", func() {
@@ -84,7 +89,12 @@ var _ = Describe("Game Handler", func() {
 			app.Router.ServeHTTP(recorder, request)
 
 			Expect(recorder.Code).To(Equal(http.StatusBadRequest))
-			Expect(recorder.Body.String()).To(ContainSubstring("Payload is invalid: BundleID:"))
+
+			var obj map[string]interface{}
+			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(obj["code"]).To(BeEquivalentTo("OFF-002"))
+			Expect(obj["description"]).To(ContainSubstring("does not validate as stringlength(1|255);"))
 		})
 
 		It("should return status code of 400 if invalid id", func() {

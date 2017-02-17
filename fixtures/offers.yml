@@ -1,0 +1,19 @@
+#offers api
+#https://github.com/topfreegames/offers
+
+#Licensed under the MIT license:
+#http://www.opensource.org/licenses/mit-license
+#Copyright © 2017 Top Free Games <backend@tfgco.com>
+
+-
+    id: 56fc0477-39f1-485c-898e-4909e9155eb1
+    game_id: offers-game
+    player_id: player-1
+    offer_template_id: 4118141e-1d20-4839-8ce8-ead92b298a86
+    created_at: 2016-01-01 12:30:12
+-
+    id: 35df52e7-3161-446f-975b-92f32871e37c
+    game_id: offers-game
+    player_id: player-2
+    offer_template_id: 4118141e-1d20-4839-8ce8-ead92b298a86
+    created_at: 2016-01-01 12:30:12

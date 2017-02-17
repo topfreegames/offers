@@ -10,11 +10,13 @@ package models
 import (
 	"database/sql"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/cenkalti/backoff"
-	_ "github.com/lib/pq" //This is required to use postgres with database/sql
+	"github.com/lib/pq"
 	"github.com/mgutz/dat"
+
 	runner "github.com/mgutz/dat/sqlx-runner"
 )
 
@@ -61,6 +63,18 @@ func GetDB(
 //IsNoRowsInResultSetError returns true if the error is a sqlx error stating that now rows were found
 func IsNoRowsInResultSetError(err error) bool {
 	return err.Error() == "sql: no rows in result set"
+}
+
+//IsForeignKeyViolationError returns true if the error is a pq error stating a foreign key has been violated
+func IsForeignKeyViolationError(err error) (*pq.Error, bool) {
+	var pqErr *pq.Error
+	var ok bool
+
+	if pqErr, ok = err.(*pq.Error); !ok {
+		return nil, false
+	}
+
+	return pqErr, pqErr.Code == "23503" && strings.Contains(pqErr.Message, "violates foreign key constraint")
 }
 
 //ShouldPing the database

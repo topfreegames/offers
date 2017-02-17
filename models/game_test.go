@@ -54,6 +54,7 @@ var _ = Describe("Games Model", func() {
 
 			Expect(err).NotTo(HaveOccurred())
 			Expect(game.ID).NotTo(Equal(""))
+			//Expect(game.CreatedAt).NotTo(Equal(""))
 
 			var game2 models.Game
 			err = db.
@@ -84,7 +85,7 @@ var _ = Describe("Games Model", func() {
 
 		It("Should return error if game not found", func() {
 			gameID := uuid.NewV4().String()
-			expectedError := errors.NewGameNotFoundError(map[string]interface{}{
+			expectedError := errors.NewModelNotFoundError("Game", map[string]interface{}{
 				"ID": gameID,
 			})
 			game, err := models.GetGameByID(db, gameID, nil)
