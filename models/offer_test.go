@@ -142,7 +142,8 @@ var _ = Describe("Offers Model", func() {
 
 			//Test that after error our connection is still usable
 			offerID, _ := uuid.FromString("56fc0477-39f1-485c-898e-4909e9155eb1")
-			dbOffer, err := models.GetOfferByID(db, offerID, nil)
+			//Must use CONN and not db here to skip transaction
+			dbOffer, err := models.GetOfferByID(conn, offerID, nil)
 
 			Expect(err).NotTo(HaveOccurred())
 			Expect(dbOffer.ID.String()).To(Equal(offerID.String()))
@@ -162,14 +163,6 @@ var _ = Describe("Offers Model", func() {
 				"insert or update on table \"offers\" violates foreign key constraint \"offers_offer_template_id_fkey\"",
 			)
 			Expect(err).To(MatchError(expectedError))
-
-			//Test that after error our connection is still usable
-			offerID, _ := uuid.FromString("56fc0477-39f1-485c-898e-4909e9155eb1")
-			dbOffer, err := models.GetOfferByID(db, offerID, nil)
-
-			Expect(err).NotTo(HaveOccurred())
-			Expect(dbOffer.ID.String()).To(Equal(offerID.String()))
 		})
-
 	})
 })

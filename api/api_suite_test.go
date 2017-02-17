@@ -9,7 +9,6 @@ package api_test
 
 import (
 	"io"
-	"time"
 
 	"github.com/Sirupsen/logrus"
 	runner "github.com/mgutz/dat/sqlx-runner"
@@ -19,7 +18,6 @@ import (
 	"testing"
 
 	"github.com/topfreegames/offers/api"
-	"github.com/topfreegames/offers/models"
 	oTesting "github.com/topfreegames/offers/testing"
 )
 
@@ -39,17 +37,26 @@ var _ = BeforeSuite(func() {
 	var err error
 	db, err = oTesting.GetTestDB()
 	Expect(err).NotTo(HaveOccurred())
-	Expect(db).NotTo(BeNil())
 
-	models.ShouldPing(db.(*runner.DB).DB.DB, 50*time.Millisecond)
-
-	err = oTesting.LoadFixtures(db.(*runner.DB))
+	err = oTesting.LoadFixtures(db)
 	Expect(err).NotTo(HaveOccurred())
 
 	config, err := oTesting.GetDefaultConfig()
 	Expect(err).NotTo(HaveOccurred())
 	app, err = api.NewApp("0.0.0.0", 8889, config, false, l, nil)
 	Expect(err).NotTo(HaveOccurred())
+})
+
+var _ = BeforeEach(func() {
+	tx, err := db.Begin()
+	Expect(err).NotTo(HaveOccurred())
+	app.DB = tx
+})
+
+var _ = AfterEach(func() {
+	err := app.DB.(*runner.Tx).Rollback()
+	Expect(err).NotTo(HaveOccurred())
+	app.DB = db
 })
 
 var _ = AfterSuite(func() {

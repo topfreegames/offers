@@ -34,12 +34,14 @@ import (
 	"github.com/topfreegames/offers/api"
 	"github.com/topfreegames/offers/errors"
 	"github.com/topfreegames/offers/models"
+	"github.com/topfreegames/offers/testing"
 )
 
 var app *api.App
 var logger logrus.Logger
 var lastStatus int
 var lastBody string
+var clock *testing.MockClock
 
 func theServerIsUp() error {
 	configFile := "../config/acc.yaml"
@@ -60,8 +62,12 @@ func theServerIsUp() error {
 	logger.Formatter = &logrus.JSONFormatter{}
 	logger.Level = logrus.FatalLevel
 
+	clock := &testing.MockClock{
+		CurrentTime: 0,
+	}
+
 	var err error
-	app, err = api.NewApp("localhost", 9999, config, true, logger)
+	app, err = api.NewApp("localhost", 9999, config, true, logger, clock)
 	if err != nil {
 		return err
 	}

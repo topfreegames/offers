@@ -17,7 +17,8 @@ import (
 	oTesting "github.com/topfreegames/offers/testing"
 )
 
-var db runner.Connection
+var conn runner.Connection
+var db *runner.Tx
 
 func TestApi(t *testing.T) {
 	RegisterFailHandler(Fail)
@@ -26,14 +27,27 @@ func TestApi(t *testing.T) {
 
 var _ = BeforeSuite(func() {
 	var err error
-	db, err = oTesting.GetTestDB()
+	conn, err = oTesting.GetTestDB()
 	Expect(err).NotTo(HaveOccurred())
 
-	err = oTesting.LoadFixtures(db.(*runner.DB))
+	err = oTesting.LoadFixtures(conn)
+	Expect(err).NotTo(HaveOccurred())
+
+})
+
+var _ = BeforeEach(func() {
+	var err error
+	db, err = conn.Begin()
 	Expect(err).NotTo(HaveOccurred())
 })
 
+var _ = AfterEach(func() {
+	err := db.Rollback()
+	Expect(err).NotTo(HaveOccurred())
+	db = nil
+})
+
 var _ = AfterSuite(func() {
-	err := db.(*runner.DB).DB.Close()
+	err := conn.(*runner.DB).DB.Close()
 	Expect(err).NotTo(HaveOccurred())
 })

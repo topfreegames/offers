@@ -27,13 +27,15 @@ func GetTestDB() (runner.Connection, error) {
 }
 
 //LoadFixtures into the DB
-func LoadFixtures(db *runner.DB) error {
+func LoadFixtures(db runner.Connection) error {
 	var err error
+
+	conn := db.(*runner.DB).DB.DB
 
 	if fixtures == nil {
 		// creating the context that hold the fixtures
 		// see about all compatible databases in this page below
-		fixtures, err = testfixtures.NewFolder(db.DB.DB, &testfixtures.PostgreSQL{}, "../fixtures")
+		fixtures, err = testfixtures.NewFolder(conn, &testfixtures.PostgreSQL{}, "../fixtures")
 		if err != nil {
 			return err
 		}
