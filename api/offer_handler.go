@@ -9,6 +9,7 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/Sirupsen/logrus"
@@ -22,8 +23,12 @@ type OfferRequestHandler struct {
 //ServeHTTP method
 func (h *OfferRequestHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	//mr := metricsReporterFromCtx(r.Context())
-	payload := offerRequestPayloadFromCtx(r.Context())
-	playerID := payload.PlayerID
+	playerID := r.URL.Query().Get("player-id")
+	if playerID == "" {
+		err := fmt.Errorf("The player-id parameter cannot be empty.")
+		h.App.HandleError(w, http.StatusBadRequest, "The player-id parameter cannot be empty.", err)
+		return
+	}
 	currentTime := h.App.Clock.GetTime()
 
 	l := loggerFromContext(r.Context()).WithFields(logrus.Fields{
@@ -33,8 +38,13 @@ func (h *OfferRequestHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 
 	l.Debug("Retrieving player info...")
 
-	//info := models.GetPlayerOffers(playerID)
-	//availableOffers := models.GetAvailableOffers()
+	//availableOffers, err := models.GetEnabledOfferTemplates(h.App.DB, mr)
+	//if err != nil {
+	//h.App.HandleError(w, http.StatusInternalServerError, "Failed to retrieve enabled offers", err)
+	//return
+	//}
+
+	//info := models.GetPlayerSeenOffers(h.App.DB, playerID, availableOffers, mr)
 
 	//fitOffers := []*OfferPayload
 	//for _, offer := range availableOffers {

@@ -28,7 +28,7 @@ var _ = Describe("Offer Template Handler", func() {
 			offerTemplateReader := JSONFor(JSON{
 				"ID":        "56fc0477-39f1-485c-898e-4909e9155eb1",
 				"Name":      "New Awesome Game",
-				"Pid":       "com.tfg.example",
+				"ProductID": "com.tfg.example",
 				"GameID":    "nonexisting-game-id",
 				"Contents":  "{\"gems\": 5, \"gold\": 100}",
 				"Period":    "{\"type\": \"once\"}",

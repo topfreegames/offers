@@ -49,7 +49,7 @@ var _ = Describe("Offer Template Models", func() {
 			Expect(err).To(HaveOccurred())
 		})
 
-		FIt("should create an template with valid parameters", func() {
+		It("should create an template with valid parameters", func() {
 			offerTemplate := &models.OfferTemplate{
 				ID:        uuid.NewV4(),
 				Name:      "New Awesome Game",
@@ -94,7 +94,13 @@ var _ = Describe("Offer Template Models", func() {
 
 	Describe("Get all available offers", func() {
 		It("Should get all available offers", func() {
+			ots, err := models.GetEnabledOfferTemplates(db, "awesome game", nil)
+			Expect(err).NotTo(HaveOccurred())
 
+			Expect(ots).To(HaveLen(2))
+
+			Expect(ots[0].Name).To(Equal("ot-1"))
+			Expect(ots[1].Name).To(Equal("ot-2"))
 		})
 	})
 })

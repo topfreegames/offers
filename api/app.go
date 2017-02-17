@@ -82,6 +82,13 @@ func (a *App) getRouter() *mux.Router {
 		&ValidationMiddleware{GetPayload: func() interface{} { return &models.OfferTemplate{} }},
 	)).Methods("PUT").Name("offer_templates")
 
+	r.Handle("/get-offers", Chain(
+		&OfferTemplateHandler{App: a},
+		&NewRelicMiddleware{App: a},
+		&LoggingMiddleware{App: a},
+		&VersionMiddleware{},
+	)).Methods("GET").Name("get_offers")
+
 	return r
 }
 
