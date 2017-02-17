@@ -94,13 +94,12 @@ var _ = Describe("Offer Template Models", func() {
 
 	Describe("Get all available offers", func() {
 		It("Should get all available offers", func() {
-			ots, err := models.GetEnabledOfferTemplates(db, "awesome game", nil)
+			ots, err := models.GetEnabledOfferTemplates(db, "offers-game", nil)
 			Expect(err).NotTo(HaveOccurred())
 
-			Expect(ots).To(HaveLen(2))
+			Expect(ots).To(HaveLen(1))
 
-			Expect(ots[0].Name).To(Equal("ot-1"))
-			Expect(ots[1].Name).To(Equal("ot-2"))
+			Expect(ots[0].Name).To(Equal("template-2"))
 		})
 	})
 })

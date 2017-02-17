@@ -94,7 +94,7 @@ var _ = Describe("Offers Model", func() {
 			offerID := uuid.NewV4()
 			expectedError := errors.NewModelNotFoundError("Offer", map[string]interface{}{
 				"GameID": "offers-game",
-				"ID":     offerID,
+				"ID":     offerID.String(),
 			})
 
 			//When
@@ -137,19 +137,13 @@ var _ = Describe("Offers Model", func() {
 			Expect(offers[0].OfferTemplateID).To(Equal(enabledOfferTemplates[0].ID))
 		})
 
-		It("Should fail if invalid game", func() {
-			//Given
-			expectedError := errors.NewInvalidModelError(
-				"Offer",
-				"insert or update on table \"offers\" violates foreign key constraint \"offers_game_id_fkey\"",
-			)
-
+		It("Should return empty list if invalid game", func() {
 			//When
-			_, err := models.GetPlayerSeenOffers(db, "invalid-game", playerID, enabledOfferTemplates, nil)
+			offers, err := models.GetPlayerSeenOffers(db, "invalid-game", playerID, enabledOfferTemplates, nil)
 
 			//Then
-			Expect(err).To(HaveOccurred())
-			Expect(err).To(MatchError(expectedError))
+			Expect(err).NotTo(HaveOccurred())
+			Expect(offers).To(HaveLen(0))
 		})
 
 	})
@@ -188,6 +182,7 @@ var _ = Describe("Offers Model", func() {
 
 			//Then
 			Expect(err).NotTo(HaveOccurred())
+
 			offerFromDB, err := models.GetOfferByID(db, "offers-game-2", offerID, nil)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(offerFromDB.ID).To(Equal(offerID))
@@ -199,7 +194,7 @@ var _ = Describe("Offers Model", func() {
 		It("should fail if game does not exist", func() {
 			//Given
 			offer := &models.Offer{
-				GameID:          "invalid-game",
+				GameID:          "invalid-offers-game",
 				OfferTemplateID: defaultOfferTemplateID,
 				PlayerID:        "player-3",
 			}
@@ -218,7 +213,7 @@ var _ = Describe("Offers Model", func() {
 			//Test that after error our connection is still usable
 			offerID, _ := uuid.FromString("56fc0477-39f1-485c-898e-4909e9155eb1")
 			//Must use CONN and not db here to skip transaction
-			dbOffer, err := models.GetOfferByID(conn, "invalid-game", offerID, nil)
+			dbOffer, err := models.GetOfferByID(conn, "offers-game", offerID, nil)
 
 			Expect(err).NotTo(HaveOccurred())
 			Expect(dbOffer.ID.String()).To(Equal(offerID.String()))

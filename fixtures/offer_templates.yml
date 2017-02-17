@@ -20,7 +20,7 @@
     id: d5114990-77d7-45c4-ba5f-462fc86b213f
     name: template-2
     product_id: com.tfg.sample
-    game_id: awesome game
+    game_id: offers-game
     contents: '{"gems": 5, "gold": 100}'
     metadata: '{}'
     period: '{"type": "once"}'
@@ -31,7 +31,7 @@
     id: a411fbcf-dddc-4153-b42b-3f9b2684c965
     name: template-3
     product_id: com.tfg.sample
-    game_id: awesome game
+    game_id: offers-game
     contents: '{"gems": 5, "gold": 100}'
     metadata: '{}'
     period: '{"type": "once"}'

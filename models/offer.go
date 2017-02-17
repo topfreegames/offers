@@ -29,8 +29,8 @@ type Offer struct {
 const playerSeenOffersScope = `
 	WHERE
 		o.game_id = $1
-		o.player_id = $2
-	AND o.offer_template_id in $3
+	AND o.player_id = $2
+	AND o.offer_template_id in ($3)
 `
 
 //GetOfferByID returns a offer by it's pk
@@ -40,7 +40,7 @@ func GetOfferByID(db runner.Connection, gameID string, id uuid.UUID, mr *MixedMe
 		return db.
 			Select("id, game_id, offer_template_id, player_id, created_at, updated_at, claimed_at").
 			From("offers").
-			Where("id = $1 AND game_id=$2", id, gameID).
+			Where("id=$1 AND game_id=$2", id, gameID).
 			QueryStruct(&offer)
 	})
 
@@ -48,7 +48,7 @@ func GetOfferByID(db runner.Connection, gameID string, id uuid.UUID, mr *MixedMe
 		if IsNoRowsInResultSetError(err) {
 			return nil, errors.NewModelNotFoundError("Offer", map[string]interface{}{
 				"GameID": gameID,
-				"ID":     id,
+				"ID":     id.String(),
 			})
 		}
 		return nil, err
@@ -70,17 +70,22 @@ func GetPlayerSeenOffers(
 		return []*Offer{}, nil
 	}
 
+	params := []interface{}{
+		gameID,
+		playerID,
+	}
 	offerTemplateIDs := make([]uuid.UUID, len(offerTemplates))
 	for i, offerTemplate := range offerTemplates {
 		offerTemplateIDs[i] = offerTemplate.ID
+		params = append(params, offerTemplate.ID)
 	}
 
 	var offers []*Offer
 	err := mr.WithDatastoreSegment("offers", "select seen offers", func() error {
 		return db.
-			Select("id, offer_template_id, claimed_at").
-			From("offers").
-			Scope(playerSeenOffersScope, gameID, playerID, offerTemplateIDs).
+			Select("o.id, o.offer_template_id, o.claimed_at").
+			From("offers o").
+			Scope(playerSeenOffersScope, params...).
 			QueryStructs(&offers)
 	})
 
