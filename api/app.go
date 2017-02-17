@@ -32,15 +32,20 @@ type App struct {
 	DB       runner.Connection
 	Logger   logrus.FieldLogger
 	NewRelic newrelic.Application
+	Clock    models.Clock
 }
 
 //NewApp ctor
-func NewApp(host string, port int, config *viper.Viper, debug bool, logger logrus.FieldLogger) (*App, error) {
+func NewApp(host string, port int, config *viper.Viper, debug bool, logger logrus.FieldLogger, clock models.Clock) (*App, error) {
+	if clock == nil {
+		clock = &models.RealClock{}
+	}
 	a := &App{
 		Config:  config,
 		Address: fmt.Sprintf("%s:%d", host, port),
 		Debug:   debug,
 		Logger:  logger,
+		Clock:   clock,
 	}
 	err := a.configureApp()
 	if err != nil {
@@ -169,6 +174,11 @@ func (a *App) configureNewRelic() error {
 func (a *App) configureServer() {
 	a.Router = a.getRouter()
 	a.Server = &http.Server{Addr: a.Address, Handler: a.Router}
+}
+
+func (a *App) HandleError(w http.ResponseWriter, status int, msg string, err error) {
+	w.WriteHeader(status)
+	w.Write([]byte(msg))
 }
 
 //ListenAndServe requests

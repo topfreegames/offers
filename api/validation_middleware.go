@@ -38,6 +38,14 @@ func gameFromCtx(ctx context.Context) *models.Game {
 	return game.(*models.Game)
 }
 
+func offerRequestPayloadFromCtx(ctx context.Context) *OfferRequestPayload {
+	offerRequest := ctx.Value(payloadString)
+	if offerRequest == nil {
+		return nil
+	}
+	return offerRequest.(*OfferRequestPayload)
+}
+
 //ServeHTTP method
 func (m *ValidationMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()

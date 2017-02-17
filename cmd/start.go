@@ -55,6 +55,7 @@ environment variables to override configuration keys.`,
 			config,
 			debug,
 			log,
+			nil,
 		)
 		if err != nil {
 			cmdL.WithError(err).Fatal("Failed to start application.")

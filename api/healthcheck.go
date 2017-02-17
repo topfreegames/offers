@@ -25,7 +25,7 @@ func (h *HealthcheckHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	l.Debug("Performing healthcheck...")
 
-	err := mr.WithSegment(models.SegmentPostgres, func() error {
+	err := mr.WithDatastoreSegment("select 1", "select", func() error {
 		_, err := h.App.DB.Exec("select 1")
 		return err
 	})

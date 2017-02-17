@@ -48,7 +48,7 @@ var _ = BeforeSuite(func() {
 
 	config, err := oTesting.GetDefaultConfig()
 	Expect(err).NotTo(HaveOccurred())
-	app, err = api.NewApp("0.0.0.0", 8889, config, false, l)
+	app, err = api.NewApp("0.0.0.0", 8889, config, false, l, nil)
 	Expect(err).NotTo(HaveOccurred())
 })
 

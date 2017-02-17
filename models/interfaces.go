@@ -7,6 +7,8 @@
 
 package models
 
+import "time"
+
 //MetricsReporter is a contract for reporters of metrics
 type MetricsReporter interface {
 	StartSegment(string) map[string]interface{}
@@ -17,4 +19,9 @@ type MetricsReporter interface {
 
 	StartExternalSegment(string) map[string]interface{}
 	EndExternalSegment(map[string]interface{})
+}
+
+//Clock returns the time
+type Clock interface {
+	GetTime() time.Time
 }
