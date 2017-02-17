@@ -54,7 +54,7 @@ func GetDB(
 	// Should be disabled in production/release builds.
 	dat.Strict = false
 
-	// Log any query over 10ms as warnings. (optional)
+	// Log any query over 100ms as warnings. (optional)
 	runner.LogQueriesThreshold = 100 * time.Millisecond
 
 	return runner.NewDB(db, "postgres"), nil
