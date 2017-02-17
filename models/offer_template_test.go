@@ -28,7 +28,7 @@ var _ = Describe("Offer Template Models", func() {
 
 			Expect(err).NotTo(HaveOccurred())
 
-			Expect(ot.Pid).To(Equal("com.tfg.sample"))
+			Expect(ot.ProductID).To(Equal("com.tfg.sample"))
 			Expect(ot.GameID).To(Equal("awesome game"))
 			Expect(ot.Contents).To(Equal(dat.JSON([]byte(`{"gems": 5, "gold": 100}`))))
 			Expect(ot.Metadata).To(Equal(dat.JSON([]byte(`{}`))))
@@ -53,7 +53,7 @@ var _ = Describe("Offer Template Models", func() {
 			offerTemplate := &models.OfferTemplate{
 				ID:        uuid.NewV4(),
 				Name:      "New Awesome Game",
-				Pid:       "com.tfg.example",
+				ProductID: "com.tfg.example",
 				GameID:    "nonexisting-game-id",
 				Contents:  dat.JSON([]byte(`{"gems": 5, "gold": 100}`)),
 				Period:    dat.JSON([]byte(`{"type": "once"}`)),
@@ -62,7 +62,7 @@ var _ = Describe("Offer Template Models", func() {
 			}
 
 			err := db.InsertInto("offer_templates").
-				Columns("id", "name", "pid", "gameid", "contents", "period", "frequency", "trigger").
+				Columns("id", "name", "product_id", "game_id", "contents", "period", "frequency", "trigger").
 				Record(offerTemplate).
 				Returning("id").
 				QueryStruct(offerTemplate)
@@ -74,7 +74,7 @@ var _ = Describe("Offer Template Models", func() {
 			offerTemplate := &models.OfferTemplate{
 				ID:        uuid.NewV4(),
 				Name:      "New Awesome Game",
-				Pid:       "com.tfg.example",
+				ProductID: "com.tfg.example",
 				GameID:    "nonexisting-game-id",
 				Contents:  dat.JSON([]byte(`{"gems": 5, "gold": 100}`)),
 				Period:    dat.JSON([]byte(`{"type": "once"}`)),
@@ -83,7 +83,7 @@ var _ = Describe("Offer Template Models", func() {
 			}
 
 			err := db.InsertInto("offer_templates").
-				Columns("id", "name", "pid", "gameid", "contents", "period", "frequency", "trigger").
+				Columns("id", "name", "product_id", "game_id", "contents", "period", "frequency", "trigger").
 				Record(offerTemplate).
 				Returning("id").
 				QueryStruct(offerTemplate)

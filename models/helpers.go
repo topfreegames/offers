@@ -16,6 +16,7 @@ import (
 	"github.com/cenkalti/backoff"
 	"github.com/lib/pq"
 	"github.com/mgutz/dat"
+	"github.com/topfreegames/offers/errors"
 
 	runner "github.com/mgutz/dat/sqlx-runner"
 )
@@ -96,4 +97,16 @@ func ShouldPing(db *sql.DB, timeout time.Duration) error {
 	}
 
 	return fmt.Errorf("could not ping database")
+}
+
+//HandleNotFoundError returns the proper error if nothing happens
+func HandleNotFoundError(model string, filters map[string]interface{}, err error) error {
+	if err != nil {
+		if IsNoRowsInResultSetError(err) {
+			return errors.NewModelNotFoundError(model, filters)
+		}
+
+		return err
+	}
+	return nil
 }
