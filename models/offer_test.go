@@ -16,10 +16,12 @@ import (
 )
 
 var _ = Describe("Offers Model", func() {
+	var defaultOfferTemplateID uuid.UUID
+	defaultOfferTemplateID, _ = uuid.FromString("dd21ec96-2890-4ba0-b8e2-40ea67196990")
+
 	Describe("Offer Instance", func() {
 		It("Shoud load a offer", func() {
 			offerID, _ := uuid.FromString("56fc0477-39f1-485c-898e-4909e9155eb1")
-			offerTemplateID, _ := uuid.FromString("4118141e-1d20-4839-8ce8-ead92b298a86")
 
 			var offer models.Offer
 			err := db.
@@ -32,14 +34,14 @@ var _ = Describe("Offers Model", func() {
 			Expect(offer.ID.String()).To(Equal(offerID.String()))
 			Expect(offer.GameID).To(Equal("offers-game"))
 			Expect(offer.PlayerID).To(Equal("player-1"))
-			Expect(offer.OfferTemplateID.String()).To(Equal(offerTemplateID.String()))
+			Expect(offer.OfferTemplateID.String()).To(Equal(defaultOfferTemplateID.String()))
 			Expect(offer.CreatedAt.Valid).To(BeTrue())
 		})
 
 		It("Should create offer", func() {
 			offer := &models.Offer{
 				GameID:          "offers-game",
-				OfferTemplateID: uuid.NewV4(),
+				OfferTemplateID: defaultOfferTemplateID,
 				PlayerID:        "player-3",
 			}
 			err := db.
@@ -66,14 +68,13 @@ var _ = Describe("Offers Model", func() {
 	Describe("Get offer by id", func() {
 		It("Should load offer by id", func() {
 			offerID, _ := uuid.FromString("56fc0477-39f1-485c-898e-4909e9155eb1")
-			offerTemplateID, _ := uuid.FromString("4118141e-1d20-4839-8ce8-ead92b298a86")
 			offer, err := models.GetOfferByID(db, offerID, nil)
 
 			Expect(err).NotTo(HaveOccurred())
 			Expect(offer.ID.String()).To(Equal(offerID.String()))
 			Expect(offer.GameID).To(Equal("offers-game"))
 			Expect(offer.PlayerID).To(Equal("player-1"))
-			Expect(offer.OfferTemplateID.String()).To(Equal(offerTemplateID.String()))
+			Expect(offer.OfferTemplateID.String()).To(Equal(defaultOfferTemplateID.String()))
 			Expect(offer.CreatedAt.Valid).To(BeTrue())
 		})
 
@@ -93,7 +94,7 @@ var _ = Describe("Offers Model", func() {
 		It("should insert offer with new id", func() {
 			offer := &models.Offer{
 				GameID:          "offers-game",
-				OfferTemplateID: uuid.NewV4(),
+				OfferTemplateID: defaultOfferTemplateID,
 				PlayerID:        "player-3",
 			}
 
@@ -107,11 +108,10 @@ var _ = Describe("Offers Model", func() {
 
 		It("should update offer with existing id", func() {
 			offerID, _ := uuid.FromString("35df52e7-3161-446f-975b-92f32871e37c")
-			offerTemplateID := uuid.NewV4()
 			offer := &models.Offer{
 				ID:              offerID,
 				GameID:          "offers-game-2",
-				OfferTemplateID: offerTemplateID,
+				OfferTemplateID: defaultOfferTemplateID,
 				PlayerID:        "player-4",
 			}
 			err := models.UpsertOffer(db, offer, nil)
@@ -122,13 +122,13 @@ var _ = Describe("Offers Model", func() {
 			Expect(offerFromDB.ID).To(Equal(offerID))
 			Expect(offerFromDB.GameID).To(Equal("offers-game-2"))
 			Expect(offerFromDB.PlayerID).To(Equal("player-4"))
-			Expect(offerFromDB.OfferTemplateID.String()).To(Equal(offerTemplateID.String()))
+			Expect(offerFromDB.OfferTemplateID.String()).To(Equal(defaultOfferTemplateID.String()))
 		})
 
 		It("should fail if game does not exist", func() {
 			offer := &models.Offer{
 				GameID:          "invalid-game",
-				OfferTemplateID: uuid.NewV4(),
+				OfferTemplateID: defaultOfferTemplateID,
 				PlayerID:        "player-3",
 			}
 
@@ -147,5 +147,29 @@ var _ = Describe("Offers Model", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(dbOffer.ID.String()).To(Equal(offerID.String()))
 		})
+
+		It("should fail if offer template does not exist", func() {
+			offer := &models.Offer{
+				GameID:          "offers-game-2",
+				OfferTemplateID: uuid.NewV4(),
+				PlayerID:        "player-3",
+			}
+
+			err := models.UpsertOffer(db, offer, nil)
+			Expect(err).To(HaveOccurred())
+			expectedError := errors.NewInvalidModelError(
+				"Offer",
+				"insert or update on table \"offers\" violates foreign key constraint \"offers_offer_template_id_fkey\"",
+			)
+			Expect(err).To(MatchError(expectedError))
+
+			//Test that after error our connection is still usable
+			offerID, _ := uuid.FromString("56fc0477-39f1-485c-898e-4909e9155eb1")
+			dbOffer, err := models.GetOfferByID(db, offerID, nil)
+
+			Expect(err).NotTo(HaveOccurred())
+			Expect(dbOffer.ID.String()).To(Equal(offerID.String()))
+		})
+
 	})
 })
