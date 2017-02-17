@@ -10,21 +10,20 @@ package models
 import (
 	"github.com/mgutz/dat"
 	runner "github.com/mgutz/dat/sqlx-runner"
-	"github.com/satori/go.uuid"
 	"github.com/topfreegames/offers/errors"
 )
 
 //OfferTemplate contains the parameters of a template
 type OfferTemplate struct {
-	ID        uuid.UUID `db:"id" valid:"uuidv4,required"`
-	Name      string    `db:"name" valid:"ascii,stringlength(1|255),required"`
-	Pid       string    `db:"pid" valid:"ascii,stringlength(1|255),required"`
-	GameID    string    `db:"gameid" valid:"ascii,stringlength(1|255),required"`
-	Contents  dat.JSON  `db:"contents" valid:"json,required"`
-	Metadata  dat.JSON  `db:"metadata" valid:"json"`
-	Period    dat.JSON  `db:"period" valid:"json,required"`
-	Frequency dat.JSON  `db:"frequency" valid:"json,required"`
-	Trigger   dat.JSON  `db:"trigger" valid:"json,required"`
+	ID        string   `db:"id" valid:"uuidv4,required"`
+	Name      string   `db:"name" valid:"ascii,stringlength(1|255),required"`
+	Pid       string   `db:"pid" valid:"ascii,stringlength(1|255),required"`
+	GameID    string   `db:"gameid" valid:"ascii,stringlength(1|255),required"`
+	Contents  dat.JSON `db:"contents" valid:"required"`
+	Metadata  dat.JSON `db:"metadata" valid:""`
+	Period    dat.JSON `db:"period" valid:"required"`
+	Frequency dat.JSON `db:"frequency" valid:"required"`
+	Trigger   dat.JSON `db:"trigger" valid:"required"`
 }
 
 //GetOfferTemplateByID returns OfferTemplate by ID
@@ -56,6 +55,7 @@ func InsertOfferTemplate(db runner.Connection, ot *OfferTemplate, mr *MixedMetri
 			InsertInto("offer_templates").
 			Columns("id", "name", "pid", "gameid", "contents", "period", "frequency", "trigger").
 			Record(ot).
+			Returning("id").
 			QueryStruct(ot)
 	})
 }

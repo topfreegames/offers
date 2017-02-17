@@ -32,5 +32,5 @@ func (g *OfferTemplateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	Write(w, http.StatusOK, ot.ID.String())
+	Write(w, http.StatusOK, ot.ID)
 }

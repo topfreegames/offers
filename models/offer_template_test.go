@@ -11,7 +11,6 @@ import (
 	"github.com/mgutz/dat"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	uuid "github.com/satori/go.uuid"
 	"github.com/topfreegames/offers/models"
 )
 
@@ -49,9 +48,9 @@ var _ = Describe("Offer Template Models", func() {
 			Expect(err).To(HaveOccurred())
 		})
 
-		FIt("should create an template with valid parameters", func() {
+		It("should create an template with valid parameters", func() {
 			offerTemplate := &models.OfferTemplate{
-				ID:        uuid.NewV4(),
+				ID:        "dd21ec96-2890-4ba0-b8e2-40ea67196990",
 				Name:      "New Awesome Game",
 				Pid:       "com.tfg.example",
 				GameID:    "nonexisting-game-id",
@@ -72,7 +71,7 @@ var _ = Describe("Offer Template Models", func() {
 
 		It("should return error if game id does not exist", func() {
 			offerTemplate := &models.OfferTemplate{
-				ID:        uuid.NewV4(),
+				ID:        "dd21ec96-2890-4ba0-b8e2-40ea67196990",
 				Name:      "New Awesome Game",
 				Pid:       "com.tfg.example",
 				GameID:    "nonexisting-game-id",
@@ -89,12 +88,6 @@ var _ = Describe("Offer Template Models", func() {
 				QueryStruct(offerTemplate)
 
 			Expect(err).NotTo(HaveOccurred())
-		})
-	})
-
-	Describe("Get all available offers", func() {
-		It("Should get all available offers", func() {
-
 		})
 	})
 })

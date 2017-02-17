@@ -8,6 +8,7 @@
 package api_test
 
 import (
+	"github.com/mgutz/dat"
 	"net/http"
 	"net/http/httptest"
 
@@ -25,20 +26,20 @@ var _ = Describe("Offer Template Handler", func() {
 
 	Describe("PUT /offer-template", func() {
 		It("should return status code 200 for valid parameters", func() {
+			id := "56fc0477-39f1-485c-898e-4909e9155eb1"
 			offerTemplateReader := JSONFor(JSON{
-				"ID":        "56fc0477-39f1-485c-898e-4909e9155eb1",
+				"ID":        id,
 				"Name":      "New Awesome Game",
 				"Pid":       "com.tfg.example",
 				"GameID":    "nonexisting-game-id",
-				"Contents":  "{\"gems\": 5, \"gold\": 100}",
-				"Period":    "{\"type\": \"once\"}",
-				"Frequency": "{\"every\": 24, \"unit\": \"hour\"}",
-				"Trigger":   "{\"from\": 1487280506875, \"to\": 1487366964730}",
+				"Contents":  dat.JSON([]byte("{\"gems\": 5, \"gold\": 100}")),
+				"Period":    dat.JSON([]byte("{\"type\": \"once\"}")),
+				"Frequency": dat.JSON([]byte("{\"every\": 24, \"unit\": \"hour\"}")),
+				"Trigger":   dat.JSON([]byte("{\"from\": 1487280506875, \"to\": 1487366964730}")),
 			})
 
 			request, _ := http.NewRequest("PUT", "/offer-templates", offerTemplateReader)
 			app.Router.ServeHTTP(recorder, request)
-			Expect(recorder.Body).To(Equal("qwe"))
 			Expect(recorder.Code).To(Equal(http.StatusOK))
 		})
 	})
