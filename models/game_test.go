@@ -54,7 +54,7 @@ var _ = Describe("Games Model", func() {
 
 			Expect(err).NotTo(HaveOccurred())
 			Expect(game.ID).NotTo(Equal(""))
-			//Expect(game.CreatedAt).NotTo(Equal(""))
+			Expect(game.CreatedAt).NotTo(Equal(""))
 
 			var game2 models.Game
 			err = db.

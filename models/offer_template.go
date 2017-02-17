@@ -22,7 +22,7 @@ type OfferTemplate struct {
 	GameID    string    `db:"gameid" valid:"ascii,stringlength(1|255),required"`
 	Contents  dat.JSON  `db:"contents" valid:"json,required"`
 	Metadata  dat.JSON  `db:"metadata" valid:"json"`
-	Period    dat.JSON  `db:"pediod" valid:"json,required"`
+	Period    dat.JSON  `db:"period" valid:"json,required"`
 	Frequency dat.JSON  `db:"frequency" valid:"json,required"`
 	Trigger   dat.JSON  `db:"trigger" valid:"json,required"`
 }

@@ -111,7 +111,11 @@ var _ = Describe("Game Handler", func() {
 			app.Router.ServeHTTP(recorder, request)
 
 			Expect(recorder.Code).To(Equal(http.StatusBadRequest))
-			Expect(recorder.Body.String()).To(ContainSubstring("Payload is invalid: ID:"))
+			var obj map[string]interface{}
+			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(obj["code"]).To(BeEquivalentTo("OFF-002"))
+			Expect(obj["description"]).To(ContainSubstring("ID: abc123!@#xyz456 does not validate as matches(^[^-][a-z0-9-]*$);"))
 		})
 
 		It("should return status code of 400 if empty id", func() {
@@ -128,7 +132,12 @@ var _ = Describe("Game Handler", func() {
 			app.Router.ServeHTTP(recorder, request)
 
 			Expect(recorder.Code).To(Equal(http.StatusBadRequest))
-			Expect(recorder.Body.String()).To(ContainSubstring("Payload is invalid: ID:"))
+
+			var obj map[string]interface{}
+			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(obj["code"]).To(BeEquivalentTo("OFF-002"))
+			Expect(obj["description"]).To(ContainSubstring("ID: non zero value required;"))
 		})
 	})
 })

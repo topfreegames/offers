@@ -11,6 +11,7 @@ import (
 	"github.com/mgutz/dat"
 	runner "github.com/mgutz/dat/sqlx-runner"
 	"github.com/topfreegames/offers/errors"
+	"time"
 )
 
 //Game represents a tenant in offers API
@@ -57,10 +58,11 @@ func GetGameByID(db runner.Connection, id string, mr *MixedMetricsReporter) (*Ga
 
 //UpsertGame updates a game with new meta or insert with the new UUID
 func UpsertGame(db runner.Connection, game *Game, mr *MixedMetricsReporter) error {
+	game.UpdatedAt = dat.NullTimeFrom(time.Now())
 	return mr.WithDatastoreSegment("games", "upsert", func() error {
 		return db.
 			Upsert("games").
-			Columns("id", "name", "bundle_id").
+			Columns("id", "name", "bundle_id", "updated_at").
 			Record(game).
 			Where("id=$1", game.ID).
 			Returning("created_at", "updated_at").
