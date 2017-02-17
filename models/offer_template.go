@@ -49,8 +49,8 @@ func GetOfferTemplateByID(db runner.Connection, id string, mr *MixedMetricsRepor
 	return &ot, nil
 }
 
-// Insert a new offer template into DB
-func Insert(db runner.Connection, ot *OfferTemplate, mr *MixedMetricsReporter) error {
+// InsertOfferTemplate inserts a new offer template into DB
+func InsertOfferTemplate(db runner.Connection, ot *OfferTemplate, mr *MixedMetricsReporter) error {
 	return mr.WithDatastoreSegment("offer_templates", "insert", func() error {
 		return db.
 			InsertInto("offer_templates").

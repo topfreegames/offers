@@ -74,6 +74,14 @@ func (a *App) getRouter() *mux.Router {
 		&ValidationMiddleware{GetPayload: func() interface{} { return &models.Game{} }},
 	)).Methods("PUT").Name("game")
 
+	r.Handle("/offer-templates", Chain(
+		&OfferTemplateHandler{App: a},
+		&NewRelicMiddleware{App: a},
+		&LoggingMiddleware{App: a},
+		&VersionMiddleware{},
+		&ValidationMiddleware{GetPayload: func() interface{} { return &models.OfferTemplate{} }},
+	)).Methods("PUT").Name("offer_templates")
+
 	return r
 }
 
@@ -176,6 +184,7 @@ func (a *App) configureServer() {
 	a.Server = &http.Server{Addr: a.Address, Handler: a.Router}
 }
 
+//HandleError writes an error response with message and status
 func (a *App) HandleError(w http.ResponseWriter, status int, msg string, err error) {
 	w.WriteHeader(status)
 	w.Write([]byte(msg))

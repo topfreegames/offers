@@ -21,10 +21,10 @@ type OfferTemplateHandler struct {
 //ServeHTTP method
 func (g *OfferTemplateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	mr := metricsReporterFromCtx(r.Context())
-	game := gameFromCtx(r.Context())
+	ot := offerTemplateFromCtx(r.Context())
 
 	err := mr.WithSegment(models.SegmentModel, func() error {
-		return models.UpsertGame(g.App.DB, game, mr)
+		return models.InsertOfferTemplate(g.App.DB, ot, mr)
 	})
 
 	if err != nil {
@@ -32,5 +32,5 @@ func (g *OfferTemplateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	Write(w, http.StatusOK, game.ID)
+	Write(w, http.StatusOK, ot.ID.String())
 }

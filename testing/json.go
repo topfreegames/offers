@@ -22,5 +22,6 @@ func JSONFor(data JSON) io.Reader {
 	if err != nil {
 		panic(err)
 	}
+
 	return strings.NewReader(string(b))
 }

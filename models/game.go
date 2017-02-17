@@ -57,8 +57,10 @@ func GetGameByID(db runner.Connection, id string, mr *MixedMetricsReporter) (*Ga
 }
 
 //UpsertGame updates a game with new meta or insert with the new UUID
+//func UpsertGame(db runner.Connection, game *Game, t time.Time, mr *MixedMetricsReporter) error {
 func UpsertGame(db runner.Connection, game *Game, mr *MixedMetricsReporter) error {
-	game.UpdatedAt = dat.NullTimeFrom(time.Now())
+	t := time.Now()
+	game.UpdatedAt = dat.NullTimeFrom(t)
 	return mr.WithDatastoreSegment("games", "upsert", func() error {
 		return db.
 			Upsert("games").

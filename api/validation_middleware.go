@@ -23,9 +23,11 @@ type ValidationMiddleware struct {
 	next       http.Handler
 }
 
-const payloadString = "payload"
+type contextKey string
 
-func newContextWithPayload(payload interface{}, ctx context.Context, r *http.Request) context.Context {
+const payloadString = contextKey("payload")
+
+func newContextWithPayload(ctx context.Context, payload interface{}, r *http.Request) context.Context {
 	c := context.WithValue(ctx, payloadString, payload)
 	return c
 }
@@ -36,6 +38,14 @@ func gameFromCtx(ctx context.Context) *models.Game {
 		return nil
 	}
 	return game.(*models.Game)
+}
+
+func offerTemplateFromCtx(ctx context.Context) *models.OfferTemplate {
+	offerTemplate := ctx.Value(payloadString)
+	if offerTemplate == nil {
+		return nil
+	}
+	return offerTemplate.(*models.OfferTemplate)
 }
 
 func offerRequestPayloadFromCtx(ctx context.Context) *OfferRequestPayload {
@@ -55,6 +65,7 @@ func (m *ValidationMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request)
 
 	decoder := json.NewDecoder(r.Body)
 	err := decoder.Decode(payload)
+
 	if err != nil {
 		l.WithError(err).Error("Payload could not be decoded.")
 		vErr := errors.NewValidationFailedError(err)
@@ -63,6 +74,7 @@ func (m *ValidationMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	}
 
 	_, err = govalidator.ValidateStruct(payload)
+
 	if err != nil {
 		l.WithError(err).Error("Payload is invalid.")
 		vErr := errors.NewValidationFailedError(err)
@@ -70,7 +82,7 @@ func (m *ValidationMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	c := newContextWithPayload(payload, r.Context(), r)
+	c := newContextWithPayload(r.Context(), payload, r)
 
 	m.next.ServeHTTP(w, r.WithContext(c))
 }
