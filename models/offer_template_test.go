@@ -91,4 +91,10 @@ var _ = Describe("Offer Template Models", func() {
 			Expect(err).NotTo(HaveOccurred())
 		})
 	})
+
+	Describe("Get all available offers", func() {
+		It("Should get all available offers", func() {
+
+		})
+	})
 })
