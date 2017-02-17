@@ -59,7 +59,7 @@ clear-coverage-profiles:
 unit: drop-test migrate-test clear-coverage-profiles unit-run gather-unit-profiles
 
 unit-run:
-	@ginkgo -cover -r -randomizeAllSpecs -randomizeSuites -skipMeasurements ${TEST_PACKAGES}
+	@LOGXI="*=ERR,dat:sqlx=OFF,dat=OFF" ginkgo -cover -r -randomizeAllSpecs -randomizeSuites -skipMeasurements ${TEST_PACKAGES}
 
 gather-unit-profiles:
 	@mkdir -p _build
@@ -69,7 +69,7 @@ gather-unit-profiles:
 integration int: drop-test migrate-test clear-coverage-profiles integration-run gather-integration-profiles
 
 integration-run:
-	@ginkgo -tags integration -cover -r -randomizeAllSpecs -randomizeSuites -skipMeasurements ${TEST_PACKAGES}
+	@LOGXI="*=ERR,dat:sqlx=OFF,dat=OFF" ginkgo -tags integration -cover -r -randomizeAllSpecs -randomizeSuites -skipMeasurements ${TEST_PACKAGES}
 
 gather-integration-profiles:
 	@mkdir -p _build
@@ -82,7 +82,7 @@ acceptance-focus acc-focus: drop-test migrate-test clear-coverage-profiles accep
 acceptance-run:
 	@mkdir -p _build
 	@rm -f _build/coverage-acceptance.out
-	@cd features && go test -cover -covermode=count -coverprofile=../_build/coverage-acceptance.out
+	@cd features && LOGXI="*=ERR,dat:sqlx=OFF,dat=OFF" go test -cover -covermode=count -coverprofile=../_build/coverage-acceptance.out
 
 acceptance-run-focus:
 	@mkdir -p _build

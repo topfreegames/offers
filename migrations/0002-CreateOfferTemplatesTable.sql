@@ -9,5 +9,6 @@ CREATE TABLE offer_templates (
   metadata JSONB NOT NULL DEFAULT '{}' ::JSONB,
   period JSONB NOT NULL DEFAULT '{}' ::JSONB,
   frequency JSONB NOT NULL DEFAULT '{}' ::JSONB,
-  trigger JSONB NOT NULL DEFAULT '{}' ::JSONB
+  trigger JSONB NOT NULL DEFAULT '{}' ::JSONB,
+  enabled bool NOT NULL DEFAULT true
 );
