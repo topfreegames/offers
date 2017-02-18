@@ -46,7 +46,7 @@ var _ = Describe("Offer Template Models", func() {
 
 		It("should create an template with valid parameters", func() {
 			offerTemplate := &models.OfferTemplate{
-				ID:        "dd21ec96-2890-4ba0-b8e2-40ea67196990",
+				ID:        uuid.NewV4().String(),
 				Name:      "New Awesome Game",
 				ProductID: "com.tfg.example",
 				GameID:    "nonexisting-game-id",
@@ -83,7 +83,18 @@ var _ = Describe("Offer Template Models", func() {
 				Returning("id").
 				QueryStruct(offerTemplate)
 
+			Expect(err).To(HaveOccurred())
+		})
+	})
+
+	Describe("Get all available offers", func() {
+		It("Should get all available offers", func() {
+			ots, err := models.GetEnabledOfferTemplates(db, "offers-game", nil)
 			Expect(err).NotTo(HaveOccurred())
+
+			Expect(ots).To(HaveLen(1))
+
+			Expect(ots[0].Name).To(Equal("template-2"))
 		})
 	})
 })

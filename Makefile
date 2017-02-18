@@ -2,11 +2,14 @@ MY_IP=`ifconfig | grep --color=none -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | gre
 PACKAGES = $(shell glide novendor)
 TEST_PACKAGES = $(shell glide novendor | egrep -v features | egrep -v '^[.]$$' | sed 's@\/[.][.][.]@@')
 
-setup:
+setup: setup-hooks
 	@go get -u github.com/Masterminds/glide/...
 	@go get -u github.com/jteeuwen/go-bindata/...
 	@go get -u github.com/wadey/gocovmerge
 	@glide install
+
+setup-hooks:
+	@cd .git/hooks && ln -sf ../../hooks/pre-commit.sh pre-commit
 
 setup-ci:
 	@go get github.com/mattn/goveralls
@@ -59,7 +62,8 @@ clear-coverage-profiles:
 unit: drop-test migrate-test clear-coverage-profiles unit-run gather-unit-profiles
 
 unit-run:
-	@LOGXI="*=ERR,dat:sqlx=OFF,dat=OFF" ginkgo -cover -r -randomizeAllSpecs -randomizeSuites -skipMeasurements ${TEST_PACKAGES}
+	#@LOGXI="*=ERR,dat:sqlx=OFF,dat=OFF" ginkgo -cover -r -randomizeAllSpecs -randomizeSuites -skipMeasurements ${TEST_PACKAGES}
+	@ginkgo -cover -r -randomizeAllSpecs -randomizeSuites -skipMeasurements ${TEST_PACKAGES}
 
 gather-unit-profiles:
 	@mkdir -p _build
@@ -69,7 +73,8 @@ gather-unit-profiles:
 integration int: drop-test migrate-test clear-coverage-profiles integration-run gather-integration-profiles
 
 integration-run:
-	@LOGXI="*=ERR,dat:sqlx=OFF,dat=OFF" ginkgo -tags integration -cover -r -randomizeAllSpecs -randomizeSuites -skipMeasurements ${TEST_PACKAGES}
+	#@LOGXI="*=ERR,dat:sqlx=OFF,dat=OFF" ginkgo -tags integration -cover -r -randomizeAllSpecs -randomizeSuites -skipMeasurements ${TEST_PACKAGES}
+	@ginkgo -tags integration -cover -r -randomizeAllSpecs -randomizeSuites -skipMeasurements ${TEST_PACKAGES}
 
 gather-integration-profiles:
 	@mkdir -p _build
@@ -82,7 +87,8 @@ acceptance-focus acc-focus: drop-test migrate-test clear-coverage-profiles accep
 acceptance-run:
 	@mkdir -p _build
 	@rm -f _build/coverage-acceptance.out
-	@cd features && LOGXI="*=ERR,dat:sqlx=OFF,dat=OFF" go test -cover -covermode=count -coverprofile=../_build/coverage-acceptance.out
+	#@cd features && LOGXI="*=ERR,dat:sqlx=OFF,dat=OFF" go test -cover -covermode=count -coverprofile=../_build/coverage-acceptance.out
+	@cd features && go test -cover -covermode=count -coverprofile=../_build/coverage-acceptance.out
 
 acceptance-run-focus:
 	@mkdir -p _build

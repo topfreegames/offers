@@ -6,8 +6,3 @@
 // Copyright © 2017 Top Free Games <backend@tfgco.com>
 
 package api
-
-//OfferRequestPayload payload
-type OfferRequestPayload struct {
-	PlayerID string `json:"playerId"`
-}

@@ -15,7 +15,7 @@ import (
 
 //OfferTemplate contains the parameters of a template
 type OfferTemplate struct {
-	ID        string   `db:"id" valid:"uuidv4,required"`
+	ID        string   `db:"id" valid:"matches(^[a-z0-9]+(\\-[a-z0-9]+)*$),required"`
 	Name      string   `db:"name" valid:"ascii,stringlength(1|255),required"`
 	ProductID string   `db:"product_id" valid:"ascii,stringlength(1|255),required"`
 	GameID    string   `db:"game_id" valid:"ascii,stringlength(1|255),required"`
@@ -29,7 +29,8 @@ type OfferTemplate struct {
 
 const enabledOfferTemplates = `
     WHERE
-		ot.enabled = true
+		ot.game_id = $1
+		AND ot.enabled = true
 `
 
 //GetOfferTemplateByID returns OfferTemplate by ID
@@ -40,7 +41,7 @@ func GetOfferTemplateByID(db runner.Connection, id string, mr *MixedMetricsRepor
 			Select(`
 				id, name, product_id, game_id,
 				contents, metadata, period,
-				frequency, trigger, enabled,
+				frequency, trigger, enabled
 			`).
 			From("offer_templates").
 			Where("id = $1", id).
@@ -59,17 +60,18 @@ func GetOfferTemplateByID(db runner.Connection, id string, mr *MixedMetricsRepor
 }
 
 //GetEnabledOfferTemplates returns all the enabled offers
-func GetEnabledOfferTemplates(db runner.Connection, mr *MixedMetricsReporter) ([]*OfferTemplate, error) {
+func GetEnabledOfferTemplates(db runner.Connection, gameID string, mr *MixedMetricsReporter) ([]*OfferTemplate, error) {
 	var ots []*OfferTemplate
-	err := mr.WithDatastoreSegment("offer_templates", "select by id", func() error {
+	err := mr.WithDatastoreSegment("offer_templates", "select", func() error {
 		return db.
 			Select(`
-				id, name, product_id, game_id, product_id,
+				id, name, product_id,
 				contents, metadata, period,
 				frequency, trigger
 			`).
 			From("offer_templates ot").
-			Scope(enabledOfferTemplates).
+			Scope(enabledOfferTemplates, gameID).
+			OrderBy("name asc").
 			QueryStructs(&ots)
 	})
 	if err != nil {

@@ -19,15 +19,18 @@ import (
 var _ = Describe("Games Model", func() {
 	Describe("Game Instance", func() {
 		It("Shoud load a game", func() {
+			//Given
 			gameID := "game-id"
-
 			var game models.Game
+
+			//When
 			err := db.
 				Select("*").
 				From("games").
 				Where("id = $1", gameID).
 				QueryStruct(&game)
 
+			//Then
 			Expect(err).NotTo(HaveOccurred())
 			Expect(game.ID).To(Equal(gameID))
 			Expect(game.Name).To(Equal("game-1"))
@@ -38,6 +41,7 @@ var _ = Describe("Games Model", func() {
 		})
 
 		It("Should create game", func() {
+			//Given
 			meta := dat.JSON([]byte(`{"qwe": 123}`))
 			game := &models.Game{
 				Name:     "Game Awesome Name",
@@ -45,50 +49,59 @@ var _ = Describe("Games Model", func() {
 				BundleID: "com.topfreegames.example",
 				Metadata: meta,
 			}
-			err := db.
+			var game2 models.Game
+
+			//When
+			err1 := db.
 				InsertInto("games").
 				Columns("name", "id", "bundle_id", "metadata").
 				Record(game).
 				Returning("created_at", "updated_at").
 				QueryStruct(game)
-
-			Expect(err).NotTo(HaveOccurred())
-			Expect(game.ID).NotTo(Equal(""))
-			Expect(game.CreatedAt).NotTo(Equal(""))
-
-			var game2 models.Game
-			err = db.
+			_ = db.
 				Select("*").
 				From("games").
 				Where("id = $1", game.ID).
 				QueryStruct(&game2)
+			obj, err2 := game2.GetMetadata()
 
-			obj, err := game2.GetMetadata()
-			Expect(err).NotTo(HaveOccurred())
+			//Then
+			Expect(err1).NotTo(HaveOccurred())
+			Expect(game.ID).NotTo(Equal(""))
+			Expect(game.CreatedAt).NotTo(Equal(""))
+			Expect(err2).NotTo(HaveOccurred())
 			Expect(obj.(map[string]interface{})["qwe"]).To(BeEquivalentTo(123))
 		})
 	})
 
 	Describe("Get game by id", func() {
 		It("Should load game by id", func() {
+			//Given
 			gameID := "game-id"
-			game, err := models.GetGameByID(db, gameID, nil)
 
-			Expect(err).NotTo(HaveOccurred())
+			//When
+			game, err1 := models.GetGameByID(db, gameID, nil)
+			obj, err2 := game.GetMetadata()
+
+			//Then
+			Expect(err1).NotTo(HaveOccurred())
 			Expect(game.ID).To(Equal(gameID))
 			Expect(game.Name).To(Equal("game-1"))
-
-			obj, err := game.GetMetadata()
-			Expect(err).NotTo(HaveOccurred())
+			Expect(err2).NotTo(HaveOccurred())
 			Expect(obj).To(BeEquivalentTo(map[string]interface{}{}))
 		})
 
 		It("Should return error if game not found", func() {
+			//Given
 			gameID := uuid.NewV4().String()
 			expectedError := errors.NewModelNotFoundError("Game", map[string]interface{}{
 				"ID": gameID,
 			})
+
+			//When
 			game, err := models.GetGameByID(db, gameID, nil)
+
+			//Then
 			Expect(game).To(BeNil())
 			Expect(err).To(HaveOccurred())
 			Expect(err).To(MatchError(expectedError))
@@ -97,21 +110,26 @@ var _ = Describe("Games Model", func() {
 
 	Describe("Upsert game", func() {
 		It("should insert game with new id", func() {
+			//Given
 			id := uuid.NewV4().String()
 			game := models.Game{
 				ID:       id,
 				Name:     "Game Awesome Name",
 				BundleID: "com.tfg.example",
 			}
-			err := models.UpsertGame(db, &game, nil)
-			Expect(err).NotTo(HaveOccurred())
 
-			gameFromDB, err := models.GetGameByID(db, id, nil)
-			Expect(err).NotTo(HaveOccurred())
+			//When
+			err1 := models.UpsertGame(db, &game, nil)
+			gameFromDB, err2 := models.GetGameByID(db, id, nil)
+
+			//Then
+			Expect(err1).NotTo(HaveOccurred())
+			Expect(err2).NotTo(HaveOccurred())
 			Expect(gameFromDB.ID).To(Equal(id))
 		})
 
 		It("should update game with existing id", func() {
+			//Given
 			id := "upsert-game-id"
 			name := "Game Awesome Name"
 			bundleID := "com.tfg.example"
@@ -120,11 +138,14 @@ var _ = Describe("Games Model", func() {
 				Name:     name,
 				BundleID: bundleID,
 			}
-			err := models.UpsertGame(db, &game, nil)
-			Expect(err).NotTo(HaveOccurred())
 
-			gameFromDB, err := models.GetGameByID(db, id, nil)
-			Expect(err).NotTo(HaveOccurred())
+			//When
+			err1 := models.UpsertGame(db, &game, nil)
+			gameFromDB, err2 := models.GetGameByID(db, id, nil)
+
+			//Then
+			Expect(err1).NotTo(HaveOccurred())
+			Expect(err2).NotTo(HaveOccurred())
 			Expect(gameFromDB.ID).To(Equal(id))
 			Expect(gameFromDB.Name).To(Equal(name))
 			Expect(gameFromDB.BundleID).To(Equal(bundleID))
