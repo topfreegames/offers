@@ -8,8 +8,8 @@
 -
     id: dd21ec96-2890-4ba0-b8e2-40ea67196990
     name: template-1
-    pid: com.tfg.sample
-    gameid: awesome game
+    product_id: com.tfg.sample
+    game_id: awesome game
     contents: '{"gems": 5, "gold": 100}'
     metadata: '{}'
     period: '{"type": "once"}'

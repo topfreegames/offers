@@ -11,23 +11,19 @@ import (
 	"github.com/mgutz/dat"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	uuid "github.com/satori/go.uuid"
 	"github.com/topfreegames/offers/models"
 )
 
 var _ = Describe("Offer Template Models", func() {
 	Describe("Offer Template instance", func() {
 		It("should load a template by its ID", func() {
-			var ot models.OfferTemplate
 			id := "dd21ec96-2890-4ba0-b8e2-40ea67196990"
-			err := db.
-				Select("*").
-				From("offer_templates").
-				Where("id = $1", id).
-				QueryStruct(&ot)
+			ot, err := models.GetOfferTemplateByID(db, id, nil)
 
 			Expect(err).NotTo(HaveOccurred())
 
-			Expect(ot.Pid).To(Equal("com.tfg.sample"))
+			Expect(ot.ProductID).To(Equal("com.tfg.sample"))
 			Expect(ot.GameID).To(Equal("awesome game"))
 			Expect(ot.Contents).To(Equal(dat.JSON([]byte(`{"gems": 5, "gold": 100}`))))
 			Expect(ot.Metadata).To(Equal(dat.JSON([]byte(`{}`))))
@@ -38,7 +34,7 @@ var _ = Describe("Offer Template Models", func() {
 
 		It("should not load a template from invalid ID", func() {
 			var ot models.OfferTemplate
-			id := "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+			id := uuid.NewV4().String()
 			err := db.
 				Select("*").
 				From("offer_templates").
@@ -52,7 +48,7 @@ var _ = Describe("Offer Template Models", func() {
 			offerTemplate := &models.OfferTemplate{
 				ID:        "dd21ec96-2890-4ba0-b8e2-40ea67196990",
 				Name:      "New Awesome Game",
-				Pid:       "com.tfg.example",
+				ProductID: "com.tfg.example",
 				GameID:    "nonexisting-game-id",
 				Contents:  dat.JSON([]byte(`{"gems": 5, "gold": 100}`)),
 				Period:    dat.JSON([]byte(`{"type": "once"}`)),
@@ -61,7 +57,7 @@ var _ = Describe("Offer Template Models", func() {
 			}
 
 			err := db.InsertInto("offer_templates").
-				Columns("id", "name", "pid", "gameid", "contents", "period", "frequency", "trigger").
+				Columns("id", "name", "product_id", "game_id", "contents", "period", "frequency", "trigger").
 				Record(offerTemplate).
 				Returning("id").
 				QueryStruct(offerTemplate)
@@ -73,7 +69,7 @@ var _ = Describe("Offer Template Models", func() {
 			offerTemplate := &models.OfferTemplate{
 				ID:        "dd21ec96-2890-4ba0-b8e2-40ea67196990",
 				Name:      "New Awesome Game",
-				Pid:       "com.tfg.example",
+				ProductID: "com.tfg.example",
 				GameID:    "nonexisting-game-id",
 				Contents:  dat.JSON([]byte(`{"gems": 5, "gold": 100}`)),
 				Period:    dat.JSON([]byte(`{"type": "once"}`)),
@@ -82,7 +78,7 @@ var _ = Describe("Offer Template Models", func() {
 			}
 
 			err := db.InsertInto("offer_templates").
-				Columns("id", "name", "pid", "gameid", "contents", "period", "frequency", "trigger").
+				Columns("id", "name", "product_id", "game_id", "contents", "period", "frequency", "trigger").
 				Record(offerTemplate).
 				Returning("id").
 				QueryStruct(offerTemplate)

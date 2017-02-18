@@ -16,9 +16,9 @@ import (
 	"github.com/cenkalti/backoff"
 	"github.com/lib/pq"
 	"github.com/mgutz/dat"
+	"github.com/topfreegames/offers/errors"
 
 	runner "github.com/mgutz/dat/sqlx-runner"
-	uuid "github.com/satori/go.uuid"
 )
 
 //GetDB Connection using the given properties
@@ -99,26 +99,14 @@ func ShouldPing(db *sql.DB, timeout time.Duration) error {
 	return fmt.Errorf("could not ping database")
 }
 
-//UniqueID implements the Unmarsheller interface
-type UniqueID struct {
-	UUID uuid.UUID
-}
-
-//UnmarshalJSON unmarshal json
-func (un *UniqueID) UnmarshalJSON(b []byte) error {
-	s := strings.Trim(string(b), "\"")
-	var err error
-	un.UUID, err = uuid.FromString(s)
+//HandleNotFoundError returns the proper error if nothing happens
+func HandleNotFoundError(model string, filters map[string]interface{}, err error) error {
 	if err != nil {
-		return fmt.Errorf("Could not parse UUID")
-	}
+		if IsNoRowsInResultSetError(err) {
+			return errors.NewModelNotFoundError(model, filters)
+		}
 
+		return err
+	}
 	return nil
-}
-
-//NewUniqueIDV4 returns a uuidv4 of type UniqueID
-func NewUniqueIDV4() *UniqueID {
-	return &UniqueID{
-		UUID: uuid.NewV4(),
-	}
 }

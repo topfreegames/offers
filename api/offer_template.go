@@ -8,6 +8,7 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/topfreegames/offers/models"
@@ -22,6 +23,8 @@ type OfferTemplateHandler struct {
 func (g *OfferTemplateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	mr := metricsReporterFromCtx(r.Context())
 	ot := offerTemplateFromCtx(r.Context())
+
+	fmt.Printf("n\n\n\nT: %#v", ot)
 
 	err := mr.WithSegment(models.SegmentModel, func() error {
 		return models.InsertOfferTemplate(g.App.DB, ot, mr)

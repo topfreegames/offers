@@ -3,8 +3,8 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE TABLE offer_templates (
   id uuid PRIMARY KEY,
   name varchar(255) NOT NULL,
-  pid varchar(255) NOT NULL,
-  gameid varchar(255) NOT NULL,
+  product_id varchar(255) NOT NULL,
+  game_id varchar(255) NOT NULL,
   contents JSONB NOT NULL DEFAULT '{}' ::JSONB,
   metadata JSONB NOT NULL DEFAULT '{}' ::JSONB,
   period JSONB NOT NULL DEFAULT '{}' ::JSONB,

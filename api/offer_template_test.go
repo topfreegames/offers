@@ -24,13 +24,12 @@ var _ = Describe("Offer Template Handler", func() {
 		recorder = httptest.NewRecorder()
 	})
 
-	Describe("PUT /offer-template", func() {
+	Describe("PUT /offer-templates", func() {
 		It("should return status code 200 for valid parameters", func() {
-			id := "56fc0477-39f1-485c-898e-4909e9155eb1"
 			offerTemplateReader := JSONFor(JSON{
-				"ID":        id,
+				"ID":        "56fc0477-39f1-485c-898e-4909e9155eb1",
 				"Name":      "New Awesome Game",
-				"Pid":       "com.tfg.example",
+				"ProductID": "com.tfg.example",
 				"GameID":    "nonexisting-game-id",
 				"Contents":  dat.JSON([]byte("{\"gems\": 5, \"gold\": 100}")),
 				"Period":    dat.JSON([]byte("{\"type\": \"once\"}")),
