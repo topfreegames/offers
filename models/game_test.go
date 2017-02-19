@@ -117,9 +117,10 @@ var _ = Describe("Games Model", func() {
 				Name:     "Game Awesome Name",
 				BundleID: "com.tfg.example",
 			}
+			var c models.RealClock
 
 			//When
-			err1 := models.UpsertGame(db, &game, nil)
+			err1 := models.UpsertGame(db, &game, c.GetTime(), nil)
 			gameFromDB, err2 := models.GetGameByID(db, id, nil)
 
 			//Then
@@ -138,9 +139,10 @@ var _ = Describe("Games Model", func() {
 				Name:     name,
 				BundleID: bundleID,
 			}
+			var c models.RealClock
 
 			//When
-			err1 := models.UpsertGame(db, &game, nil)
+			err1 := models.UpsertGame(db, &game, c.GetTime(), nil)
 			gameFromDB, err2 := models.GetGameByID(db, id, nil)
 
 			//Then

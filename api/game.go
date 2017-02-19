@@ -24,7 +24,8 @@ func (g *GameHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	game := gameFromCtx(r.Context())
 
 	err := mr.WithSegment(models.SegmentModel, func() error {
-		return models.UpsertGame(g.App.DB, game, mr)
+		var c models.RealClock
+		return models.UpsertGame(g.App.DB, game, c.GetTime(), mr)
 	})
 
 	if err != nil {

@@ -39,7 +39,8 @@ func newGame(db runner.Connection, id, bundleID string) (*models.Game, error) {
 		Name:     id,
 		BundleID: bundleID,
 	}
-	err := models.UpsertGame(app.DB, game, nil)
+	var c models.RealClock
+	err := models.UpsertGame(app.DB, game, c.GetTime(), nil)
 	if err != nil {
 		return nil, err
 	}
