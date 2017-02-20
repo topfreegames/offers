@@ -9,3 +9,6 @@ CREATE TABLE offers (
     updated_at timestamp NULL,
     claimed_at timestamp NULL
 );
+
+CREATE INDEX player_id
+ON offers (player_id)
