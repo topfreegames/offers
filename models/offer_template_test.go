@@ -18,11 +18,14 @@ import (
 var _ = Describe("Offer Template Models", func() {
 	Describe("Offer Template instance", func() {
 		It("should load a template by its ID", func() {
+			//Given
 			id := "dd21ec96-2890-4ba0-b8e2-40ea67196990"
+
+			//When
 			ot, err := models.GetOfferTemplateByID(db, id, nil)
 
+			//Then
 			Expect(err).NotTo(HaveOccurred())
-
 			Expect(ot.ProductID).To(Equal("com.tfg.sample"))
 			Expect(ot.GameID).To(Equal("awesome game"))
 			Expect(ot.Contents).To(Equal(dat.JSON([]byte(`{"gems": 5, "gold": 100}`))))
@@ -33,18 +36,18 @@ var _ = Describe("Offer Template Models", func() {
 		})
 
 		It("should not load a template from invalid ID", func() {
-			var ot models.OfferTemplate
+			//Given
 			id := uuid.NewV4().String()
-			err := db.
-				Select("*").
-				From("offer_templates").
-				Where("id = $1", id).
-				QueryStruct(&ot)
 
+			//When
+			_, err := models.GetOfferTemplateByID(db, id, nil)
+
+			//Then
 			Expect(err).To(HaveOccurred())
 		})
 
 		It("should create an template with valid parameters", func() {
+			//Given
 			offerTemplate := &models.OfferTemplate{
 				ID:        uuid.NewV4().String(),
 				Name:      "New Awesome Game",
@@ -56,16 +59,15 @@ var _ = Describe("Offer Template Models", func() {
 				Trigger:   dat.JSON([]byte(`{"from": 1487280506875, "to": 1487366964730}`)),
 			}
 
-			err := db.InsertInto("offer_templates").
-				Columns("id", "name", "product_id", "game_id", "contents", "period", "frequency", "trigger").
-				Record(offerTemplate).
-				Returning("id").
-				QueryStruct(offerTemplate)
+			//When
+			err := models.InsertOfferTemplate(db, offerTemplate, nil)
 
+			//Then
 			Expect(err).NotTo(HaveOccurred())
 		})
 
 		It("should return error if game id does not exist", func() {
+			//Given
 			offerTemplate := &models.OfferTemplate{
 				ID:        "dd21ec96-2890-4ba0-b8e2-40ea67196990",
 				Name:      "New Awesome Game",
@@ -77,12 +79,10 @@ var _ = Describe("Offer Template Models", func() {
 				Trigger:   dat.JSON([]byte(`{"from": 1487280506875, "to": 1487366964730}`)),
 			}
 
-			err := db.InsertInto("offer_templates").
-				Columns("id", "name", "product_id", "game_id", "contents", "period", "frequency", "trigger").
-				Record(offerTemplate).
-				Returning("id").
-				QueryStruct(offerTemplate)
+			//When
+			err := models.InsertOfferTemplate(db, offerTemplate, nil)
 
+			//Then
 			Expect(err).To(HaveOccurred())
 		})
 	})
