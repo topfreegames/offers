@@ -39,7 +39,7 @@ var _ = Describe("Game Handler", func() {
 			Expect(recorder.Code).To(Equal(http.StatusOK))
 		})
 
-		It("should return status code of 400 if missing parameter", func() {
+		It("should return status code of 422 if missing parameter", func() {
 			gameReader := JSONFor(JSON{
 				"Name": "Game Awesome Name",
 			})
@@ -47,10 +47,10 @@ var _ = Describe("Game Handler", func() {
 
 			app.Router.ServeHTTP(recorder, request)
 
-			Expect(recorder.Code).To(Equal(http.StatusBadRequest))
+			Expect(recorder.Code).To(Equal(http.StatusUnprocessableEntity))
 		})
 
-		It("should return status code of 400 if invalid name", func() {
+		It("should return status code of 422 if invalid name", func() {
 			reallyBigName := "1234567890"
 			for i := 0; i < 5; i++ {
 				reallyBigName += reallyBigName
@@ -65,7 +65,7 @@ var _ = Describe("Game Handler", func() {
 
 			app.Router.ServeHTTP(recorder, request)
 
-			Expect(recorder.Code).To(Equal(http.StatusBadRequest))
+			Expect(recorder.Code).To(Equal(http.StatusUnprocessableEntity))
 			var obj map[string]interface{}
 			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
 			Expect(err).NotTo(HaveOccurred())
@@ -73,7 +73,7 @@ var _ = Describe("Game Handler", func() {
 			Expect(obj["description"]).To(ContainSubstring("does not validate as stringlength(1|255);"))
 		})
 
-		It("should return status code of 400 if invalid bundle id", func() {
+		It("should return status code of 422 if invalid bundle id", func() {
 			reallyBigName := "1234567890"
 			for i := 0; i < 5; i++ {
 				reallyBigName += reallyBigName
@@ -88,7 +88,7 @@ var _ = Describe("Game Handler", func() {
 
 			app.Router.ServeHTTP(recorder, request)
 
-			Expect(recorder.Code).To(Equal(http.StatusBadRequest))
+			Expect(recorder.Code).To(Equal(http.StatusUnprocessableEntity))
 
 			var obj map[string]interface{}
 			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
@@ -97,7 +97,7 @@ var _ = Describe("Game Handler", func() {
 			Expect(obj["description"]).To(ContainSubstring("does not validate as stringlength(1|255);"))
 		})
 
-		It("should return status code of 400 if invalid id", func() {
+		It("should return status code of 422 if invalid id", func() {
 			id := "abc123!@#xyz456"
 			name := "Game Awesome Name"
 			bundleID := "com.tfg.example"
@@ -110,7 +110,7 @@ var _ = Describe("Game Handler", func() {
 
 			app.Router.ServeHTTP(recorder, request)
 
-			Expect(recorder.Code).To(Equal(http.StatusBadRequest))
+			Expect(recorder.Code).To(Equal(http.StatusUnprocessableEntity))
 			var obj map[string]interface{}
 			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
 			Expect(err).NotTo(HaveOccurred())
@@ -118,7 +118,7 @@ var _ = Describe("Game Handler", func() {
 			Expect(obj["description"]).To(ContainSubstring("ID: abc123!@#xyz456 does not validate as matches(^[^-][a-z0-9-]*$);"))
 		})
 
-		It("should return status code of 400 if empty id", func() {
+		It("should return status code of 422 if empty id", func() {
 			id := ""
 			name := "Game Awesome Name"
 			bundleID := "com.tfg.example"
@@ -131,7 +131,7 @@ var _ = Describe("Game Handler", func() {
 
 			app.Router.ServeHTTP(recorder, request)
 
-			Expect(recorder.Code).To(Equal(http.StatusBadRequest))
+			Expect(recorder.Code).To(Equal(http.StatusUnprocessableEntity))
 
 			var obj map[string]interface{}
 			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
