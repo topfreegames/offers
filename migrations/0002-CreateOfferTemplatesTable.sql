@@ -10,5 +10,6 @@ CREATE TABLE offer_templates (
   period JSONB NOT NULL DEFAULT '{}' ::JSONB,
   frequency JSONB NOT NULL DEFAULT '{}' ::JSONB,
   trigger JSONB NOT NULL DEFAULT '{}' ::JSONB,
-  enabled bool NOT NULL DEFAULT true
+  enabled bool NOT NULL DEFAULT true,
+  created_at timestamp NOT NULL DEFAULT NOW()
 );

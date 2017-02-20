@@ -50,7 +50,9 @@ func GetOfferTemplateByID(db runner.Connection, id string, mr *MixedMetricsRepor
 
 	if err != nil {
 		if IsNoRowsInResultSetError(err) {
-			return nil, errors.NewOfferTemplateError(err)
+			return nil, errors.NewModelNotFoundError("offer template", map[string]interface{}{
+				"ID": id,
+			})
 		}
 
 		return nil, err

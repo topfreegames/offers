@@ -13,6 +13,7 @@ import (
 	uuid "github.com/satori/go.uuid"
 	"github.com/topfreegames/offers/errors"
 	"github.com/topfreegames/offers/models"
+	"time"
 )
 
 var _ = Describe("Offers Model", func() {
@@ -237,6 +238,72 @@ var _ = Describe("Offers Model", func() {
 			//Then
 			Expect(err).To(HaveOccurred())
 			Expect(err).To(MatchError(expectedError))
+		})
+	})
+
+	Describe("Claim offer", func() {
+		var from, to int64 = 1486678000, 148669000
+		It("should claim valid offer", func() {
+			//Given
+			id, _ := uuid.FromString("56fc0477-39f1-485c-898e-4909e9155eb1")
+			currentTime := time.Unix(from+500, 0)
+
+			//When
+			err := models.ClaimOffer(db, id, "offers-game", currentTime, nil)
+
+			//Then
+			Expect(err).NotTo(HaveOccurred())
+		})
+
+		It("should claim valid offer before trigger begins", func() {
+			//Given
+			id, _ := uuid.FromString("56fc0477-39f1-485c-898e-4909e9155eb1")
+			currentTime := time.Unix(from-500, 0)
+
+			//When
+			err := models.ClaimOffer(db, id, "offers-game", currentTime, nil)
+
+			//Then
+			Expect(err).NotTo(HaveOccurred())
+		})
+
+		It("should claim valid offer after trigger begins", func() {
+			//Given
+			id, _ := uuid.FromString("56fc0477-39f1-485c-898e-4909e9155eb1")
+			currentTime := time.Unix(to+500, 0)
+
+			//When
+			err := models.ClaimOffer(db, id, "offers-game", currentTime, nil)
+
+			//Then
+			Expect(err).NotTo(HaveOccurred())
+		})
+
+		It("should not claim twice the same offer", func() {
+			//Given
+			id, _ := uuid.FromString("56fc0477-39f1-485c-898e-4909e9155eb1")
+			firstTime := time.Unix(to+500, 0)
+			secondTime := time.Unix(to+1000, 0)
+
+			//When
+			err1 := models.ClaimOffer(db, id, "offers-game", firstTime, nil)
+			err2 := models.ClaimOffer(db, id, "offers-game", secondTime, nil)
+
+			//Then
+			Expect(err1).NotTo(HaveOccurred())
+			Expect(err2).To(HaveOccurred())
+		})
+
+		It("should not claim an offer that doesn't exist", func() {
+			//Given
+			id := uuid.NewV4()
+			currentTime := time.Unix(to+500, 0)
+
+			//When
+			err := models.ClaimOffer(db, id, "offers-game", currentTime, nil)
+
+			//Then
+			Expect(err).To(HaveOccurred())
 		})
 	})
 })

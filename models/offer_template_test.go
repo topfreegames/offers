@@ -32,7 +32,7 @@ var _ = Describe("Offer Template Models", func() {
 			Expect(ot.Metadata).To(Equal(dat.JSON([]byte(`{}`))))
 			Expect(ot.Period).To(Equal(dat.JSON([]byte(`{"type": "once"}`))))
 			Expect(ot.Frequency).To(BeEquivalentTo(dat.JSON([]byte(`{"unit": "hour", "every": 12}`))))
-			Expect(ot.Trigger).To(Equal(dat.JSON([]byte(`{"to": 1486678079, "from": 1486678078}`))))
+			Expect(ot.Trigger).To(Equal(dat.JSON([]byte(`{"to": 1486679000, "from": 1486678000}`))))
 		})
 
 		It("should not load a template from invalid ID", func() {

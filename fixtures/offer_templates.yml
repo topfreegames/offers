@@ -14,7 +14,7 @@
     metadata: '{}'
     period: '{"type": "once"}'
     frequency: '{"every": 12, "unit": "hour"}'
-    trigger: '{"from": 1486678078, "to": 1486678079}'
+    trigger: '{"from": 1486678000, "to": 1486679000}'
     enabled: true
 -
     id: d5114990-77d7-45c4-ba5f-462fc86b213f
@@ -25,7 +25,7 @@
     metadata: '{}'
     period: '{"type": "once"}'
     frequency: '{"every": 12, "unit": "hour"}'
-    trigger: '{"from": 1486678078, "to": 1486678079}'
+    trigger: '{"from": 1486678000, "to": 1486679000}'
     enabled: true
 -
     id: a411fbcf-dddc-4153-b42b-3f9b2684c965
@@ -36,5 +36,5 @@
     metadata: '{}'
     period: '{"type": "once"}'
     frequency: '{"every": 12, "unit": "hour"}'
-    trigger: '{"from": 1486678078, "to": 1486678079}'
+    trigger: '{"from": 1486678000, "to": 1486679000}'
     enabled: false

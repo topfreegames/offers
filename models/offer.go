@@ -8,10 +8,12 @@
 package models
 
 import (
+	"fmt"
 	"github.com/mgutz/dat"
 	runner "github.com/mgutz/dat/sqlx-runner"
 	"github.com/satori/go.uuid"
 	"github.com/topfreegames/offers/errors"
+	"time"
 )
 
 //Offer represents a tenant in offers API
@@ -123,4 +125,38 @@ func UpsertOffer(db runner.Connection, offer *Offer, mr *MixedMetricsReporter) e
 	}
 
 	return nil
+}
+
+//ClaimOffer sets claimed_at to time
+func ClaimOffer(db runner.Connection, id uuid.UUID, gameID string, t time.Time, mr *MixedMetricsReporter) error {
+	offer, err := GetOfferByID(db, gameID, id, mr)
+	if err != nil {
+		return errors.NewModelNotFoundError("offer", map[string]interface{}{
+			"ID": id.String(),
+		})
+	}
+
+	offerTemplate, err := GetOfferTemplateByID(db, offer.OfferTemplateID, mr)
+	if err != nil {
+		return errors.NewModelNotFoundError("offer_template", map[string]interface{}{
+			"ID": offer.OfferTemplateID,
+		})
+	}
+
+	if offer.ClaimedAt.Valid {
+		msg := fmt.Sprintf("Offer %s has already been claimed by player.", offerTemplate.Name)
+		return errors.NewInvalidModelError("offer", msg)
+	}
+
+	err = mr.WithDatastoreSegment("offers", "upsert", func() error {
+		return db.
+			Upsert("offers").
+			Columns("claimed_at").
+			Values(t).
+			Where("id=$1", offer.ID).
+			Returning("claimed_at").
+			QueryStruct(offer)
+	})
+
+	return err
 }
