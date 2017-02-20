@@ -23,7 +23,7 @@ var _ = Describe("Offers Model", func() {
 	Describe("Offer Instance", func() {
 		It("Shoud load a offer", func() {
 			//Given
-			offerID, _ := uuid.FromString("56fc0477-39f1-485c-898e-4909e9155eb1")
+			offerID := "56fc0477-39f1-485c-898e-4909e9155eb1"
 
 			//When
 			var offer models.Offer
@@ -35,7 +35,7 @@ var _ = Describe("Offers Model", func() {
 
 			//Then
 			Expect(err).NotTo(HaveOccurred())
-			Expect(offer.ID.String()).To(Equal(offerID.String()))
+			Expect(offer.ID).To(Equal(offerID))
 			Expect(offer.GameID).To(Equal("offers-game"))
 			Expect(offer.PlayerID).To(Equal("player-1"))
 			Expect(offer.OfferTemplateID).To(Equal(defaultOfferTemplateID))
@@ -76,14 +76,14 @@ var _ = Describe("Offers Model", func() {
 	Describe("Get offer by id", func() {
 		It("Should load offer by id", func() {
 			//Given
-			offerID, _ := uuid.FromString("56fc0477-39f1-485c-898e-4909e9155eb1")
+			offerID := "56fc0477-39f1-485c-898e-4909e9155eb1"
 
 			//When
 			offer, err := models.GetOfferByID(db, "offers-game", offerID, nil)
 
 			//Then
 			Expect(err).NotTo(HaveOccurred())
-			Expect(offer.ID.String()).To(Equal(offerID.String()))
+			Expect(offer.ID).To(Equal(offerID))
 			Expect(offer.GameID).To(Equal("offers-game"))
 			Expect(offer.PlayerID).To(Equal("player-1"))
 			Expect(offer.OfferTemplateID).To(Equal(defaultOfferTemplateID))
@@ -92,7 +92,7 @@ var _ = Describe("Offers Model", func() {
 
 		It("Should return error if offer not found", func() {
 			//Given
-			offerID := uuid.NewV4()
+			offerID := uuid.NewV4().String()
 			expectedError := errors.NewModelNotFoundError("Offer", map[string]interface{}{
 				"GameID": "offers-game",
 				"ID":     offerID,
@@ -124,7 +124,7 @@ var _ = Describe("Offers Model", func() {
 				OfferTemplateID: enabledOfferTemplates[0].ID,
 				PlayerID:        playerID,
 			}
-			err = models.UpsertOffer(db, offer, nil)
+			err = models.UpsertOffer(db, offer, time.Now(), nil)
 			Expect(err).NotTo(HaveOccurred())
 		})
 
@@ -159,7 +159,7 @@ var _ = Describe("Offers Model", func() {
 			}
 
 			//When
-			err := models.UpsertOffer(db, offer, nil)
+			err := models.UpsertOffer(db, offer, time.Now(), nil)
 			Expect(err).NotTo(HaveOccurred())
 
 			//Then
@@ -170,7 +170,7 @@ var _ = Describe("Offers Model", func() {
 
 		It("should update offer with existing id", func() {
 			//Given
-			offerID, _ := uuid.FromString("35df52e7-3161-446f-975b-92f32871e37c")
+			offerID := "35df52e7-3161-446f-975b-92f32871e37c"
 			offer := &models.Offer{
 				ID:              offerID,
 				GameID:          "offers-game-2",
@@ -179,7 +179,7 @@ var _ = Describe("Offers Model", func() {
 			}
 
 			//When
-			err := models.UpsertOffer(db, offer, nil)
+			err := models.UpsertOffer(db, offer, time.Now(), nil)
 
 			//Then
 			Expect(err).NotTo(HaveOccurred())
@@ -205,19 +205,19 @@ var _ = Describe("Offers Model", func() {
 			)
 
 			//When
-			err := models.UpsertOffer(db, offer, nil)
+			err := models.UpsertOffer(db, offer, time.Now(), nil)
 
 			//Then
 			Expect(err).To(HaveOccurred())
 			Expect(err).To(MatchError(expectedError))
 
 			//Test that after error our connection is still usable
-			offerID, _ := uuid.FromString("56fc0477-39f1-485c-898e-4909e9155eb1")
+			offerID := "56fc0477-39f1-485c-898e-4909e9155eb1"
 			//Must use CONN and not db here to skip transaction
 			dbOffer, err := models.GetOfferByID(conn, "offers-game", offerID, nil)
 
 			Expect(err).NotTo(HaveOccurred())
-			Expect(dbOffer.ID.String()).To(Equal(offerID.String()))
+			Expect(dbOffer.ID).To(Equal(offerID))
 		})
 
 		It("should fail if offer template does not exist", func() {
@@ -233,7 +233,7 @@ var _ = Describe("Offers Model", func() {
 			)
 
 			//When
-			err := models.UpsertOffer(db, offer, nil)
+			err := models.UpsertOffer(db, offer, time.Now(), nil)
 
 			//Then
 			Expect(err).To(HaveOccurred())
@@ -245,7 +245,7 @@ var _ = Describe("Offers Model", func() {
 		var from, to int64 = 1486678000, 148669000
 		It("should claim valid offer", func() {
 			//Given
-			id, _ := uuid.FromString("56fc0477-39f1-485c-898e-4909e9155eb1")
+			id := "56fc0477-39f1-485c-898e-4909e9155eb1"
 			currentTime := time.Unix(from+500, 0)
 
 			//When
@@ -257,7 +257,7 @@ var _ = Describe("Offers Model", func() {
 
 		It("should claim valid offer before trigger begins", func() {
 			//Given
-			id, _ := uuid.FromString("56fc0477-39f1-485c-898e-4909e9155eb1")
+			id := "56fc0477-39f1-485c-898e-4909e9155eb1"
 			currentTime := time.Unix(from-500, 0)
 
 			//When
@@ -269,7 +269,7 @@ var _ = Describe("Offers Model", func() {
 
 		It("should claim valid offer after trigger begins", func() {
 			//Given
-			id, _ := uuid.FromString("56fc0477-39f1-485c-898e-4909e9155eb1")
+			id := "56fc0477-39f1-485c-898e-4909e9155eb1"
 			currentTime := time.Unix(to+500, 0)
 
 			//When
@@ -281,7 +281,7 @@ var _ = Describe("Offers Model", func() {
 
 		It("should not claim twice the same offer", func() {
 			//Given
-			id, _ := uuid.FromString("56fc0477-39f1-485c-898e-4909e9155eb1")
+			id := "56fc0477-39f1-485c-898e-4909e9155eb1"
 			firstTime := time.Unix(to+500, 0)
 			secondTime := time.Unix(to+1000, 0)
 
@@ -296,7 +296,7 @@ var _ = Describe("Offers Model", func() {
 
 		It("should not claim an offer that doesn't exist", func() {
 			//Given
-			id := uuid.NewV4()
+			id := uuid.NewV4().String()
 			currentTime := time.Unix(to+500, 0)
 
 			//When

@@ -11,17 +11,16 @@ import (
 	"fmt"
 	"github.com/mgutz/dat"
 	runner "github.com/mgutz/dat/sqlx-runner"
-	"github.com/satori/go.uuid"
 	"github.com/topfreegames/offers/errors"
 	"time"
 )
 
 //Offer represents a tenant in offers API
 type Offer struct {
-	ID              uuid.UUID `db:"id" valid:"uuidv4,required"`
-	GameID          string    `db:"game_id" valid:"matches(^[a-z0-9]+(\\-[a-z0-9]+)*$),stringlength(1|255),required"`
-	OfferTemplateID string    `db:"offer_template_id" valid:"uuidv4,required"`
-	PlayerID        string    `db:"player_id" valid:"ascii,stringlength(1|1000),required"`
+	ID              string `db:"id" valid:"uuidv4,required"`
+	GameID          string `db:"game_id" valid:"matches(^[a-z0-9]+(\\-[a-z0-9]+)*$),stringlength(1|255),required"`
+	OfferTemplateID string `db:"offer_template_id" valid:"uuidv4,required"`
+	PlayerID        string `db:"player_id" valid:"ascii,stringlength(1|1000),required"`
 
 	CreatedAt dat.NullTime `db:"created_at" valid:""`
 	UpdatedAt dat.NullTime `db:"updated_at" valid:""`
@@ -32,11 +31,17 @@ const playerSeenOffersScope = `
 	WHERE
 		o.game_id = $1
 	AND o.player_id = $2
-	AND o.offer_template_id in ($3)
+	AND o.offer_template_id IN ($3)
+`
+const playerUnseenOffersScope = `
+	WHERE
+		o.game_id = $1
+	AND o.player_id = $2
+	AND o.offer_template_id NOT IN ($3)
 `
 
 //GetOfferByID returns a offer by it's pk
-func GetOfferByID(db runner.Connection, gameID string, id uuid.UUID, mr *MixedMetricsReporter) (*Offer, error) {
+func GetOfferByID(db runner.Connection, gameID string, id string, mr *MixedMetricsReporter) (*Offer, error) {
 	var offer Offer
 	err := mr.WithDatastoreSegment("offers", "select by id", func() error {
 		return db.
@@ -68,6 +73,29 @@ func GetPlayerSeenOffers(
 	offerTemplates []*OfferTemplate,
 	mr *MixedMetricsReporter,
 ) ([]*Offer, error) {
+	return getPlayerOffers(db, gameID, playerID, offerTemplates, mr, playerSeenOffersScope)
+}
+
+// GetPlayerUnseenOffers returns all the offers player has not seen, but only brings the
+// ID, offer_template_id and claimed_at fields
+func GetPlayerUnseenOffers(
+	db runner.Connection,
+	gameID string,
+	playerID string,
+	offerTemplates []*OfferTemplate,
+	mr *MixedMetricsReporter,
+) ([]*Offer, error) {
+	return getPlayerOffers(db, gameID, playerID, offerTemplates, mr, playerUnseenOffersScope)
+}
+
+func getPlayerOffers(
+	db runner.Connection,
+	gameID string,
+	playerID string,
+	offerTemplates []*OfferTemplate,
+	mr *MixedMetricsReporter,
+	scope string,
+) ([]*Offer, error) {
 	if len(offerTemplates) == 0 {
 		return []*Offer{}, nil
 	}
@@ -87,7 +115,7 @@ func GetPlayerSeenOffers(
 		return db.
 			Select("o.id, o.offer_template_id, o.claimed_at").
 			From("offers o").
-			Scope(playerSeenOffersScope, params...).
+			Scope(scope, params...).
 			QueryStructs(&offers)
 	})
 
@@ -105,11 +133,12 @@ func GetPlayerSeenOffers(
 }
 
 //UpsertOffer updates a offer with new meta or insert with the new UUID
-func UpsertOffer(db runner.Connection, offer *Offer, mr *MixedMetricsReporter) error {
+func UpsertOffer(db runner.Connection, offer *Offer, t time.Time, mr *MixedMetricsReporter) error {
+	offer.CreatedAt = dat.NullTimeFrom(t)
 	err := mr.WithDatastoreSegment("offers", "upsert", func() error {
 		return db.
 			Upsert("offers").
-			Columns("game_id", "offer_template_id", "player_id").
+			Columns("game_id", "offer_template_id", "player_id", "created_at").
 			Record(offer).
 			Where("id=$1", offer.ID).
 			Returning("id", "created_at", "updated_at", "claimed_at").
@@ -128,11 +157,11 @@ func UpsertOffer(db runner.Connection, offer *Offer, mr *MixedMetricsReporter) e
 }
 
 //ClaimOffer sets claimed_at to time
-func ClaimOffer(db runner.Connection, id uuid.UUID, gameID string, t time.Time, mr *MixedMetricsReporter) error {
+func ClaimOffer(db runner.Connection, id string, gameID string, t time.Time, mr *MixedMetricsReporter) error {
 	offer, err := GetOfferByID(db, gameID, id, mr)
 	if err != nil {
 		return errors.NewModelNotFoundError("offer", map[string]interface{}{
-			"ID": id.String(),
+			"ID": id,
 		})
 	}
 

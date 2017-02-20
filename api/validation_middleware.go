@@ -48,6 +48,15 @@ func offerTemplateFromCtx(ctx context.Context) *models.OfferTemplate {
 	return offerTemplate.(*models.OfferTemplate)
 }
 
+func offerFromCtx(ctx context.Context) *models.Offer {
+	offer := ctx.Value(payloadString)
+	if offer == nil {
+		return nil
+	}
+
+	return offer.(*models.Offer)
+}
+
 //ServeHTTP method
 func (m *ValidationMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
