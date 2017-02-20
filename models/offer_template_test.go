@@ -49,7 +49,7 @@ var _ = Describe("Offer Template Models", func() {
 				ID:        uuid.NewV4().String(),
 				Name:      "New Awesome Game",
 				ProductID: "com.tfg.example",
-				GameID:    "nonexisting-game-id",
+				GameID:    "game-id",
 				Contents:  dat.JSON([]byte(`{"gems": 5, "gold": 100}`)),
 				Period:    dat.JSON([]byte(`{"type": "once"}`)),
 				Frequency: dat.JSON([]byte(`{"every": 24, "unit": "hour"}`)),
