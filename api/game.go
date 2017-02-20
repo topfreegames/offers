@@ -24,12 +24,12 @@ func (g *GameHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	game := gameFromCtx(r.Context())
 
 	err := mr.WithSegment(models.SegmentModel, func() error {
-		var c models.RealClock
-		return models.UpsertGame(g.App.DB, game, c.GetTime(), mr)
+		currentTime := g.App.Clock.GetTime()
+		return models.UpsertGame(g.App.DB, game, currentTime, mr)
 	})
 
 	if err != nil {
-		Write(w, http.StatusBadRequest, "Creating game failed.")
+		g.App.HandleError(w, http.StatusInternalServerError, "Upserting game failed", err)
 		return
 	}
 

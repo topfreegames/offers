@@ -28,7 +28,7 @@ func (g *OfferTemplateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	})
 
 	if err != nil {
-		Write(w, http.StatusBadRequest, "Creating game failed.")
+		g.App.HandleError(w, http.StatusInternalServerError, "Insert offer template failed", err)
 		return
 	}
 
