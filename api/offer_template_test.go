@@ -44,7 +44,7 @@ var _ = Describe("Offer Template Handler", func() {
 			Expect(recorder.Code).To(Equal(http.StatusOK))
 		})
 
-		It("should return status code 400 if ID not passed", func() {
+		It("should return status code 422 if ID not passed", func() {
 			offerTemplateReader := JSONFor(JSON{
 				"Name":      "New Awesome Game",
 				"ProductID": "com.tfg.example",
@@ -57,10 +57,10 @@ var _ = Describe("Offer Template Handler", func() {
 
 			request, _ := http.NewRequest("PUT", "/offer-templates", offerTemplateReader)
 			app.Router.ServeHTTP(recorder, request)
-			Expect(recorder.Code).To(Equal(http.StatusBadRequest))
+			Expect(recorder.Code).To(Equal(http.StatusUnprocessableEntity))
 		})
 
-		It("should return status code 400 if ID is empty", func() {
+		It("should return status code 422 if ID is empty", func() {
 			offerTemplateReader := JSONFor(JSON{
 				"ID":        "",
 				"Name":      "New Awesome Game",
@@ -74,10 +74,10 @@ var _ = Describe("Offer Template Handler", func() {
 
 			request, _ := http.NewRequest("PUT", "/offer-templates", offerTemplateReader)
 			app.Router.ServeHTTP(recorder, request)
-			Expect(recorder.Code).To(Equal(http.StatusBadRequest))
+			Expect(recorder.Code).To(Equal(http.StatusUnprocessableEntity))
 		})
 
-		It("should return status code 400 if ID is invalid", func() {
+		It("should return status code 422 if ID is invalid", func() {
 			offerTemplateReader := JSONFor(JSON{
 				"ID":        "not_a_valid id!",
 				"Name":      "New Awesome Game",
@@ -91,10 +91,10 @@ var _ = Describe("Offer Template Handler", func() {
 
 			request, _ := http.NewRequest("PUT", "/offer-templates", offerTemplateReader)
 			app.Router.ServeHTTP(recorder, request)
-			Expect(recorder.Code).To(Equal(http.StatusBadRequest))
+			Expect(recorder.Code).To(Equal(http.StatusUnprocessableEntity))
 		})
 
-		It("should return status code 400 if game-id doesn`t exist", func() {
+		It("should return status code 422 if game-id doesn`t exist", func() {
 			id := uuid.NewV4().String()
 			offerTemplateReader := JSONFor(JSON{
 				"ID":        id,
@@ -108,7 +108,7 @@ var _ = Describe("Offer Template Handler", func() {
 
 			request, _ := http.NewRequest("PUT", "/offer-templates", offerTemplateReader)
 			app.Router.ServeHTTP(recorder, request)
-			Expect(recorder.Code).To(Equal(http.StatusBadRequest))
+			Expect(recorder.Code).To(Equal(http.StatusUnprocessableEntity))
 		})
 	})
 })

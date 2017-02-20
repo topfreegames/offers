@@ -32,7 +32,7 @@ Feature: Game Management
 
     Examples:
       | name          | bundle_id                | status | error_code | error_message                               |
-      |               | com.topfreegames.example | 400    | OFF-002    | ID: non zero value required;                |
-      | game5         |                          | 400    | OFF-002    | BundleID: non zero value required;          |
-      | asd*@!3[1249  | com.topfreegames.example | 400    | OFF-002    | ID: non zero value required;                |
-      | @VeryBigText@ | com.topfreegames.example | 400    | OFF-002    | *does not validate as stringlength(1\|255); |
+      |               | com.topfreegames.example | 422    | OFF-002    | ID: non zero value required;                |
+      | game5         |                          | 422    | OFF-002    | BundleID: non zero value required;          |
+      | asd*@!3[1249  | com.topfreegames.example | 422    | OFF-002    | ID: non zero value required;                |
+      | @VeryBigText@ | com.topfreegames.example | 422    | OFF-002    | *does not validate as stringlength(1\|255); |
