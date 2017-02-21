@@ -57,6 +57,15 @@ func offerFromCtx(ctx context.Context) *models.Offer {
 	return offer.(*models.Offer)
 }
 
+func offerToClaimFromCtx(ctx context.Context) *models.OfferToClaim {
+	offer := ctx.Value(payloadString)
+	if offer == nil {
+		return nil
+	}
+
+	return offer.(*models.OfferToClaim)
+}
+
 //ServeHTTP method
 func (m *ValidationMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()

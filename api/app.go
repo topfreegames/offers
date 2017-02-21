@@ -88,22 +88,22 @@ func (a *App) getRouter() *mux.Router {
 		&LoggingMiddleware{App: a},
 		&VersionMiddleware{},
 		&ValidationMiddleware{GetPayload: func() interface{} { return &models.Offer{} }},
-	)).Methods("PUT").Name("claim_offer")
+	)).Methods("PUT").Name("offer")
 
 	r.Handle("/get-offers", Chain(
 		&OfferRequestHandler{App: a, Method: "get_offers"},
 		&NewRelicMiddleware{App: a},
 		&LoggingMiddleware{App: a},
 		&VersionMiddleware{},
-	)).Methods("GET").Name("get_offers")
+	)).Methods("GET").Name("offer")
 
 	r.Handle("/claim-offer", Chain(
 		&OfferRequestHandler{App: a, Method: "claim_offer"},
 		&NewRelicMiddleware{App: a},
 		&LoggingMiddleware{App: a},
 		&VersionMiddleware{},
-		&ValidationMiddleware{GetPayload: func() interface{} { return &models.Offer{} }},
-	)).Methods("PUT").Name("claim_offer")
+		&ValidationMiddleware{GetPayload: func() interface{} { return &models.OfferToClaim{} }},
+	)).Methods("PUT").Name("offer")
 
 	return r
 }

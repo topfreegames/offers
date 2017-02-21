@@ -246,12 +246,16 @@ var _ = Describe("Offers Model", func() {
 		It("should claim valid offer", func() {
 			//Given
 			id := "56fc0477-39f1-485c-898e-4909e9155eb1"
+      playerID := "player-1"
+      gameID := "offers-game"
 			currentTime := time.Unix(from+500, 0)
 
 			//When
-			err := models.ClaimOffer(db, id, "offers-game", currentTime, nil)
+			contents, alreadyClaimed, err := models.ClaimOffer(db, id, playerID, gameID, currentTime, nil)
 
 			//Then
+      Expect(contents).NotTo(BeNil())
+      Expect(alreadyClaimed).To(BeFalse())
 			Expect(err).NotTo(HaveOccurred())
 		})
 
@@ -259,11 +263,15 @@ var _ = Describe("Offers Model", func() {
 			//Given
 			id := "56fc0477-39f1-485c-898e-4909e9155eb1"
 			currentTime := time.Unix(from-500, 0)
+      playerID := "player-1"
+      gameID := "offers-game"
 
 			//When
-			err := models.ClaimOffer(db, id, "offers-game", currentTime, nil)
+			contents, alreadyClaimed, err := models.ClaimOffer(db, id, playerID, gameID, currentTime, nil)
 
 			//Then
+      Expect(contents).NotTo(BeNil())
+      Expect(alreadyClaimed).To(BeFalse())
 			Expect(err).NotTo(HaveOccurred())
 		})
 
@@ -271,36 +279,49 @@ var _ = Describe("Offers Model", func() {
 			//Given
 			id := "56fc0477-39f1-485c-898e-4909e9155eb1"
 			currentTime := time.Unix(to+500, 0)
+      playerID := "player-1"
+      gameID := "offers-game"
 
 			//When
-			err := models.ClaimOffer(db, id, "offers-game", currentTime, nil)
+			contents, alreadyClaimed, err := models.ClaimOffer(db, id, playerID, gameID, currentTime, nil)
 
 			//Then
+      Expect(contents).NotTo(BeNil())
+      Expect(alreadyClaimed).To(BeFalse())
 			Expect(err).NotTo(HaveOccurred())
 		})
 
 		It("should not claim twice the same offer", func() {
 			//Given
 			id := "56fc0477-39f1-485c-898e-4909e9155eb1"
+      playerID := "player-1"
+      gameID := "offers-game"
 			firstTime := time.Unix(to+500, 0)
 			secondTime := time.Unix(to+1000, 0)
 
 			//When
-			err1 := models.ClaimOffer(db, id, "offers-game", firstTime, nil)
-			err2 := models.ClaimOffer(db, id, "offers-game", secondTime, nil)
+			contents1, alreadyClaimed1, err1 := models.ClaimOffer(db, id, playerID, gameID, firstTime, nil)
+			contents2, alreadyClaimed2, err2 := models.ClaimOffer(db, id, playerID, gameID, secondTime, nil)
 
 			//Then
+      Expect(contents1).NotTo(BeNil())
+      Expect(alreadyClaimed1).To(BeFalse())
 			Expect(err1).NotTo(HaveOccurred())
-			Expect(err2).To(HaveOccurred())
+
+      Expect(contents2).NotTo(BeNil())
+      Expect(alreadyClaimed2).To(BeTrue())
+			Expect(err2).NotTo(HaveOccurred())
 		})
 
 		It("should not claim an offer that doesn't exist", func() {
 			//Given
 			id := uuid.NewV4().String()
+      playerID := "player-1"
+      gameID := "offers-game"
 			currentTime := time.Unix(to+500, 0)
 
 			//When
-			err := models.ClaimOffer(db, id, "offers-game", currentTime, nil)
+			_, _, err := models.ClaimOffer(db, id, playerID, gameID, currentTime, nil)
 
 			//Then
 			Expect(err).To(HaveOccurred())

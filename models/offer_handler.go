@@ -8,7 +8,6 @@
 package models
 
 import (
-	"fmt"
 	"github.com/mgutz/dat"
 	runner "github.com/mgutz/dat/sqlx-runner"
 	"github.com/topfreegames/offers/errors"
@@ -25,6 +24,13 @@ type Offer struct {
 	CreatedAt dat.NullTime `db:"created_at" valid:""`
 	UpdatedAt dat.NullTime `db:"updated_at" valid:""`
 	ClaimedAt dat.NullTime `db:"claimed_at" valid:""`
+}
+
+//OfferToClaim has required fields for claiming an offer
+type OfferToClaim struct {
+	ID              string `db:"id" valid:"uuidv4,required"`
+	GameID          string `db:"game_id" valid:"matches(^[a-z0-9]+(\\-[a-z0-9]+)*$),stringlength(1|255),required"`
+	PlayerID        string `db:"player_id" valid:"ascii,stringlength(1|1000),required"`
 }
 
 const playerSeenOffersScope = `
@@ -157,35 +163,46 @@ func UpsertOffer(db runner.Connection, offer *Offer, t time.Time, mr *MixedMetri
 }
 
 //ClaimOffer sets claimed_at to time
-func ClaimOffer(db runner.Connection, id string, gameID string, t time.Time, mr *MixedMetricsReporter) error {
-	offer, err := GetOfferByID(db, gameID, id, mr)
+func ClaimOffer(db runner.Connection, offerID, playerID, gameID string, t time.Time, mr *MixedMetricsReporter) (dat.JSON, bool, error) {
+  
+	var offer Offer
+
+  err := mr.WithDatastoreSegment("offers", "select by id", func() error {
+    return db.
+      Select("id, claimed_at, offer_template_id").
+      From("offers").
+      Where("id=$1 AND player_id=$2 AND game_id=$3", offerID, playerID, gameID).
+      QueryStruct(&offer)
+  })
+
 	if err != nil {
-		return errors.NewModelNotFoundError("offer", map[string]interface{}{
-			"ID": id,
-		})
+		if IsNoRowsInResultSetError(err) {
+			return nil, false, errors.NewModelNotFoundError("Offer", map[string]interface{}{
+        "ID": offerID,
+				"GameID":   gameID,
+				"PlayerID": playerID,
+			})
+		}
+		return nil, false, err
 	}
 
-	offerTemplate, err := GetOfferTemplateByID(db, offer.OfferTemplateID, mr)
-	if err != nil {
-		return errors.NewModelNotFoundError("offer_template", map[string]interface{}{
-			"ID": offer.OfferTemplateID,
-		})
-	}
+  ot, err := GetOfferTemplateByID(db, offer.OfferTemplateID, mr)
+  if err != nil {
+    return nil, false, err
+  }
 
-	if offer.ClaimedAt.Valid {
-		msg := fmt.Sprintf("Offer %s has already been claimed by player.", offerTemplate.Name)
-		return errors.NewInvalidModelError("offer", msg)
-	}
+  if offer.ClaimedAt.Valid {
+    return ot.Contents, true, nil
+  }
 
 	err = mr.WithDatastoreSegment("offers", "upsert", func() error {
 		return db.
-			Upsert("offers").
-			Columns("claimed_at").
-			Values(t).
+			Update("offers").
+			Set("claimed_at", t).
 			Where("id=$1", offer.ID).
 			Returning("claimed_at").
-			QueryStruct(offer)
+			QueryStruct(&offer)
 	})
 
-	return err
+	return ot.Contents, false, err
 }

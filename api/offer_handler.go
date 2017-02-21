@@ -15,6 +15,7 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/topfreegames/offers/models"
+	e "github.com/topfreegames/offers/errors"
 )
 
 //OfferRequestHandler handler
@@ -85,17 +86,32 @@ func (h *OfferRequestHandler) getOffers(w http.ResponseWriter, r *http.Request) 
 
 func (h *OfferRequestHandler) claimOffer(w http.ResponseWriter, r *http.Request) {
 	mr := metricsReporterFromCtx(r.Context())
-	offer := offerFromCtx(r.Context())
+	offer := offerToClaimFromCtx(r.Context())
 	currentTime := h.App.Clock.GetTime()
 
-	err := models.ClaimOffer(h.App.DB, offer.ID, offer.GameID, currentTime, mr)
+	contents, alreadyClaimed, err := models.ClaimOffer(h.App.DB, offer.ID, offer.PlayerID, offer.GameID, currentTime, mr)
 
 	if err != nil {
-		h.App.HandleError(w, http.StatusBadRequest, err.Error(), err)
-		return
+    if modelNotFound, ok := err.(*e.ModelNotFoundError); ok {
+      h.App.HandleError(w, http.StatusNotFound, modelNotFound.Error(), modelNotFound)
+      return
+    }
+
+    h.App.HandleError(w, http.StatusInternalServerError, err.Error(), err)
+    return
 	}
 
-	Write(w, http.StatusOK, offer.ClaimedAt.Time.String())
+  if err != nil {
+    h.App.HandleError(w, http.StatusInternalServerError, err.Error(), err)
+    return
+  }
+
+  if alreadyClaimed {
+    WriteBytes(w, http.StatusConflict, contents)
+    return
+  }
+
+  WriteBytes(w, http.StatusOK, contents)
 }
 
 func (h *OfferRequestHandler) insertOffer(w http.ResponseWriter, r *http.Request) {

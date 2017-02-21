@@ -112,6 +112,7 @@ var _ = Describe("Healthcheck Handler", func() {
 			offerReader := JSONFor(JSON{
 				"ID":     "56fc0477-39f1-485c-898e-4909e9155eb1",
 				"GameID": "offers-game",
+        "PlayerID": "player-1",
 			})
 			request, _ := http.NewRequest("PUT", "/claim-offer", offerReader)
 
@@ -119,7 +120,113 @@ var _ = Describe("Healthcheck Handler", func() {
 			app.Router.ServeHTTP(recorder, request)
 
 			//Then
-			//Expect(recorder.Code).To(Equal(http.StatusOK))
+      Expect(recorder.Body.String()).To(Equal(`{"gems": 5, "gold": 100}`))
+			Expect(recorder.Code).To(Equal(http.StatusOK))
+		})
+
+		It("should not claim a claimed offer", func() {
+			//Given
+			offerReader1 := JSONFor(JSON{
+				"ID":     "56fc0477-39f1-485c-898e-4909e9155eb1",
+				"GameID": "offers-game",
+        "PlayerID": "player-1",
+			})
+			offerReader2 := JSONFor(JSON{
+				"ID":     "56fc0477-39f1-485c-898e-4909e9155eb1",
+				"GameID": "offers-game",
+        "PlayerID": "player-1",
+			})
+			request1, _ := http.NewRequest("PUT", "/claim-offer", offerReader1)
+			request2, _ := http.NewRequest("PUT", "/claim-offer", offerReader2)
+
+			//When
+			app.Router.ServeHTTP(recorder, request1)
+      recorder = httptest.NewRecorder()
+			app.Router.ServeHTTP(recorder, request2)
+
+			//Then
+      Expect(recorder.Body.String()).To(Equal(`{"gems": 5, "gold": 100}`))
+			Expect(recorder.Code).To(Equal(http.StatusConflict))
+		})
+
+		It("should return 422 if invalid OfferID", func() {
+			//Given
+			offerReader := JSONFor(JSON{
+				"ID":     "567-391-4c-8-4909eeb1",
+				"GameID": "offers-game",
+        "PlayerID": "player-1",
+			})
+			request, _ := http.NewRequest("PUT", "/claim-offer", offerReader)
+
+			//When
+			app.Router.ServeHTTP(recorder, request)
+
+			//Then
+      Expect(recorder.Body.String()).To(Equal(`{"code":"OFF-002","description":"ID: 567-391-4c-8-4909eeb1 does not validate as uuidv4;","error":"ValidationFailedError"}`))
+			Expect(recorder.Code).To(Equal(http.StatusUnprocessableEntity))
+		})
+
+		It("should return 404 if non existing OfferID", func() {
+			//Given
+			offerReader := JSONFor(JSON{
+				"ID":     uuid.NewV4().String(),
+				"GameID": "offers-game",
+        "PlayerID": "player-1",
+			})
+			request, _ := http.NewRequest("PUT", "/claim-offer", offerReader)
+
+			//When
+			app.Router.ServeHTTP(recorder, request)
+
+			//Then
+			Expect(recorder.Code).To(Equal(http.StatusNotFound))
+		})
+
+		It("should return 404 if non existing GameID", func() {
+			//Given
+			offerReader := JSONFor(JSON{
+        "ID":     "56fc0477-39f1-485c-898e-4909e9155eb1",
+				"GameID": "non-existing-offers-game",
+        "PlayerID": "player-1",
+			})
+			request, _ := http.NewRequest("PUT", "/claim-offer", offerReader)
+
+			//When
+			app.Router.ServeHTTP(recorder, request)
+
+			//Then
+			Expect(recorder.Code).To(Equal(http.StatusNotFound))
+		})
+
+		It("should return 404 if non existing PlayerID", func() {
+			//Given
+			offerReader := JSONFor(JSON{
+        "ID":     "56fc0477-39f1-485c-898e-4909e9155eb1",
+				"GameID": "offers-game",
+        "PlayerID": "non-existing-player-1",
+			})
+			request, _ := http.NewRequest("PUT", "/claim-offer", offerReader)
+
+			//When
+			app.Router.ServeHTTP(recorder, request)
+
+			//Then
+			Expect(recorder.Code).To(Equal(http.StatusNotFound))
+		})
+
+		It("should return 422 if OfferID is not passed", func() {
+			//Given
+			offerReader := JSONFor(JSON{
+				"GameID": "offers-game",
+        "PlayerID": "non-existing-player-1",
+			})
+			request, _ := http.NewRequest("PUT", "/claim-offer", offerReader)
+
+			//When
+			app.Router.ServeHTTP(recorder, request)
+
+			//Then
+			Expect(recorder.Code).To(Equal(http.StatusUnprocessableEntity))
 		})
 	})
 })
