@@ -21,13 +21,14 @@ type Offer struct {
 	OfferTemplateID string `db:"offer_template_id" valid:"uuidv4,required"`
 	PlayerID        string `db:"player_id" valid:"ascii,stringlength(1|1000),required"`
 
-	CreatedAt dat.NullTime `db:"created_at" valid:""`
-	UpdatedAt dat.NullTime `db:"updated_at" valid:""`
-	ClaimedAt dat.NullTime `db:"claimed_at" valid:""`
+	CreatedAt  dat.NullTime `db:"created_at" valid:""`
+	UpdatedAt  dat.NullTime `db:"updated_at" valid:""`
+	ClaimedAt  dat.NullTime `db:"claimed_at" valid:""`
+  LastSeenAt dat.NullTime `db:"last_seen_at" valid:""`
 }
 
-//OfferToClaim has required fields for claiming an offer
-type OfferToClaim struct {
+//OfferToUpdate has required fields for claiming an offer
+type OfferToUpdate struct {
 	ID              string `db:"id" valid:"uuidv4,required"`
 	GameID          string `db:"game_id" valid:"matches(^[a-z0-9]+(\\-[a-z0-9]+)*$),stringlength(1|255),required"`
 	PlayerID        string `db:"player_id" valid:"ascii,stringlength(1|1000),required"`
@@ -37,13 +38,13 @@ const playerSeenOffersScope = `
 	WHERE
 		o.game_id = $1
 	AND o.player_id = $2
-	AND o.offer_template_id IN ($3)
+  AND o.last_seen_at IS NOT NULL
 `
 const playerUnseenOffersScope = `
 	WHERE
 		o.game_id = $1
 	AND o.player_id = $2
-	AND o.offer_template_id NOT IN ($3)
+  AND o.last_seen_at IS NULL
 `
 
 //GetOfferByID returns a offer by it's pk
@@ -76,10 +77,9 @@ func GetPlayerSeenOffers(
 	db runner.Connection,
 	gameID string,
 	playerID string,
-	offerTemplates []*OfferTemplate,
 	mr *MixedMetricsReporter,
 ) ([]*Offer, error) {
-	return getPlayerOffers(db, gameID, playerID, offerTemplates, mr, playerSeenOffersScope)
+	return getPlayerOffers(db, gameID, playerID, mr, playerSeenOffersScope)
 }
 
 // GetPlayerUnseenOffers returns all the offers player has not seen, but only brings the
@@ -88,32 +88,21 @@ func GetPlayerUnseenOffers(
 	db runner.Connection,
 	gameID string,
 	playerID string,
-	offerTemplates []*OfferTemplate,
 	mr *MixedMetricsReporter,
 ) ([]*Offer, error) {
-	return getPlayerOffers(db, gameID, playerID, offerTemplates, mr, playerUnseenOffersScope)
+	return getPlayerOffers(db, gameID, playerID, mr, playerUnseenOffersScope)
 }
 
 func getPlayerOffers(
 	db runner.Connection,
 	gameID string,
 	playerID string,
-	offerTemplates []*OfferTemplate,
 	mr *MixedMetricsReporter,
 	scope string,
 ) ([]*Offer, error) {
-	if len(offerTemplates) == 0 {
-		return []*Offer{}, nil
-	}
-
 	params := []interface{}{
 		gameID,
 		playerID,
-	}
-	offerTemplateIDs := make([]string, len(offerTemplates))
-	for i, offerTemplate := range offerTemplates {
-		offerTemplateIDs[i] = offerTemplate.ID
-		params = append(params, offerTemplate.ID)
 	}
 
 	var offers []*Offer
@@ -195,7 +184,7 @@ func ClaimOffer(db runner.Connection, offerID, playerID, gameID string, t time.T
     return ot.Contents, true, nil
   }
 
-	err = mr.WithDatastoreSegment("offers", "upsert", func() error {
+	err = mr.WithDatastoreSegment("offers", "update", func() error {
 		return db.
 			Update("offers").
 			Set("claimed_at", t).
@@ -205,4 +194,30 @@ func ClaimOffer(db runner.Connection, offerID, playerID, gameID string, t time.T
 	})
 
 	return ot.Contents, false, err
+}
+
+//UpdateLastSeenAt updates last seen timestamp of an offer
+func UpdateLastSeenAt(db runner.Connection, offerID, playerID, gameID string, t time.Time, mr *MixedMetricsReporter) error {
+  var offer Offer
+  err := mr.WithDatastoreSegment("offers", "update", func() error {
+		return db.
+			Update("offers").
+			Set("last_seen_at", t).
+      Where("id=$1 AND player_id=$2 AND game_id=$3", offerID, playerID, gameID).
+			Returning("id").
+      QueryStruct(&offer)
+	})
+
+	if err != nil {
+		if IsNoRowsInResultSetError(err) {
+			return errors.NewModelNotFoundError("Offer", map[string]interface{}{
+        "ID": offerID,
+				"GameID":   gameID,
+				"PlayerID": playerID,
+			})
+		}
+		return err
+  }
+
+  return nil
 }

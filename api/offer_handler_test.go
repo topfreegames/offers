@@ -49,64 +49,11 @@ var _ = Describe("Healthcheck Handler", func() {
 		})
 	})
 
-	Describe("PUT /offer", func() {
-		It("should insert valid offer", func() {
-			//Given
-			offerReader := JSONFor(JSON{
-				"ID":              uuid.NewV4().String(),
-				"GameID":          "offers-game",
-				"OfferTemplateID": "dd21ec96-2890-4ba0-b8e2-40ea67196990",
-				"PlayerID":        "player-1",
-			})
-			request, _ := http.NewRequest("PUT", "/offer", offerReader)
-
-			//When
-			app.Router.ServeHTTP(recorder, request)
-
-			//Then
-			Expect(recorder.Code).To(Equal(http.StatusOK))
-		})
-
-		It("should receive status code 400 if OfferTemplateID not exists", func() {
-			//Given
-			offerReader := JSONFor(JSON{
-				"ID":              uuid.NewV4().String(),
-				"GameID":          "offers-game",
-				"OfferTemplateID": uuid.NewV4().String(),
-				"PlayerID":        "player-1",
-			})
-			request, _ := http.NewRequest("PUT", "/offer", offerReader)
-
-			//When
-			app.Router.ServeHTTP(recorder, request)
-
-			//Then
-			Expect(recorder.Code).To(Equal(http.StatusBadRequest))
-		})
-
-		It("should receive status code 400 if game-id doesn't exist", func() {
-			//Given
-			offerReader := JSONFor(JSON{
-				"ID":              uuid.NewV4().String(),
-				"GameID":          "non-existing-offers-game",
-				"OfferTemplateID": "dd21ec96-2890-4ba0-b8e2-40ea67196990",
-				"PlayerID":        "player-1",
-			})
-			request, _ := http.NewRequest("PUT", "/offer", offerReader)
-
-			//When
-			app.Router.ServeHTTP(recorder, request)
-
-			//Then
-			Expect(recorder.Code).To(Equal(http.StatusBadRequest))
-		})
-	})
-
-	Describe("GET /get-offers", func() {
+	Describe("GET /offers/available", func() {
 
 	})
 
-	Describe("PUT /claim-offer", func() {
+	Describe("PUT /offer/claim", func() {
 		It("should claim valid offer", func() {
 			//Given
 			offerReader := JSONFor(JSON{
@@ -114,7 +61,7 @@ var _ = Describe("Healthcheck Handler", func() {
 				"GameID": "offers-game",
         "PlayerID": "player-1",
 			})
-			request, _ := http.NewRequest("PUT", "/claim-offer", offerReader)
+			request, _ := http.NewRequest("PUT", "/offer/claim", offerReader)
 
 			//When
 			app.Router.ServeHTTP(recorder, request)
@@ -136,8 +83,8 @@ var _ = Describe("Healthcheck Handler", func() {
 				"GameID": "offers-game",
         "PlayerID": "player-1",
 			})
-			request1, _ := http.NewRequest("PUT", "/claim-offer", offerReader1)
-			request2, _ := http.NewRequest("PUT", "/claim-offer", offerReader2)
+			request1, _ := http.NewRequest("PUT", "/offer/claim", offerReader1)
+			request2, _ := http.NewRequest("PUT", "/offer/claim", offerReader2)
 
 			//When
 			app.Router.ServeHTTP(recorder, request1)
@@ -156,7 +103,7 @@ var _ = Describe("Healthcheck Handler", func() {
 				"GameID": "offers-game",
         "PlayerID": "player-1",
 			})
-			request, _ := http.NewRequest("PUT", "/claim-offer", offerReader)
+			request, _ := http.NewRequest("PUT", "/offer/claim", offerReader)
 
 			//When
 			app.Router.ServeHTTP(recorder, request)
@@ -173,7 +120,7 @@ var _ = Describe("Healthcheck Handler", func() {
 				"GameID": "offers-game",
         "PlayerID": "player-1",
 			})
-			request, _ := http.NewRequest("PUT", "/claim-offer", offerReader)
+			request, _ := http.NewRequest("PUT", "/offer/claim", offerReader)
 
 			//When
 			app.Router.ServeHTTP(recorder, request)
@@ -189,7 +136,7 @@ var _ = Describe("Healthcheck Handler", func() {
 				"GameID": "non-existing-offers-game",
         "PlayerID": "player-1",
 			})
-			request, _ := http.NewRequest("PUT", "/claim-offer", offerReader)
+			request, _ := http.NewRequest("PUT", "/offer/claim", offerReader)
 
 			//When
 			app.Router.ServeHTTP(recorder, request)
@@ -205,7 +152,7 @@ var _ = Describe("Healthcheck Handler", func() {
 				"GameID": "offers-game",
         "PlayerID": "non-existing-player-1",
 			})
-			request, _ := http.NewRequest("PUT", "/claim-offer", offerReader)
+			request, _ := http.NewRequest("PUT", "/offer/claim", offerReader)
 
 			//When
 			app.Router.ServeHTTP(recorder, request)
@@ -220,7 +167,7 @@ var _ = Describe("Healthcheck Handler", func() {
 				"GameID": "offers-game",
         "PlayerID": "non-existing-player-1",
 			})
-			request, _ := http.NewRequest("PUT", "/claim-offer", offerReader)
+			request, _ := http.NewRequest("PUT", "/offer/claim", offerReader)
 
 			//When
 			app.Router.ServeHTTP(recorder, request)
@@ -229,4 +176,72 @@ var _ = Describe("Healthcheck Handler", func() {
 			Expect(recorder.Code).To(Equal(http.StatusUnprocessableEntity))
 		})
 	})
+
+  Describe("PUT /update-offer-last-seen-at", func() {
+    It("should update last seen at of valid offer", func() {
+      //Given
+			offerReader := JSONFor(JSON{
+        "ID": "56fc0477-39f1-485c-898e-4909e9155eb1",
+        "PlayerID": "player-1",
+        "GameID": "offers-game",
+			})
+			request, _ := http.NewRequest("PUT", "/offer/last-seen-at", offerReader)
+
+      //When
+			app.Router.ServeHTTP(recorder, request)
+
+      //Then
+			Expect(recorder.Code).To(Equal(http.StatusOK))
+    })
+
+    It("should return status code 422 if ID is invalid", func() {
+      //Given
+			offerReader := JSONFor(JSON{
+        "ID": "invalid-uuid",
+        "PlayerID": "player-1",
+        "GameID": "offers-game",
+			})
+			request, _ := http.NewRequest("PUT", "/offer/last-seen-at", offerReader)
+
+      //When
+			app.Router.ServeHTTP(recorder, request)
+
+      //Then
+      Expect(recorder.Body.String()).To(Equal(`{"code":"OFF-002","description":"ID: invalid-uuid does not validate as uuidv4;","error":"ValidationFailedError"}`))
+			Expect(recorder.Code).To(Equal(http.StatusUnprocessableEntity))
+    })
+
+    It("should return status code 422 if ID is not passed", func() {
+      //Given
+			offerReader := JSONFor(JSON{
+        "PlayerID": "player-1",
+        "GameID": "offers-game",
+			})
+			request, _ := http.NewRequest("PUT", "/offer/last-seen-at", offerReader)
+
+      //When
+			app.Router.ServeHTTP(recorder, request)
+
+      //Then
+      Expect(recorder.Body.String()).To(Equal(`{"code":"OFF-002","description":"ID: non zero value required;","error":"ValidationFailedError"}`))
+			Expect(recorder.Code).To(Equal(http.StatusUnprocessableEntity))
+    })
+
+    It("should return status code 404 if ID is not passed", func() {
+      //Given
+			offerReader := JSONFor(JSON{
+        "ID": uuid.NewV4().String(),
+        "PlayerID": "player-1",
+        "GameID": "offers-game",
+			})
+			request, _ := http.NewRequest("PUT", "/offer/last-seen-at", offerReader)
+
+      //When
+			app.Router.ServeHTTP(recorder, request)
+
+      //Then
+      Expect(recorder.Body.String()).To(Equal(`Offer was not found with specified filters.`))
+			Expect(recorder.Code).To(Equal(http.StatusNotFound))
+    })
+  })
 })

@@ -31,8 +31,8 @@ func (h *OfferRequestHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		h.getOffers(w, r)
 	case "claim_offer":
 		h.claimOffer(w, r)
-	case "insert_offer":
-		h.insertOffer(w, r)
+	case "update_offer_last_seen_at":
+		h.updateOfferLastSeenAt(w, r)
 	default:
 		msg := "method not found"
 		h.App.HandleError(w, http.StatusBadRequest, msg, errors.New(msg))
@@ -86,7 +86,7 @@ func (h *OfferRequestHandler) getOffers(w http.ResponseWriter, r *http.Request) 
 
 func (h *OfferRequestHandler) claimOffer(w http.ResponseWriter, r *http.Request) {
 	mr := metricsReporterFromCtx(r.Context())
-	offer := offerToClaimFromCtx(r.Context())
+	offer := offerToUpdateFromCtx(r.Context())
 	currentTime := h.App.Clock.GetTime()
 
 	contents, alreadyClaimed, err := models.ClaimOffer(h.App.DB, offer.ID, offer.PlayerID, offer.GameID, currentTime, mr)
@@ -114,12 +114,13 @@ func (h *OfferRequestHandler) claimOffer(w http.ResponseWriter, r *http.Request)
   WriteBytes(w, http.StatusOK, contents)
 }
 
-func (h *OfferRequestHandler) insertOffer(w http.ResponseWriter, r *http.Request) {
+//UpdateOfferLastSeenAt updates the offer last seen at
+func (h *OfferRequestHandler) updateOfferLastSeenAt(w http.ResponseWriter, r *http.Request) {
 	mr := metricsReporterFromCtx(r.Context())
 	offer := offerFromCtx(r.Context())
 	currentTime := h.App.Clock.GetTime()
 
-	err := models.UpsertOffer(h.App.DB, offer, currentTime, mr)
+	err := models.UpdateLastSeenAt(h.App.DB, offer.ID, offer.PlayerID, offer.GameID, currentTime, mr)
 
 	if err != nil {
 		h.App.HandleError(w, http.StatusBadRequest, err.Error(), err)

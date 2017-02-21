@@ -7,7 +7,8 @@ CREATE TABLE offers (
     player_id varchar(1000) NOT NULL,
     created_at timestamp NOT NULL DEFAULT NOW(),
     updated_at timestamp NULL,
-    claimed_at timestamp NULL
+    claimed_at timestamp NULL,
+    last_seen_at timestamp NULL
 );
 
 CREATE INDEX player_id

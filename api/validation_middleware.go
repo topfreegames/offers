@@ -57,13 +57,13 @@ func offerFromCtx(ctx context.Context) *models.Offer {
 	return offer.(*models.Offer)
 }
 
-func offerToClaimFromCtx(ctx context.Context) *models.OfferToClaim {
+func offerToUpdateFromCtx(ctx context.Context) *models.OfferToUpdate {
 	offer := ctx.Value(payloadString)
 	if offer == nil {
 		return nil
 	}
 
-	return offer.(*models.OfferToClaim)
+	return offer.(*models.OfferToUpdate)
 }
 
 //ServeHTTP method

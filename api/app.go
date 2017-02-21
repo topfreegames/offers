@@ -82,27 +82,27 @@ func (a *App) getRouter() *mux.Router {
 		&ValidationMiddleware{GetPayload: func() interface{} { return &models.OfferTemplate{} }},
 	)).Methods("PUT").Name("offer_templates")
 
-	r.Handle("/offer", Chain(
-		&OfferRequestHandler{App: a, Method: "insert_offer"},
-		&NewRelicMiddleware{App: a},
-		&LoggingMiddleware{App: a},
-		&VersionMiddleware{},
-		&ValidationMiddleware{GetPayload: func() interface{} { return &models.Offer{} }},
-	)).Methods("PUT").Name("offer")
-
-	r.Handle("/get-offers", Chain(
+	r.Handle("/offers", Chain(
 		&OfferRequestHandler{App: a, Method: "get_offers"},
 		&NewRelicMiddleware{App: a},
 		&LoggingMiddleware{App: a},
 		&VersionMiddleware{},
 	)).Methods("GET").Name("offer")
 
-	r.Handle("/claim-offer", Chain(
+	r.Handle("/offer/claim", Chain(
 		&OfferRequestHandler{App: a, Method: "claim_offer"},
 		&NewRelicMiddleware{App: a},
 		&LoggingMiddleware{App: a},
 		&VersionMiddleware{},
-		&ValidationMiddleware{GetPayload: func() interface{} { return &models.OfferToClaim{} }},
+		&ValidationMiddleware{GetPayload: func() interface{} { return &models.OfferToUpdate{} }},
+	)).Methods("PUT").Name("offer")
+
+	r.Handle("/offer/last-seen-at", Chain(
+		&OfferRequestHandler{App: a, Method: "claim_offer"},
+		&NewRelicMiddleware{App: a},
+		&LoggingMiddleware{App: a},
+		&VersionMiddleware{},
+		&ValidationMiddleware{GetPayload: func() interface{} { return &models.OfferToUpdate{} }},
 	)).Methods("PUT").Name("offer")
 
 	return r
