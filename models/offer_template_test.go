@@ -71,7 +71,7 @@ var _ = Describe("Offer Template Models", func() {
 		It("should return error if game id does not exist", func() {
 			//Given
 			offerTemplate := &models.OfferTemplate{
-				ID:        "dd21ec96-2890-4ba0-b8e2-40ea67196990",
+				ID:        uuid.NewV4().String(),
 				Name:      "New Awesome Game",
 				ProductID: "com.tfg.example",
 				GameID:    "nonexisting-game-id",

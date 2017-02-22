@@ -73,14 +73,14 @@ func GetOfferByID(db runner.Connection, gameID string, id string, mr *MixedMetri
 	return &offer, nil
 }
 
-//InsertOffer updates a offer with new meta or insert with the new UUID
+//InsertOffer inserts an offer with the new UUID
 func InsertOffer(db runner.Connection, offer *Offer, t time.Time, mr *MixedMetricsReporter) error {
 	offer.CreatedAt = dat.NullTimeFrom(t)
-	err := mr.WithDatastoreSegment("offers", "upsert", func() error {
-		return db.
-		  Insect("offers").
+	err := mr.WithDatastoreSegment("offers", "insect", func() error {
+    return db.
+		  InsertInto("offers").
+      Columns("id", "game_id", "offer_template_id", "player_id").
       Record(offer).
-      Where("game_id=$1, player_id=$2, offer_template_id=$3", offer.GameID, offer.PlayerID, offer.OfferTemplateID).
       Returning("id").
       QueryStruct(offer)
 	})
@@ -143,15 +143,14 @@ func ClaimOffer(db runner.Connection, offerID, playerID, gameID string, t time.T
 //UpdateOfferLastSeenAt updates last seen timestamp of an offer
 func UpdateOfferLastSeenAt(db runner.Connection, offerID, playerID, gameID string, t time.Time, mr *MixedMetricsReporter) error {
   var offer Offer
-  err := mr.WithDatastoreSegment("offers", "update", func() error {
-		return db.
-			Update("offers").
-			Set("last_seen_at", t).
-      Set("seen_counter", "seen_counter + 1").
+
+  err := mr.WithDatastoreSegment("offers", "select by id", func() error {
+    return db.
+      Select("id, seen_counter").
+      From("offers").
       Where("id=$1 AND player_id=$2 AND game_id=$3", offerID, playerID, gameID).
-			Returning("id").
       QueryStruct(&offer)
-	})
+  })
 
 	if err != nil {
 		if IsNoRowsInResultSetError(err) {
@@ -161,6 +160,22 @@ func UpdateOfferLastSeenAt(db runner.Connection, offerID, playerID, gameID strin
 				"PlayerID": playerID,
 			})
 		}
+		return err
+  }
+
+  seenCounter := offer.SeenCounter
+
+  err = mr.WithDatastoreSegment("offers", "update", func() error {
+		return db.
+			Update("offers").
+			Set("last_seen_at", t).
+      Set("seen_counter", seenCounter + 1).
+      Where("id=$1 AND player_id=$2 AND game_id=$3", offerID, playerID, gameID).
+			Returning("id").
+      QueryStruct(&offer)
+	})
+
+	if err != nil {
 		return err
   }
 
