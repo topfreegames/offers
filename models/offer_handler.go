@@ -54,7 +54,7 @@ func GetOfferByID(db runner.Connection, gameID string, id string, mr *MixedMetri
 	var offer Offer
 	err := mr.WithDatastoreSegment("offers", "select by id", func() error {
 		return db.
-			Select("id, game_id, offer_template_id, player_id, created_at, updated_at, claimed_at, last_seen_at").
+			Select("id, game_id, offer_template_id, player_id, created_at, updated_at, claimed_at, last_seen_at, seen_counter").
 			From("offers").
 			Where("id=$1 AND game_id=$2", id, gameID).
 			QueryStruct(&offer)
@@ -143,14 +143,17 @@ func ClaimOffer(db runner.Connection, offerID, playerID, gameID string, t time.T
 func UpdateOfferLastSeenAt(db runner.Connection, offerID, playerID, gameID string, t time.Time, mr *MixedMetricsReporter) error {
   var offer Offer
 
-
+  query := `UPDATE offers
+            SET 
+              last_seen_at = $1,
+              seen_counter = seen_counter + 1
+            WHERE
+              id = $2 AND
+              player_id = $3 AND
+              game_id = $4
+            RETURNING id`
   err := mr.WithDatastoreSegment("offers", "select by id", func() error {
-    return db.
-      Select(`id, game_id, offer_template_id, player_id,
-              seen_counter, last_seen_at`).
-      From("offers").
-      Where("id=$1 AND player_id=$2 AND game_id=$3", offerID, playerID, gameID).
-      QueryStruct(&offer)
+    return db.SQL(query, t, offerID, playerID, gameID).QueryStruct(&offer)
   })
 
 	if err != nil {
@@ -163,22 +166,6 @@ func UpdateOfferLastSeenAt(db runner.Connection, offerID, playerID, gameID strin
 		}
 		return err
   }
-
-  seenCounter := offer.SeenCounter
-  err = mr.WithDatastoreSegment("offers", "update", func() error {
-		return db.
-			Update("offers").
-      Set("last_seen_at", t).
-      Set("seen_counter", seenCounter + 1).
-      Where("id=$1", offerID).
-			Returning("last_seen_at").
-      QueryStruct(&offer)
-	})
-
-	if err != nil {
-		return err
-  }
-
   return nil
 }
 

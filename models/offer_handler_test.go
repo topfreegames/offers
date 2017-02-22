@@ -14,7 +14,6 @@ import (
 	"github.com/topfreegames/offers/errors"
 	"github.com/topfreegames/offers/models"
 	"time"
-  "fmt"
 )
 
 var _ = Describe("Offers Model", func() {
@@ -265,7 +264,7 @@ var _ = Describe("Offers Model", func() {
 	})
 
   Describe("Update offer last seen at", func() {
-    It("should update last seen offer at now", func() {
+    It("should update last seen offer at now and increment seen counter", func() {
 			//Given
 			offerID := "56fc0477-39f1-485c-898e-4909e9155eb1"
       playerID := "player-1"
@@ -273,16 +272,18 @@ var _ = Describe("Offers Model", func() {
       currentTime := time.Now()
 
 			//When
-			err1 := models.UpdateOfferLastSeenAt(db, offerID, playerID, gameID, currentTime, nil)
-			offer, err2 := models.GetOfferByID(db, "offers-game", offerID, nil)
+			offerBefore, err1 := models.GetOfferByID(db, "offers-game", offerID, nil)
+			err2 := models.UpdateOfferLastSeenAt(db, offerID, playerID, gameID, currentTime, nil)
+      offerAfter, err3 := models.GetOfferByID(db, "offers-game", offerID, nil)
 
-      fmt.Printf("TIME NOW %v", currentTime)
-      fmt.Printf("TIME DB %v", offer.LastSeenAt.Time)
 			//Then
 			Expect(err1).NotTo(HaveOccurred())
 			Expect(err2).NotTo(HaveOccurred())
-      Expect(offer.LastSeenAt.Time.Unix()).To(Equal(currentTime.Unix()))
-      Expect(offer.LastSeenAt.Valid).To(BeTrue())
+			Expect(err3).NotTo(HaveOccurred())
+      Expect(offerAfter.LastSeenAt.Time.Unix()).To(Equal(currentTime.Unix()))
+      Expect(offerAfter.LastSeenAt.Valid).To(BeTrue())
+      Expect(offerBefore.SeenCounter).To(Equal(0))
+      Expect(offerAfter.SeenCounter).To(Equal(1))
     })
 
     It("should return status code 422 if invalid id", func() {
