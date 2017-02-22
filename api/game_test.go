@@ -12,6 +12,8 @@ import (
 	"net/http"
 	"net/http/httptest"
 
+	runner "gopkg.in/mgutz/dat.v2/sqlx-runner"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	uuid "github.com/satori/go.uuid"
@@ -138,6 +140,27 @@ var _ = Describe("Game Handler", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(obj["code"]).To(BeEquivalentTo("OFF-002"))
 			Expect(obj["description"]).To(ContainSubstring("ID: non zero value required;"))
+		})
+
+		It("should return status code of 500 if some error occurred", func() {
+			gameReader := JSONFor(JSON{
+				"ID":       uuid.NewV4().String(),
+				"Name":     "Game Awesome Break",
+				"BundleID": "com.topfreegames.example",
+			})
+
+			oldDB := app.DB
+			db, err := GetTestDB()
+			Expect(err).NotTo(HaveOccurred())
+			app.DB = db
+			app.DB.(*runner.DB).DB.Close() // make DB connection unavailable
+			request, _ := http.NewRequest("PUT", "/games", gameReader)
+
+			app.Router.ServeHTTP(recorder, request)
+
+			Expect(recorder.Code).To(Equal(http.StatusInternalServerError))
+			Expect(recorder.Body.String()).To(Equal("Upserting game failed"))
+			app.DB = oldDB // avoid errors in after each
 		})
 	})
 })
