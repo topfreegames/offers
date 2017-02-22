@@ -21,7 +21,7 @@ var _ = Describe("Offers Model", func() {
 	defaultOfferTemplateID = "dd21ec96-2890-4ba0-b8e2-40ea67196990"
 
 	Describe("Offer Instance", func() {
-		It("Shoud load a offer", func() {
+		It("Should load a offer", func() {
 			//Given
 			offerID := "56fc0477-39f1-485c-898e-4909e9155eb1"
 

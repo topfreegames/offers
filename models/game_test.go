@@ -18,7 +18,7 @@ import (
 
 var _ = Describe("Games Model", func() {
 	Describe("Game Instance", func() {
-		It("Shoud load a game", func() {
+		It("Should load a game", func() {
 			//Given
 			gameID := "game-id"
 			var game models.Game
