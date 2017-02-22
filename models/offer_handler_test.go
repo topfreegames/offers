@@ -14,6 +14,7 @@ import (
 	"github.com/topfreegames/offers/errors"
 	"github.com/topfreegames/offers/models"
 	"time"
+  "fmt"
 )
 
 var _ = Describe("Offers Model", func() {
@@ -130,8 +131,8 @@ var _ = Describe("Offers Model", func() {
 		It("should fail if game does not exist", func() {
 			//Given
 			offer := &models.Offer{
-				GameID:          "invalid-offers-game",
-				OfferTemplateID: defaultOfferTemplateID,
+				GameID:          "non-existing-game",
+				OfferTemplateID: uuid.NewV4().String(),
 				PlayerID:        "player-3",
 			}
 			expectedError := errors.NewInvalidModelError(
@@ -263,18 +264,25 @@ var _ = Describe("Offers Model", func() {
 		})
 	})
 
-  Describe("Update last seen offer at", func() {
+  Describe("Update offer last seen at", func() {
     It("should update last seen offer at now", func() {
 			//Given
-			id := "56fc0477-39f1-485c-898e-4909e9155eb1"
+			offerID := "56fc0477-39f1-485c-898e-4909e9155eb1"
       playerID := "player-1"
       gameID := "offers-game"
+      currentTime := time.Now()
 
 			//When
-			err := models.UpdateOfferLastSeenAt(db, id, playerID, gameID, time.Now(), nil)
+			err1 := models.UpdateOfferLastSeenAt(db, offerID, playerID, gameID, currentTime, nil)
+			offer, err2 := models.GetOfferByID(db, "offers-game", offerID, nil)
 
+      fmt.Printf("TIME NOW %v", currentTime)
+      fmt.Printf("TIME DB %v", offer.LastSeenAt.Time)
 			//Then
-			Expect(err).NotTo(HaveOccurred())
+			Expect(err1).NotTo(HaveOccurred())
+			Expect(err2).NotTo(HaveOccurred())
+      Expect(offer.LastSeenAt.Time.Unix()).To(Equal(currentTime.Unix()))
+      Expect(offer.LastSeenAt.Valid).To(BeTrue())
     })
 
     It("should return status code 422 if invalid id", func() {

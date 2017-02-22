@@ -91,7 +91,7 @@ func InsertOfferTemplate(db runner.Connection, ot *OfferTemplate, mr *MixedMetri
 	return mr.WithDatastoreSegment("offer_templates", "insert", func() error {
 		return db.
 			InsertInto("offer_templates").
-			Columns("id", "name", "product_id", "game_id", "contents", "period", "frequency", "trigger", "placement").
+			Columns("name", "product_id", "game_id", "contents", "period", "frequency", "trigger", "placement").
 			Record(ot).
 			Returning("id").
 			QueryStruct(ot)

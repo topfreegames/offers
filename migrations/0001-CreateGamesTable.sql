@@ -5,6 +5,6 @@ CREATE TABLE games (
     name varchar(255) NOT NULL,
     metadata JSONB NOT NULL DEFAULT '{}'::JSONB,
     bundle_id varchar(255) NOT NULL,
-    created_at timestamp NOT NULL DEFAULT NOW(),
-    updated_at timestamp NULL
+    created_at timestamp WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    updated_at timestamp WITH TIME ZONE NULL
 );

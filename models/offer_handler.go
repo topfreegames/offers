@@ -54,7 +54,7 @@ func GetOfferByID(db runner.Connection, gameID string, id string, mr *MixedMetri
 	var offer Offer
 	err := mr.WithDatastoreSegment("offers", "select by id", func() error {
 		return db.
-			Select("id, game_id, offer_template_id, player_id, created_at, updated_at, claimed_at").
+			Select("id, game_id, offer_template_id, player_id, created_at, updated_at, claimed_at, last_seen_at").
 			From("offers").
 			Where("id=$1 AND game_id=$2", id, gameID).
 			QueryStruct(&offer)
@@ -79,19 +79,18 @@ func InsertOffer(db runner.Connection, offer *Offer, t time.Time, mr *MixedMetri
 	err := mr.WithDatastoreSegment("offers", "insect", func() error {
     return db.
 		  InsertInto("offers").
-      Columns("id", "game_id", "offer_template_id", "player_id").
+      Columns("game_id", "offer_template_id", "player_id").
       Record(offer).
       Returning("id").
       QueryStruct(offer)
 	})
 
-	if pqErr, ok := IsForeignKeyViolationError(err); ok {
-		return errors.NewInvalidModelError("Offer", pqErr.Message)
-	}
-
-	if err != nil {
-		return err
-	}
+  if err != nil {
+    if pqErr, ok := IsForeignKeyViolationError(err); ok {
+      return errors.NewInvalidModelError("Offer", pqErr.Message)
+    }
+    return err
+  }
 
 	return nil
 }
@@ -144,9 +143,11 @@ func ClaimOffer(db runner.Connection, offerID, playerID, gameID string, t time.T
 func UpdateOfferLastSeenAt(db runner.Connection, offerID, playerID, gameID string, t time.Time, mr *MixedMetricsReporter) error {
   var offer Offer
 
+
   err := mr.WithDatastoreSegment("offers", "select by id", func() error {
     return db.
-      Select("id, seen_counter").
+      Select(`id, game_id, offer_template_id, player_id,
+              seen_counter, last_seen_at`).
       From("offers").
       Where("id=$1 AND player_id=$2 AND game_id=$3", offerID, playerID, gameID).
       QueryStruct(&offer)
@@ -164,14 +165,13 @@ func UpdateOfferLastSeenAt(db runner.Connection, offerID, playerID, gameID strin
   }
 
   seenCounter := offer.SeenCounter
-
   err = mr.WithDatastoreSegment("offers", "update", func() error {
 		return db.
 			Update("offers").
-			Set("last_seen_at", t).
+      Set("last_seen_at", t).
       Set("seen_counter", seenCounter + 1).
-      Where("id=$1 AND player_id=$2 AND game_id=$3", offerID, playerID, gameID).
-			Returning("id").
+      Where("id=$1", offerID).
+			Returning("last_seen_at").
       QueryStruct(&offer)
 	})
 

@@ -50,7 +50,6 @@ var _ = Describe("Offer Template Models", func() {
 		It("should create an template with valid parameters", func() {
 			//Given
 			offerTemplate := &models.OfferTemplate{
-				ID:        uuid.NewV4().String(),
 				Name:      "New Awesome Game",
 				ProductID: "com.tfg.example",
 				GameID:    "game-id",
@@ -71,10 +70,9 @@ var _ = Describe("Offer Template Models", func() {
 		It("should return error if game id does not exist", func() {
 			//Given
 			offerTemplate := &models.OfferTemplate{
-				ID:        uuid.NewV4().String(),
 				Name:      "New Awesome Game",
 				ProductID: "com.tfg.example",
-				GameID:    "nonexisting-game-id",
+				GameID:    "non-existing-game-id",
 				Contents:  dat.JSON([]byte(`{"gems": 5, "gold": 100}`)),
 				Period:    dat.JSON([]byte(`{"type": "once"}`)),
 				Frequency: dat.JSON([]byte(`{"every": 24, "unit": "hour"}`)),
