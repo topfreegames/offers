@@ -37,6 +37,7 @@ var _ = Describe("Offer Template Handler", func() {
 				"Period":    dat.JSON([]byte("{\"type\": \"once\"}")),
 				"Frequency": dat.JSON([]byte("{\"every\": 24, \"unit\": \"hour\"}")),
 				"Trigger":   dat.JSON([]byte("{\"from\": 1487280506875, \"to\": 1487366964730}")),
+        "Placement": "popup",
 			})
 
 			request, _ := http.NewRequest("PUT", "/offer-templates", offerTemplateReader)
@@ -53,6 +54,7 @@ var _ = Describe("Offer Template Handler", func() {
 				"Period":    dat.JSON([]byte("{\"type\": \"once\"}")),
 				"Frequency": dat.JSON([]byte("{\"every\": 24, \"unit\": \"hour\"}")),
 				"Trigger":   dat.JSON([]byte("{\"from\": 1487280506875, \"to\": 1487366964730}")),
+        "Placement": "popup",
 			})
 
 			request, _ := http.NewRequest("PUT", "/offer-templates", offerTemplateReader)
@@ -70,6 +72,7 @@ var _ = Describe("Offer Template Handler", func() {
 				"Period":    dat.JSON([]byte("{\"type\": \"once\"}")),
 				"Frequency": dat.JSON([]byte("{\"every\": 24, \"unit\": \"hour\"}")),
 				"Trigger":   dat.JSON([]byte("{\"from\": 1487280506875, \"to\": 1487366964730}")),
+        "Placement": "popup",
 			})
 
 			request, _ := http.NewRequest("PUT", "/offer-templates", offerTemplateReader)
@@ -87,6 +90,7 @@ var _ = Describe("Offer Template Handler", func() {
 				"Period":    dat.JSON([]byte("{\"type\": \"once\"}")),
 				"Frequency": dat.JSON([]byte("{\"every\": 24, \"unit\": \"hour\"}")),
 				"Trigger":   dat.JSON([]byte("{\"from\": 1487280506875, \"to\": 1487366964730}")),
+        "Placement": "popup",
 			})
 
 			request, _ := http.NewRequest("PUT", "/offer-templates", offerTemplateReader)
@@ -104,6 +108,7 @@ var _ = Describe("Offer Template Handler", func() {
 				"Period":    dat.JSON([]byte("{\"type\": \"once\"}")),
 				"Frequency": dat.JSON([]byte("{\"every\": 24, \"unit\": \"hour\"}")),
 				"Trigger":   dat.JSON([]byte("{\"from\": 1487280506875, \"to\": 1487366964730}")),
+        "Placement": "popup",
 			})
 
 			request, _ := http.NewRequest("PUT", "/offer-templates", offerTemplateReader)

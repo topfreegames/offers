@@ -5,6 +5,8 @@ CREATE TABLE offers (
     game_id varchar(255) NOT NULL REFERENCES games(id),
     offer_template_id varchar(255) NOT NULL REFERENCES offer_templates(id),
     player_id varchar(1000) NOT NULL,
+    seen_counter integer NOT NULL DEFAULT 0,
+    bought_counter integer NOT NULL DEFAULT 0,
     created_at timestamp NOT NULL DEFAULT NOW(),
     updated_at timestamp NULL,
     claimed_at timestamp NULL,

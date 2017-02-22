@@ -25,3 +25,8 @@ type MetricsReporter interface {
 type Clock interface {
 	GetTime() time.Time
 }
+
+//Trigger return true if offer is triggered
+type Trigger interface {
+  IsTriggered(interface{}, interface{}) bool
+}

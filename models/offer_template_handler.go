@@ -25,6 +25,7 @@ type OfferTemplate struct {
 	Frequency dat.JSON `db:"frequency" valid:"required"`
 	Trigger   dat.JSON `db:"trigger" valid:"required"`
 	Enabled   bool     `db:"enabled" valid:"matches(^(true|false)$),optional"`
+  Placement string   `db:"placement" valid:"ascii,stringlength(1|255),required"`
 }
 
 const enabledOfferTemplates = `
@@ -41,7 +42,7 @@ func GetOfferTemplateByID(db runner.Connection, id string, mr *MixedMetricsRepor
 			Select(`
 				id, name, product_id, game_id,
 				contents, metadata, period,
-				frequency, trigger, enabled
+				frequency, trigger, placement, enabled
 			`).
 			From("offer_templates").
 			Where("id = $1", id).
@@ -69,7 +70,7 @@ func GetEnabledOfferTemplates(db runner.Connection, gameID string, mr *MixedMetr
 			Select(`
 				id, name, product_id,
 				contents, metadata, period,
-				frequency, trigger
+				frequency, trigger, placement
 			`).
 			From("offer_templates ot").
 			Scope(enabledOfferTemplates, gameID).
@@ -90,7 +91,7 @@ func InsertOfferTemplate(db runner.Connection, ot *OfferTemplate, mr *MixedMetri
 	return mr.WithDatastoreSegment("offer_templates", "insert", func() error {
 		return db.
 			InsertInto("offer_templates").
-			Columns("id", "name", "product_id", "game_id", "contents", "period", "frequency", "trigger").
+			Columns("id", "name", "product_id", "game_id", "contents", "period", "frequency", "trigger", "placement").
 			Record(ot).
 			Returning("id").
 			QueryStruct(ot)

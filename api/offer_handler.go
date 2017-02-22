@@ -120,7 +120,7 @@ func (h *OfferRequestHandler) updateOfferLastSeenAt(w http.ResponseWriter, r *ht
 	offer := offerFromCtx(r.Context())
 	currentTime := h.App.Clock.GetTime()
 
-	err := models.UpdateLastSeenAt(h.App.DB, offer.ID, offer.PlayerID, offer.GameID, currentTime, mr)
+	err := models.UpdateOfferLastSeenAt(h.App.DB, offer.ID, offer.PlayerID, offer.GameID, currentTime, mr)
 
 	if err != nil {
 		h.App.HandleError(w, http.StatusBadRequest, err.Error(), err)

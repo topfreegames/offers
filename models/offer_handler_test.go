@@ -108,48 +108,7 @@ var _ = Describe("Offers Model", func() {
 		})
 	})
 
-	XDescribe("Get player's seen offers", func() {
-		var enabledOfferTemplates []*models.OfferTemplate
-		const playerID = "player-seen-offers"
-		var offer *models.Offer
-
-		BeforeEach(func() {
-			//Given
-			var err error
-			enabledOfferTemplates, err = models.GetEnabledOfferTemplates(db, "offers-game", nil)
-			Expect(err).NotTo(HaveOccurred())
-
-			offer = &models.Offer{
-				GameID:          "offers-game",
-				OfferTemplateID: enabledOfferTemplates[0].ID,
-				PlayerID:        playerID,
-			}
-			err = models.UpsertOffer(db, offer, time.Now(), nil)
-			Expect(err).NotTo(HaveOccurred())
-		})
-
-		It("Should get all offers the player has seen and are enabled", func() {
-			//When
-			offers, err := models.GetPlayerSeenOffers(db, "offers-game", playerID, nil)
-
-			//Then
-			Expect(err).NotTo(HaveOccurred())
-			Expect(offers).To(HaveLen(1))
-			Expect(offers[0].OfferTemplateID).To(Equal(enabledOfferTemplates[0].ID))
-		})
-
-		It("Should return empty list if invalid game", func() {
-			//When
-			//offers, err := models.GetPlayerSeenOffers(db, "invalid-game", playerID, enabledOfferTemplates, nil)
-
-			//Then
-			//Expect(err).NotTo(HaveOccurred())
-			//Expect(offers).To(HaveLen(0))
-		})
-
-	})
-
-	Describe("Upsert offer", func() {
+	Describe("Insert offer", func() {
 		It("should insert offer with new id", func() {
 			//Given
 			offer := &models.Offer{
@@ -159,37 +118,13 @@ var _ = Describe("Offers Model", func() {
 			}
 
 			//When
-			err := models.UpsertOffer(db, offer, time.Now(), nil)
+			err := models.InsertOffer(db, offer, time.Now(), nil)
 			Expect(err).NotTo(HaveOccurred())
 
 			//Then
 			offerFromDB, err := models.GetOfferByID(db, "offers-game", offer.ID, nil)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(offerFromDB.ID).To(Equal(offer.ID))
-		})
-
-		It("should update offer with existing id", func() {
-			//Given
-			offerID := "35df52e7-3161-446f-975b-92f32871e37c"
-			offer := &models.Offer{
-				ID:              offerID,
-				GameID:          "offers-game-2",
-				OfferTemplateID: defaultOfferTemplateID,
-				PlayerID:        "player-4",
-			}
-
-			//When
-			err := models.UpsertOffer(db, offer, time.Now(), nil)
-
-			//Then
-			Expect(err).NotTo(HaveOccurred())
-
-			offerFromDB, err := models.GetOfferByID(db, "offers-game-2", offerID, nil)
-			Expect(err).NotTo(HaveOccurred())
-			Expect(offerFromDB.ID).To(Equal(offerID))
-			Expect(offerFromDB.GameID).To(Equal("offers-game-2"))
-			Expect(offerFromDB.PlayerID).To(Equal("player-4"))
-			Expect(offerFromDB.OfferTemplateID).To(Equal(defaultOfferTemplateID))
 		})
 
 		It("should fail if game does not exist", func() {
@@ -205,7 +140,7 @@ var _ = Describe("Offers Model", func() {
 			)
 
 			//When
-			err := models.UpsertOffer(db, offer, time.Now(), nil)
+			err := models.InsertOffer(db, offer, time.Now(), nil)
 
 			//Then
 			Expect(err).To(HaveOccurred())
@@ -233,7 +168,7 @@ var _ = Describe("Offers Model", func() {
 			)
 
 			//When
-			err := models.UpsertOffer(db, offer, time.Now(), nil)
+			err := models.InsertOffer(db, offer, time.Now(), nil)
 
 			//Then
 			Expect(err).To(HaveOccurred())
@@ -336,7 +271,7 @@ var _ = Describe("Offers Model", func() {
       gameID := "offers-game"
 
 			//When
-			err := models.UpdateLastSeenAt(db, id, playerID, gameID, time.Now(), nil)
+			err := models.UpdateOfferLastSeenAt(db, id, playerID, gameID, time.Now(), nil)
 
 			//Then
 			Expect(err).NotTo(HaveOccurred())
@@ -349,7 +284,7 @@ var _ = Describe("Offers Model", func() {
       gameID := "offers-game"
 
 			//When
-			err := models.UpdateLastSeenAt(db, id, playerID, gameID, time.Now(), nil)
+			err := models.UpdateOfferLastSeenAt(db, id, playerID, gameID, time.Now(), nil)
 
 			//Then
 			Expect(err).To(HaveOccurred())
