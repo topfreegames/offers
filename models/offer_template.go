@@ -68,7 +68,7 @@ func GetEnabledOfferTemplates(db runner.Connection, gameID string, mr *MixedMetr
 	err := mr.WithDatastoreSegment("offer_templates", "select", func() error {
 		return db.
 			Select(`
-				id, name, product_id,
+				id, name, game_id, product_id,
 				contents, metadata, period,
 				frequency, trigger, placement
 			`).

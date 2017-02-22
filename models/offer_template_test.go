@@ -27,11 +27,11 @@ var _ = Describe("Offer Template Models", func() {
 			//Then
 			Expect(err).NotTo(HaveOccurred())
 			Expect(ot.ProductID).To(Equal("com.tfg.sample"))
-			Expect(ot.GameID).To(Equal("awesome game"))
+			Expect(ot.GameID).To(Equal("offers-game"))
 			Expect(ot.Contents).To(Equal(dat.JSON([]byte(`{"gems": 5, "gold": 100}`))))
 			Expect(ot.Metadata).To(Equal(dat.JSON([]byte(`{}`))))
-			Expect(ot.Period).To(Equal(dat.JSON([]byte(`{"type": "once"}`))))
-			Expect(ot.Frequency).To(BeEquivalentTo(dat.JSON([]byte(`{"unit": "hour", "every": 12}`))))
+      Expect(ot.Period).To(Equal(dat.JSON([]byte(`{"every": "1s"}`))))
+			Expect(ot.Frequency).To(BeEquivalentTo(dat.JSON([]byte(`{"every": "1s"}`))))
 			Expect(ot.Trigger).To(Equal(dat.JSON([]byte(`{"to": 1486679000, "from": 1486678000}`))))
 			Expect(ot.Placement).To(Equal("popup"))
 		})
@@ -88,14 +88,14 @@ var _ = Describe("Offer Template Models", func() {
 		})
 	})
 
-	Describe("Get all available offers", func() {
-		It("Should get all available offers", func() {
+	Describe("Get enabled offer templates", func() {
+		It("Should get all enabled offer templates", func() {
 			ots, err := models.GetEnabledOfferTemplates(db, "offers-game", nil)
+
 			Expect(err).NotTo(HaveOccurred())
-
-			Expect(ots).To(HaveLen(1))
-
-			Expect(ots[0].Name).To(Equal("template-2"))
+			Expect(ots).To(HaveLen(2))
+			Expect(ots[0].Name).To(Equal("template-1"))
+			Expect(ots[1].Name).To(Equal("template-2"))
 		})
 	})
 })

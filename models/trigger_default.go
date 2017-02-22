@@ -11,6 +11,6 @@ package models
 type DefaultTrigger struct{}
 
 //IsTriggered returns the current time
-func (dt *DefaultTrigger) IsTriggered(times map[string]interface{}, user map[string]interface{}) bool {
+func (dt DefaultTrigger) IsTriggered(times map[string]interface{}, user map[string]interface{}) bool {
   return true
 }

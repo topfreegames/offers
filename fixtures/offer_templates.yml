@@ -9,11 +9,11 @@
     id: dd21ec96-2890-4ba0-b8e2-40ea67196990
     name: template-1
     product_id: com.tfg.sample
-    game_id: awesome game
+    game_id: offers-game
     contents: '{"gems": 5, "gold": 100}'
     metadata: '{}'
-    period: '{"type": "once"}'
-    frequency: '{"every": 12, "unit": "hour"}'
+    period: '{"every": "1s"}'
+    frequency: '{"every": "1s"}'
     trigger: '{"from": 1486678000, "to": 1486679000}'
     placement: popup
     enabled: true
@@ -24,8 +24,8 @@
     game_id: offers-game
     contents: '{"gems": 5, "gold": 100}'
     metadata: '{}'
-    period: '{"type": "once"}'
-    frequency: '{"every": 12, "unit": "hour"}'
+    period: '{"every": "1s"}'
+    frequency: '{"every": "1s"}'
     trigger: '{"from": 1486678000, "to": 1486679000}'
     placement: store
     enabled: true

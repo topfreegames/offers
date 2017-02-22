@@ -10,7 +10,6 @@ import (
 	"encoding/json"
 	"time"
 
-	uuid "github.com/satori/go.uuid"
 	"github.com/topfreegames/offers/errors"
 	"gopkg.in/mgutz/dat.v2/dat"
 	runner "gopkg.in/mgutz/dat.v2/sqlx-runner"
@@ -51,7 +50,7 @@ type Period struct {
 }
 
 //GetOfferByID returns a offer by it's pk
-func GetOfferByID(db runner.Connection, gameID string, id string, mr *MixedMetricsReporter) (*Offer, error) {
+func GetOfferByID(db runner.Connection, gameID, id string, mr *MixedMetricsReporter) (*Offer, error) {
 	var offer Offer
 	err := mr.WithDatastoreSegment("offers", "select by id", func() error {
 		return db.
@@ -142,9 +141,9 @@ func ClaimOffer(db runner.Connection, offerID, playerID, gameID string, t time.T
 
 //UpdateOfferLastSeenAt updates last seen timestamp of an offer
 func UpdateOfferLastSeenAt(db runner.Connection, offerID, playerID, gameID string, t time.Time, mr *MixedMetricsReporter) error {
-  var offer Offer
+	var offer Offer
 
-  query := `UPDATE offers
+	query := `UPDATE offers
             SET 
               last_seen_at = $1,
               seen_counter = seen_counter + 1
@@ -153,21 +152,21 @@ func UpdateOfferLastSeenAt(db runner.Connection, offerID, playerID, gameID strin
               player_id = $3 AND
               game_id = $4
             RETURNING id`
-  err := mr.WithDatastoreSegment("offers", "select by id", func() error {
-    return db.SQL(query, t, offerID, playerID, gameID).QueryStruct(&offer)
-  })
+	err := mr.WithDatastoreSegment("offers", "select by id", func() error {
+		return db.SQL(query, t, offerID, playerID, gameID).QueryStruct(&offer)
+	})
 
 	if err != nil {
 		if IsNoRowsInResultSetError(err) {
 			return errors.NewModelNotFoundError("Offer", map[string]interface{}{
-        "ID": offerID,
+				"ID":       offerID,
 				"GameID":   gameID,
 				"PlayerID": playerID,
 			})
 		}
 		return err
-  }
-  return nil
+	}
+	return nil
 }
 
 //GetAvailableOffers returns the offers that match the criteria of enabled offer templates
@@ -181,7 +180,7 @@ func GetAvailableOffers(db runner.Connection, playerID, gameID string, t time.Ti
 	}
 
 	var trigger TimeTrigger
-	filteredOts, err := filterTemplatesByTrigger(&trigger, eot, t)
+	filteredOts, err := filterTemplatesByTrigger(trigger, eot, t)
 	if err != nil {
 		return nil, err
 	}
@@ -206,12 +205,11 @@ func GetAvailableOffers(db runner.Connection, playerID, gameID string, t time.Ti
 		return map[string]*OfferTemplate{}, nil
 	}
 
-	var offerTemplatesByPlacement map[string]*OfferTemplate
+	offerTemplatesByPlacement := make(map[string]*OfferTemplate)
 	for _, ot := range filteredOts {
 		if _, otInMap := offerTemplatesByPlacement[ot.Placement]; !otInMap {
 			offerTemplatesByPlacement[ot.Placement] = ot
 			o := &Offer{
-				ID:              uuid.NewV4().String(),
 				GameID:          ot.GameID,
 				OfferTemplateID: ot.ID,
 				PlayerID:        playerID,
@@ -224,15 +222,22 @@ func GetAvailableOffers(db runner.Connection, playerID, gameID string, t time.Ti
 }
 
 func filterTemplatesByTrigger(trigger Trigger, ots []*OfferTemplate, t time.Time) ([]*OfferTemplate, error) {
-	var filteredOts []*OfferTemplate
+	var (
+		filteredOts []*OfferTemplate
+		times       Times
+		bytes       []byte
+		err         error
+	)
 	for _, ot := range ots {
-		var times Times
-		err := json.Unmarshal(ot.Trigger, &times)
-		if err != nil {
+		if bytes, err = ot.Trigger.MarshalJSON(); err != nil {
 			return nil, err
 		}
 
-		if trigger.IsTriggered(&times, &t) {
+		if json.Unmarshal(bytes, &times) != nil {
+			return nil, err
+		}
+
+		if trigger.IsTriggered(times, t) {
 			filteredOts = append(filteredOts, ot)
 		}
 	}
@@ -249,17 +254,16 @@ func getPlayerOffersByOfferTemplateIDs(
 	var offers []*Offer
 	err := mr.WithDatastoreSegment("offers", "select by id", func() error {
 		return db.
-			Select("id, offer_template_id").
+			Select("id, offer_template_id, game_id").
 			From("offers").
-			Where("player_id=$1 AND game_id=$2 AND offer_template_id IN ($3)", playerID, gameID, offerTemplateIDs).
+			Where("player_id=$1 AND game_id=$2 AND offer_template_id IN $3", playerID, gameID, offerTemplateIDs).
 			QueryStructs(&offers)
 	})
-
 	return offers, err
 }
 
 func filterTemplatesByFrequencyAndPeriod(offers []*Offer, ots []*OfferTemplate, t time.Time) ([]*OfferTemplate, error) {
-	var offersByOfferTemplateID map[string][]*Offer
+	offersByOfferTemplateID := make(map[string][]*Offer)
 	var filteredOts []*OfferTemplate
 
 	for _, offer := range offers {
