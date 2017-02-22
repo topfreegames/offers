@@ -15,11 +15,11 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/gorilla/mux"
-	runner "github.com/mgutz/dat/sqlx-runner"
 	newrelic "github.com/newrelic/go-agent"
 	"github.com/spf13/viper"
 	"github.com/topfreegames/offers/metadata"
 	"github.com/topfreegames/offers/models"
+	runner "gopkg.in/mgutz/dat.v2/sqlx-runner"
 )
 
 //App is our API application

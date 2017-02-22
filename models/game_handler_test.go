@@ -8,12 +8,12 @@
 package models_test
 
 import (
-	"github.com/mgutz/dat"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	uuid "github.com/satori/go.uuid"
 	"github.com/topfreegames/offers/errors"
 	"github.com/topfreegames/offers/models"
+	"gopkg.in/mgutz/dat.v2/dat"
 )
 
 var _ = Describe("Games Model", func() {

@@ -8,11 +8,11 @@
 package models_test
 
 import (
-	"github.com/mgutz/dat"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	uuid "github.com/satori/go.uuid"
 	"github.com/topfreegames/offers/models"
+	"gopkg.in/mgutz/dat.v2/dat"
 )
 
 var _ = Describe("Offer Template Models", func() {
@@ -33,7 +33,7 @@ var _ = Describe("Offer Template Models", func() {
 			Expect(ot.Period).To(Equal(dat.JSON([]byte(`{"type": "once"}`))))
 			Expect(ot.Frequency).To(BeEquivalentTo(dat.JSON([]byte(`{"unit": "hour", "every": 12}`))))
 			Expect(ot.Trigger).To(Equal(dat.JSON([]byte(`{"to": 1486679000, "from": 1486678000}`))))
-      Expect(ot.Placement).To(Equal("popup"))
+			Expect(ot.Placement).To(Equal("popup"))
 		})
 
 		It("should not load a template from invalid ID", func() {
@@ -57,7 +57,7 @@ var _ = Describe("Offer Template Models", func() {
 				Period:    dat.JSON([]byte(`{"type": "once"}`)),
 				Frequency: dat.JSON([]byte(`{"every": 24, "unit": "hour"}`)),
 				Trigger:   dat.JSON([]byte(`{"from": 1487280506875, "to": 1487366964730}`)),
-        Placement: "popup",
+				Placement: "popup",
 			}
 
 			//When
@@ -77,7 +77,7 @@ var _ = Describe("Offer Template Models", func() {
 				Period:    dat.JSON([]byte(`{"type": "once"}`)),
 				Frequency: dat.JSON([]byte(`{"every": 24, "unit": "hour"}`)),
 				Trigger:   dat.JSON([]byte(`{"from": 1487280506875, "to": 1487366964730}`)),
-        Placement: "popup",
+				Placement: "popup",
 			}
 
 			//When

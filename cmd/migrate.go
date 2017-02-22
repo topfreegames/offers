@@ -19,10 +19,10 @@ import (
 	"strings"
 
 	"github.com/GuiaBolso/darwin"
-	runner "github.com/mgutz/dat/sqlx-runner"
 	"github.com/spf13/cobra"
 	migrations "github.com/topfreegames/offers/migrations"
 	"github.com/topfreegames/offers/models"
+	runner "gopkg.in/mgutz/dat.v2/sqlx-runner"
 )
 
 var newline = []byte("\n")

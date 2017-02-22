@@ -8,10 +8,11 @@
 package models
 
 import (
-	"github.com/mgutz/dat"
-	runner "github.com/mgutz/dat/sqlx-runner"
-	"github.com/topfreegames/offers/errors"
 	"time"
+
+	"github.com/topfreegames/offers/errors"
+	dat "gopkg.in/mgutz/dat.v2/dat"
+	runner "gopkg.in/mgutz/dat.v2/sqlx-runner"
 )
 
 //Game represents a tenant in offers API

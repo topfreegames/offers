@@ -2,8 +2,6 @@ package: github.com/topfreegames/offers
 import:
 - package: github.com/DATA-DOG/godog
   version: ^0.6.2
-- package: github.com/mgutz/dat
-  version: ^1.1.10
 - package: github.com/spf13/cobra
 - package: github.com/spf13/viper
 - package: github.com/GuiaBolso/darwin
@@ -12,10 +10,6 @@ import:
   version: ^1.2.0
 - package: github.com/onsi/gomega
   version: ^1.0.0
-- package: gopkg.in/mgutz/dat.v1
-  version: ^1.1.10
-  subpackages:
-  - sqlx-runner
 - package: github.com/cenkalti/backoff
   version: ^1.0.0
 - package: github.com/go-testfixtures/testfixtures
@@ -28,3 +22,5 @@ import:
   version: ^1.6.0
 - package: github.com/asaskevich/govalidator
   version: ^5.0.0
+- package: gopkg.in/mgutz/dat.v2
+  version: v2

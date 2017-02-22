@@ -28,9 +28,9 @@ import (
 	"net/http/httptest"
 	"strings"
 
-	runner "github.com/mgutz/dat/sqlx-runner"
 	"github.com/topfreegames/offers/api"
 	"github.com/topfreegames/offers/models"
+	runner "gopkg.in/mgutz/dat.v2/sqlx-runner"
 )
 
 func newGame(db runner.Connection, id, bundleID string) (*models.Game, error) {

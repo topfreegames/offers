@@ -8,9 +8,9 @@
 package models_test
 
 import (
-	runner "github.com/mgutz/dat/sqlx-runner"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	runner "gopkg.in/mgutz/dat.v2/sqlx-runner"
 
 	"testing"
 
