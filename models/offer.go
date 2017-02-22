@@ -61,17 +61,12 @@ func GetOfferByID(db runner.Connection, gameID string, id string, mr *MixedMetri
 			QueryStruct(&offer)
 	})
 
-	if err != nil {
-		if IsNoRowsInResultSetError(err) {
-			return nil, errors.NewModelNotFoundError("Offer", map[string]interface{}{
-				"GameID": gameID,
-				"ID":     id,
-			})
-		}
-		return nil, err
-	}
+	err = HandleNotFoundError("Offer", map[string]interface{}{
+		"GameID": gameID,
+		"ID":     id,
+	}, err)
 
-	return &offer, nil
+	return &offer, err
 }
 
 //InsertOffer inserts an offer with the new UUID
@@ -108,14 +103,13 @@ func ClaimOffer(db runner.Connection, offerID, playerID, gameID string, t time.T
 			QueryStruct(&offer)
 	})
 
+	err = HandleNotFoundError("Offer", map[string]interface{}{
+		"ID":       offerID,
+		"GameID":   gameID,
+		"PlayerID": playerID,
+	}, err)
+
 	if err != nil {
-		if IsNoRowsInResultSetError(err) {
-			return nil, false, errors.NewModelNotFoundError("Offer", map[string]interface{}{
-				"ID":       offerID,
-				"GameID":   gameID,
-				"PlayerID": playerID,
-			})
-		}
 		return nil, false, err
 	}
 
@@ -142,10 +136,10 @@ func ClaimOffer(db runner.Connection, offerID, playerID, gameID string, t time.T
 
 //UpdateOfferLastSeenAt updates last seen timestamp of an offer
 func UpdateOfferLastSeenAt(db runner.Connection, offerID, playerID, gameID string, t time.Time, mr *MixedMetricsReporter) error {
-  var offer Offer
+	var offer Offer
 
-  query := `UPDATE offers
-            SET 
+	query := `UPDATE offers
+            SET
               last_seen_at = $1,
               seen_counter = seen_counter + 1
             WHERE
@@ -153,21 +147,17 @@ func UpdateOfferLastSeenAt(db runner.Connection, offerID, playerID, gameID strin
               player_id = $3 AND
               game_id = $4
             RETURNING id`
-  err := mr.WithDatastoreSegment("offers", "select by id", func() error {
-    return db.SQL(query, t, offerID, playerID, gameID).QueryStruct(&offer)
-  })
+	err := mr.WithDatastoreSegment("offers", "select by id", func() error {
+		return db.SQL(query, t, offerID, playerID, gameID).QueryStruct(&offer)
+	})
 
-	if err != nil {
-		if IsNoRowsInResultSetError(err) {
-			return errors.NewModelNotFoundError("Offer", map[string]interface{}{
-        "ID": offerID,
-				"GameID":   gameID,
-				"PlayerID": playerID,
-			})
-		}
-		return err
-  }
-  return nil
+	err = HandleNotFoundError("Offer", map[string]interface{}{
+		"ID":       offerID,
+		"GameID":   gameID,
+		"PlayerID": playerID,
+	}, err)
+
+	return err
 }
 
 //GetAvailableOffers returns the offers that match the criteria of enabled offer templates

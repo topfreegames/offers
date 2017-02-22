@@ -8,7 +8,6 @@
 package models
 
 import (
-	"github.com/topfreegames/offers/errors"
 	"gopkg.in/mgutz/dat.v2/dat"
 	runner "gopkg.in/mgutz/dat.v2/sqlx-runner"
 )
@@ -49,17 +48,8 @@ func GetOfferTemplateByID(db runner.Connection, id string, mr *MixedMetricsRepor
 			QueryStruct(&ot)
 	})
 
-	if err != nil {
-		if IsNoRowsInResultSetError(err) {
-			return nil, errors.NewModelNotFoundError("offer template", map[string]interface{}{
-				"ID": id,
-			})
-		}
-
-		return nil, err
-	}
-
-	return &ot, nil
+	err = HandleNotFoundError("Offer Template", map[string]interface{}{"ID": id}, err)
+	return &ot, err
 }
 
 //GetEnabledOfferTemplates returns all the enabled offers
@@ -77,23 +67,22 @@ func GetEnabledOfferTemplates(db runner.Connection, gameID string, mr *MixedMetr
 			OrderBy("name asc").
 			QueryStructs(&ots)
 	})
-	if err != nil {
-		err = HandleNotFoundError("Offer Template", map[string]interface{}{
-			"enabled": true,
-		}, err)
-		return nil, err
-	}
-	return ots, nil
+	err = HandleNotFoundError("Offer Template", map[string]interface{}{"enabled": true}, err)
+	return ots, err
 }
 
 // InsertOfferTemplate inserts a new offer template into DB
-func InsertOfferTemplate(db runner.Connection, ot *OfferTemplate, mr *MixedMetricsReporter) error {
-	return mr.WithDatastoreSegment("offer_templates", "insert", func() error {
+func InsertOfferTemplate(db runner.Connection, ot *OfferTemplate, mr *MixedMetricsReporter) (*OfferTemplate, error) {
+	if ot.Metadata == nil {
+		ot.Metadata = dat.JSON([]byte(`{}`))
+	}
+	err := mr.WithDatastoreSegment("offer_templates", "insert", func() error {
 		return db.
 			InsertInto("offer_templates").
-			Columns("name", "product_id", "game_id", "contents", "period", "frequency", "trigger", "placement").
+			Columns("name", "product_id", "game_id", "contents", "period", "frequency", "trigger", "placement", "metadata").
 			Record(ot).
-			Returning("id").
+			Returning("id, enabled").
 			QueryStruct(ot)
 	})
+	return ot, err
 }

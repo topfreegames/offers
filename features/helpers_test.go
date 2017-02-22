@@ -61,7 +61,8 @@ func insertOfferTemplate(db runner.Connection, name, gameID string) error {
 		Trigger:   dat.JSON([]byte(`{"from": 1487280506875, "to": 1487366964730}`)),
 		Placement: "popup",
 	}
-	return models.InsertOfferTemplate(app.DB, offerTemplate, nil)
+	_, err := models.InsertOfferTemplate(app.DB, offerTemplate, nil)
+	return err
 }
 
 func performRequest(a *api.App, method, url string, payload map[string]interface{}) (int, string, error) {

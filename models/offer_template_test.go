@@ -16,16 +16,12 @@ import (
 )
 
 var _ = Describe("Offer Template Models", func() {
-	Describe("Offer Template instance", func() {
-		It("should load a template by its ID", func() {
-			//Given
+	Describe("Get offer template by its id", func() {
+		It("should load a template from existent id", func() {
 			id := "dd21ec96-2890-4ba0-b8e2-40ea67196990"
-
-			//When
 			ot, err := models.GetOfferTemplateByID(db, id, nil)
-
-			//Then
 			Expect(err).NotTo(HaveOccurred())
+			Expect(ot.Name).To(Equal("template-1"))
 			Expect(ot.ProductID).To(Equal("com.tfg.sample"))
 			Expect(ot.GameID).To(Equal("awesome game"))
 			Expect(ot.Contents).To(Equal(dat.JSON([]byte(`{"gems": 5, "gold": 100}`))))
@@ -33,42 +29,60 @@ var _ = Describe("Offer Template Models", func() {
 			Expect(ot.Period).To(Equal(dat.JSON([]byte(`{"type": "once"}`))))
 			Expect(ot.Frequency).To(BeEquivalentTo(dat.JSON([]byte(`{"unit": "hour", "every": 12}`))))
 			Expect(ot.Trigger).To(Equal(dat.JSON([]byte(`{"to": 1486679000, "from": 1486678000}`))))
+			Expect(ot.Enabled).To(BeTrue())
 			Expect(ot.Placement).To(Equal("popup"))
 		})
 
-		It("should not load a template from invalid ID", func() {
-			//Given
+		It("should not load a template from unexistent ID", func() {
 			id := uuid.NewV4().String()
-
-			//When
 			_, err := models.GetOfferTemplateByID(db, id, nil)
-
-			//Then
 			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(Equal("Offer Template was not found with specified filters."))
 		})
+	})
 
+	Describe("Offer Template instance", func() {
 		It("should create an template with valid parameters", func() {
-			//Given
 			offerTemplate := &models.OfferTemplate{
 				Name:      "New Awesome Game",
 				ProductID: "com.tfg.example",
 				GameID:    "game-id",
 				Contents:  dat.JSON([]byte(`{"gems": 5, "gold": 100}`)),
 				Period:    dat.JSON([]byte(`{"type": "once"}`)),
-				Frequency: dat.JSON([]byte(`{"every": 24, "unit": "hour"}`)),
-				Trigger:   dat.JSON([]byte(`{"from": 1487280506875, "to": 1487366964730}`)),
+				Frequency: dat.JSON([]byte(`{"every": "24h"}`)),
+				Trigger:   dat.JSON([]byte(`{"from": 1487280506875}`)),
 				Placement: "popup",
 			}
 
-			//When
-			err := models.InsertOfferTemplate(db, offerTemplate, nil)
-
-			//Then
+			ot, err := models.InsertOfferTemplate(db, offerTemplate, nil)
 			Expect(err).NotTo(HaveOccurred())
+			Expect(ot.ID).NotTo(Equal(""))
+			Expect(ot.Name).To(Equal(offerTemplate.Name))
+			Expect(ot.ProductID).To(Equal(offerTemplate.ProductID))
+			Expect(ot.GameID).To(Equal(offerTemplate.GameID))
+			Expect(ot.Contents).To(Equal(offerTemplate.Contents))
+			Expect(ot.Metadata).To(Equal(offerTemplate.Metadata))
+			Expect(ot.Period).To(Equal(offerTemplate.Period))
+			Expect(ot.Frequency).To(Equal(offerTemplate.Frequency))
+			Expect(ot.Trigger).To(Equal(offerTemplate.Trigger))
+			Expect(ot.Enabled).To(BeTrue())
+			Expect(ot.Placement).To(Equal(offerTemplate.Placement))
+
+			dbOt, err := models.GetOfferTemplateByID(db, ot.ID, nil)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(dbOt.Name).To(Equal(offerTemplate.Name))
+			Expect(dbOt.ProductID).To(Equal(offerTemplate.ProductID))
+			Expect(dbOt.GameID).To(Equal(offerTemplate.GameID))
+			Expect(dbOt.Contents).To(Equal(offerTemplate.Contents))
+			Expect(dbOt.Metadata).To(Equal(offerTemplate.Metadata))
+			Expect(dbOt.Period).To(Equal(offerTemplate.Period))
+			Expect(dbOt.Frequency).To(Equal(offerTemplate.Frequency))
+			Expect(dbOt.Trigger).To(BeEquivalentTo(offerTemplate.Trigger))
+			Expect(dbOt.Enabled).To(BeTrue())
+			Expect(dbOt.Placement).To(Equal(offerTemplate.Placement))
 		})
 
-		It("should return error if game id does not exist", func() {
-			//Given
+		It("should return error if game with given id does not exist", func() {
 			offerTemplate := &models.OfferTemplate{
 				Name:      "New Awesome Game",
 				ProductID: "com.tfg.example",
@@ -79,12 +93,20 @@ var _ = Describe("Offer Template Models", func() {
 				Trigger:   dat.JSON([]byte(`{"from": 1487280506875, "to": 1487366964730}`)),
 				Placement: "popup",
 			}
-
-			//When
-			err := models.InsertOfferTemplate(db, offerTemplate, nil)
-
-			//Then
+			_, err := models.InsertOfferTemplate(db, offerTemplate, nil)
 			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(Equal("pq: insert or update on table \"offer_templates\" violates foreign key constraint \"offer_templates_game_id_fkey\""))
+
+			// TODO: test if was not created in the db
+			// currently it returns "pq: current transaction is aborted, commands ignored until end of transaction block"
+			var ot models.OfferTemplate
+			err = conn.
+				Select("id").
+				From("offer_templates").
+				Where("game_id = $1", "non-existing-game-id").
+				QueryStruct(&ot)
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(Equal("sql: no rows in result set"))
 		})
 	})
 
@@ -95,7 +117,15 @@ var _ = Describe("Offer Template Models", func() {
 
 			Expect(ots).To(HaveLen(1))
 
+			Expect(ots[0].ID).To(Equal("d5114990-77d7-45c4-ba5f-462fc86b213f"))
 			Expect(ots[0].Name).To(Equal("template-2"))
+			Expect(ots[0].ProductID).To(Equal("com.tfg.sample"))
+			Expect(ots[0].Contents).To(Equal(dat.JSON([]byte(`{"gems": 5, "gold": 100}`))))
+			Expect(ots[0].Metadata).To(Equal(dat.JSON([]byte(`{}`))))
+			Expect(ots[0].Period).To(Equal(dat.JSON([]byte(`{"type": "once"}`))))
+			Expect(ots[0].Frequency).To(BeEquivalentTo(dat.JSON([]byte(`{"unit": "hour", "every": 12}`))))
+			Expect(ots[0].Trigger).To(Equal(dat.JSON([]byte(`{"to": 1486679000, "from": 1486678000}`))))
+			Expect(ots[0].Placement).To(Equal("store"))
 		})
 	})
 })

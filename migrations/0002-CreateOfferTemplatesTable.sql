@@ -6,7 +6,7 @@ CREATE TABLE offer_templates (
   product_id varchar(255) NOT NULL,
   game_id varchar(255) NOT NULL REFERENCES games(id),
   contents JSONB NOT NULL DEFAULT '{}' ::JSONB,
-  metadata JSONB NOT NULL DEFAULT '{}' ::JSONB,
+  metadata JSONB DEFAULT '{}' ::JSONB,
   period JSONB NOT NULL DEFAULT '{}' ::JSONB,
   frequency JSONB NOT NULL DEFAULT '{}' ::JSONB,
   trigger JSONB NOT NULL DEFAULT '{}' ::JSONB,

@@ -8,12 +8,13 @@
 package models_test
 
 import (
+	"time"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	uuid "github.com/satori/go.uuid"
 	"github.com/topfreegames/offers/errors"
 	"github.com/topfreegames/offers/models"
-	"time"
 )
 
 var _ = Describe("Offers Model", func() {
@@ -68,7 +69,7 @@ var _ = Describe("Offers Model", func() {
 				From("offers").
 				Where("id = $1", offer.ID).
 				QueryStruct(&offer2)
-
+			Expect(err).NotTo(HaveOccurred())
 			Expect(offer2.ID).To(Equal(offer.ID))
 		})
 	})
@@ -102,7 +103,7 @@ var _ = Describe("Offers Model", func() {
 			offer, err := models.GetOfferByID(db, "offers-game", offerID, nil)
 
 			//Then
-			Expect(offer).To(BeNil())
+			Expect(offer.ID).To(Equal(""))
 			Expect(err).To(HaveOccurred())
 			Expect(err).To(MatchError(expectedError))
 		})
@@ -181,16 +182,16 @@ var _ = Describe("Offers Model", func() {
 		It("should claim valid offer", func() {
 			//Given
 			id := "56fc0477-39f1-485c-898e-4909e9155eb1"
-      playerID := "player-1"
-      gameID := "offers-game"
+			playerID := "player-1"
+			gameID := "offers-game"
 			currentTime := time.Unix(from+500, 0)
 
 			//When
 			contents, alreadyClaimed, err := models.ClaimOffer(db, id, playerID, gameID, currentTime, nil)
 
 			//Then
-      Expect(contents).NotTo(BeNil())
-      Expect(alreadyClaimed).To(BeFalse())
+			Expect(contents).NotTo(BeNil())
+			Expect(alreadyClaimed).To(BeFalse())
 			Expect(err).NotTo(HaveOccurred())
 		})
 
@@ -198,15 +199,15 @@ var _ = Describe("Offers Model", func() {
 			//Given
 			id := "56fc0477-39f1-485c-898e-4909e9155eb1"
 			currentTime := time.Unix(from-500, 0)
-      playerID := "player-1"
-      gameID := "offers-game"
+			playerID := "player-1"
+			gameID := "offers-game"
 
 			//When
 			contents, alreadyClaimed, err := models.ClaimOffer(db, id, playerID, gameID, currentTime, nil)
 
 			//Then
-      Expect(contents).NotTo(BeNil())
-      Expect(alreadyClaimed).To(BeFalse())
+			Expect(contents).NotTo(BeNil())
+			Expect(alreadyClaimed).To(BeFalse())
 			Expect(err).NotTo(HaveOccurred())
 		})
 
@@ -214,23 +215,23 @@ var _ = Describe("Offers Model", func() {
 			//Given
 			id := "56fc0477-39f1-485c-898e-4909e9155eb1"
 			currentTime := time.Unix(to+500, 0)
-      playerID := "player-1"
-      gameID := "offers-game"
+			playerID := "player-1"
+			gameID := "offers-game"
 
 			//When
 			contents, alreadyClaimed, err := models.ClaimOffer(db, id, playerID, gameID, currentTime, nil)
 
 			//Then
-      Expect(contents).NotTo(BeNil())
-      Expect(alreadyClaimed).To(BeFalse())
+			Expect(contents).NotTo(BeNil())
+			Expect(alreadyClaimed).To(BeFalse())
 			Expect(err).NotTo(HaveOccurred())
 		})
 
 		It("should not claim twice the same offer", func() {
 			//Given
 			id := "56fc0477-39f1-485c-898e-4909e9155eb1"
-      playerID := "player-1"
-      gameID := "offers-game"
+			playerID := "player-1"
+			gameID := "offers-game"
 			firstTime := time.Unix(to+500, 0)
 			secondTime := time.Unix(to+1000, 0)
 
@@ -239,20 +240,20 @@ var _ = Describe("Offers Model", func() {
 			contents2, alreadyClaimed2, err2 := models.ClaimOffer(db, id, playerID, gameID, secondTime, nil)
 
 			//Then
-      Expect(contents1).NotTo(BeNil())
-      Expect(alreadyClaimed1).To(BeFalse())
+			Expect(contents1).NotTo(BeNil())
+			Expect(alreadyClaimed1).To(BeFalse())
 			Expect(err1).NotTo(HaveOccurred())
 
-      Expect(contents2).NotTo(BeNil())
-      Expect(alreadyClaimed2).To(BeTrue())
+			Expect(contents2).NotTo(BeNil())
+			Expect(alreadyClaimed2).To(BeTrue())
 			Expect(err2).NotTo(HaveOccurred())
 		})
 
 		It("should not claim an offer that doesn't exist", func() {
 			//Given
 			id := uuid.NewV4().String()
-      playerID := "player-1"
-      gameID := "offers-game"
+			playerID := "player-1"
+			gameID := "offers-game"
 			currentTime := time.Unix(to+500, 0)
 
 			//When
@@ -263,40 +264,40 @@ var _ = Describe("Offers Model", func() {
 		})
 	})
 
-  Describe("Update offer last seen at", func() {
-    It("should update last seen offer at now and increment seen counter", func() {
+	Describe("Update offer last seen at", func() {
+		It("should update last seen offer at now and increment seen counter", func() {
 			//Given
 			offerID := "56fc0477-39f1-485c-898e-4909e9155eb1"
-      playerID := "player-1"
-      gameID := "offers-game"
-      currentTime := time.Now()
+			playerID := "player-1"
+			gameID := "offers-game"
+			currentTime := time.Now()
 
 			//When
 			offerBefore, err1 := models.GetOfferByID(db, "offers-game", offerID, nil)
 			err2 := models.UpdateOfferLastSeenAt(db, offerID, playerID, gameID, currentTime, nil)
-      offerAfter, err3 := models.GetOfferByID(db, "offers-game", offerID, nil)
+			offerAfter, err3 := models.GetOfferByID(db, "offers-game", offerID, nil)
 
 			//Then
 			Expect(err1).NotTo(HaveOccurred())
 			Expect(err2).NotTo(HaveOccurred())
 			Expect(err3).NotTo(HaveOccurred())
-      Expect(offerAfter.LastSeenAt.Time.Unix()).To(Equal(currentTime.Unix()))
-      Expect(offerAfter.LastSeenAt.Valid).To(BeTrue())
-      Expect(offerBefore.SeenCounter).To(Equal(0))
-      Expect(offerAfter.SeenCounter).To(Equal(1))
-    })
+			Expect(offerAfter.LastSeenAt.Time.Unix()).To(Equal(currentTime.Unix()))
+			Expect(offerAfter.LastSeenAt.Valid).To(BeTrue())
+			Expect(offerBefore.SeenCounter).To(Equal(0))
+			Expect(offerAfter.SeenCounter).To(Equal(1))
+		})
 
-    It("should return status code 422 if invalid id", func() {
+		It("should return status code 422 if invalid id", func() {
 			//Given
 			id := uuid.NewV4().String()
-      playerID := "player-1"
-      gameID := "offers-game"
+			playerID := "player-1"
+			gameID := "offers-game"
 
 			//When
 			err := models.UpdateOfferLastSeenAt(db, id, playerID, gameID, time.Now(), nil)
 
 			//Then
 			Expect(err).To(HaveOccurred())
-    })
-  })
+		})
+	})
 })
