@@ -28,8 +28,10 @@ import (
 	"net/http/httptest"
 	"strings"
 
+	uuid "github.com/satori/go.uuid"
 	"github.com/topfreegames/offers/api"
 	"github.com/topfreegames/offers/models"
+	"gopkg.in/mgutz/dat.v2/dat"
 	runner "gopkg.in/mgutz/dat.v2/sqlx-runner"
 )
 
@@ -45,6 +47,21 @@ func newGame(db runner.Connection, id, bundleID string) (*models.Game, error) {
 		return nil, err
 	}
 	return game, nil
+}
+
+func insertOfferTemplate(db runner.Connection, name, gameID string) error {
+	offerTemplate := &models.OfferTemplate{
+		ID:        uuid.NewV4().String(),
+		Name:      name,
+		ProductID: "com.tfg.example",
+		GameID:    gameID,
+		Contents:  dat.JSON([]byte(`{"gems": 5, "gold": 100}`)),
+		Period:    dat.JSON([]byte(`{"type": "once"}`)),
+		Frequency: dat.JSON([]byte(`{"every": 24, "unit": "hour"}`)),
+		Trigger:   dat.JSON([]byte(`{"from": 1487280506875, "to": 1487366964730}`)),
+		Placement: "popup",
+	}
+	return models.InsertOfferTemplate(app.DB, offerTemplate, nil)
 }
 
 func performRequest(a *api.App, method, url string, payload map[string]interface{}) (int, string, error) {
