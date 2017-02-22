@@ -15,10 +15,10 @@ import (
 
 	"github.com/cenkalti/backoff"
 	"github.com/lib/pq"
-	"github.com/mgutz/dat"
 	"github.com/topfreegames/offers/errors"
+	"gopkg.in/mgutz/dat.v2/dat"
 
-	runner "github.com/mgutz/dat/sqlx-runner"
+	runner "gopkg.in/mgutz/dat.v2/sqlx-runner"
 )
 
 //GetDB Connection using the given properties

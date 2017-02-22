@@ -164,8 +164,9 @@ func theGameDoesNotExist(id string) error {
 	return fmt.Errorf("The game %s should not exist but it does.", game.ID)
 }
 
-func aGameWithNameExists(arg1 string) error {
-	return godog.ErrPending
+func aGameWithNameExists(name string) error {
+	_, err := newGame(app.DB, name, name)
+	return err
 }
 
 func theFollowingOfferTemplatesExistInTheGame(arg1 string, arg2 *gherkin.DataTable) error {
@@ -192,16 +193,32 @@ func theCurrentTimeIsD(arg1 int) error {
 	return godog.ErrPending
 }
 
-func anOfferTemplateIsCreatedInTheGameWith(arg1 string, arg2 *gherkin.DataTable) error {
+func anOfferTemplateIsCreatedInTheGameWith(gameID string, otArgs *gherkin.DataTable) error {
 	return godog.ErrPending
+	// payload := map[string]interface{}{
+	// 	"id":        uuid.NewV4().String(),
+	// 	"gameId":    gameID,
+	// 	"name":      otArgs.Rows[0].Cells[0].Value,
+	// 	"productId": otArgs.Rows[0].Cells[1].Value,
+	// 	"contents":  otArgs.Rows[0].Cells[2].Value,
+	// 	"metadata":  otArgs.Rows[0].Cells[3].Value,
+	// 	"period":    otArgs.Rows[0].Cells[4].Value,
+	// 	"frequency": otArgs.Rows[0].Cells[5].Value,
+	// 	"trigger":   otArgs.Rows[0].Cells[6].Value,
+	// 	"placement": otArgs.Rows[0].Cells[7].Value,
+	// }
+	//
+	// var err error
+	// lastStatus, lastBody, err = performRequest(app, "PUT", "/offer-templates", payload)
+	// return err
 }
 
 func anOfferTemplateWithNameExistsInGame(arg1, arg2 string) error {
 	return godog.ErrPending
 }
 
-func anOfferTemplateExistsWithNameInGame(arg1, arg2 string) error {
-	return godog.ErrPending
+func anOfferTemplateExistsWithNameInGame(name, gameID string) error {
+	return insertOfferTemplate(app.DB, name, gameID)
 }
 
 func anOfferTemplateWithNameDoesNotExistInGame(arg1, arg2 string) error {

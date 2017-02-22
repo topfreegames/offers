@@ -8,9 +8,9 @@
 package models
 
 import (
-	"github.com/mgutz/dat"
-	runner "github.com/mgutz/dat/sqlx-runner"
 	"github.com/topfreegames/offers/errors"
+	"gopkg.in/mgutz/dat.v2/dat"
+	runner "gopkg.in/mgutz/dat.v2/sqlx-runner"
 )
 
 //OfferTemplate contains the parameters of a template
@@ -25,7 +25,7 @@ type OfferTemplate struct {
 	Frequency dat.JSON `db:"frequency" valid:"required"`
 	Trigger   dat.JSON `db:"trigger" valid:"required"`
 	Enabled   bool     `db:"enabled" valid:"matches(^(true|false)$),optional"`
-  Placement string   `db:"placement" valid:"ascii,stringlength(1|255),required"`
+	Placement string   `db:"placement" valid:"ascii,stringlength(1|255),required"`
 }
 
 const enabledOfferTemplates = `

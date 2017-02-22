@@ -9,8 +9,8 @@ package testing
 
 import (
 	"github.com/go-testfixtures/testfixtures"
-	runner "github.com/mgutz/dat/sqlx-runner"
 	"github.com/topfreegames/offers/models"
+	runner "gopkg.in/mgutz/dat.v2/sqlx-runner"
 )
 
 var (

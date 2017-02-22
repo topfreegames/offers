@@ -1,5 +1,5 @@
-hash: 1d56798c4476c04e33cf54fe9a5b4b6f880cdfc0953f1b62601d0169c5eefd2b
-updated: 2017-02-16T13:24:01.997227177-02:00
+hash: 1c224cadf20301fe9b75b4f118947d60850f41c45d1daca8890d131f18193522
+updated: 2017-02-22T14:37:43.0124492-03:00
 imports:
 - name: github.com/asaskevich/govalidator
   version: 7b3beb6df3c42abd3509abfc3bcacc0fbfb7c877
@@ -11,14 +11,14 @@ imports:
   - colors
   - gherkin
 - name: github.com/fsnotify/fsnotify
-  version: fd9ec7deca8bf46ecd2a795baaacf2b3a9be1197
+  version: f12c6236fe7b5cf6bcf30e5935d08cb079d78334
 - name: github.com/garyburd/redigo
   version: 80f7de34463b0ed3d7c61303e5619efe1b227f92
   subpackages:
   - internal
   - redis
 - name: github.com/go-testfixtures/testfixtures
-  version: b9ef14dc461bf934d8df2dfc6f1f456be5664cca
+  version: 958f514005e5266c7feb4ef78ecf397e5786447b
 - name: github.com/gorilla/context
   version: 08b5f424b9271eedf6f9f0ce86cb9396ed337a42
 - name: github.com/gorilla/mux
@@ -26,7 +26,7 @@ imports:
 - name: github.com/GuiaBolso/darwin
   version: 86919dfcf80873d58ea2e527c15b1e02a5636ead
 - name: github.com/hashicorp/hcl
-  version: 8fa153c5b4e9d1ccecda7075821ffc7c1f6d912b
+  version: baeb59c710717b06aac1dbe2270e8192ec593244
   subpackages:
   - hcl/ast
   - hcl/parser
@@ -49,17 +49,13 @@ imports:
   subpackages:
   - oid
 - name: github.com/magiconair/properties
-  version: 0723e352fa358f9322c938cc2dadda874e9151a9
+  version: 61b492c03cf472e0c6419be5899b8e0dc28b1b88
 - name: github.com/mattn/go-colorable
-  version: 6c903ff4aa50920ca86087a280590b36b3152b9c
+  version: ed8eb9e318d7a84ce5915b495b7d35e0cfe7b5a8
 - name: github.com/mattn/go-isatty
   version: 66b8e73f3f5cda9f96b69efd03dd3d7fc4a5cdb8
 - name: github.com/mgutz/ansi
   version: 9520e82c474b0a04dd04f8a40959027271bab992
-- name: github.com/mgutz/dat
-  version: c2a5759ae4b0303a8bf640d01a85ae3acc02455d
-  subpackages:
-  - sqlx-runner
 - name: github.com/mgutz/logxi
   version: aebf8a7d67ab4625e0fd4a665766fef9a709161b
   subpackages:
@@ -67,9 +63,9 @@ imports:
 - name: github.com/mgutz/str
   version: 968bf66e3da857419e4f6e71b2d5c9ae95682dc4
 - name: github.com/mitchellh/mapstructure
-  version: f3009df150dadf309fdee4a54ed65c124afad715
+  version: ca63d7c062ee3c9f34db231e352b60012b4fd0c1
 - name: github.com/newrelic/go-agent
-  version: 71ae6edf91a40f8bb740c2438eef209b11c2f87c
+  version: 7c6c920d222b18632f03b12c3b594df816eab6d0
   subpackages:
   - internal
   - internal/jsonx
@@ -109,56 +105,57 @@ imports:
 - name: github.com/pelletier/go-buffruneio
   version: df1e16fde7fc330a0ca68167c23bf7ed6ac31d6d
 - name: github.com/pelletier/go-toml
-  version: 45932ad32dfdd20826f5671da37a5f3ce9f26a8d
+  version: 5a62685873ef617233ab5f1b825a6e4a758e16cf
 - name: github.com/pkg/errors
-  version: 248dadf4e9068a0b3e79f02ed0a610d935de5302
+  version: 17b591df37844cde689f4d5813e5cea0927d8dd2
 - name: github.com/pkg/sftp
-  version: 4d0e916071f68db74f8a73926335f809396d6b42
+  version: a71e8f580e3b622ebff585309160b1cc549ef4d2
 - name: github.com/pmylund/go-cache
   version: e7a9def80f35fe1b170b7b8b68871d59dea117e1
 - name: github.com/satori/go.uuid
-  version: 879c5887cd475cd7864858769793b2ceb0d44feb
+  version: 0aa62d5ddceb50dbcb909d790b5345affd3669b6
 - name: github.com/Sirupsen/logrus
   version: c078b1e43f58d563c74cebe63c85789e76ddb627
 - name: github.com/spf13/afero
-  version: 52e4a6cfac46163658bd4f123c49b6ee7dc75f78
+  version: 20500e2abd0d1f4564a499e83d11d6c73cd58c27
   subpackages:
   - mem
   - sftp
 - name: github.com/spf13/cast
-  version: 2580bc98dc0e62908119e4737030cc2fdfc45e4c
+  version: e31f36ffc91a2ba9ddb72a4b6a607ff9b3d3cb63
 - name: github.com/spf13/cobra
-  version: 6e91dded25d73176bf7f60b40dd7aa1f0bf9be8d
+  version: 37c3f8060359192150945916cbc2d72bce804b4d
 - name: github.com/spf13/jwalterweatherman
   version: 33c24e77fb80341fe7130ee7c594256ff08ccc46
 - name: github.com/spf13/pflag
-  version: 5ccb023bc27df288a957c5e994cd44fd19619465
+  version: 103ce5cd2042f2fe629c1957abb64ab3e7f50235
 - name: github.com/spf13/viper
-  version: 651d9d916abc3c3d6a91a12549495caba5edffd2
+  version: 7fb2782df3d83e0036cc89f461ed0422628776f4
 - name: golang.org/x/crypto
-  version: 9477e0b78b9ac3d0b03822fd95422e2fe07627cd
+  version: 986d3313588aa5c68f1df95eac956f79cf3b2c01
   subpackages:
   - curve25519
   - ed25519
   - ed25519/internal/edwards25519
   - ssh
 - name: golang.org/x/sys
-  version: c200b10b5d5e122be351b67af224adc6128af5bf
+  version: a646d33e2ee3172a661fc09bca23bb4889a41bc8
   subpackages:
   - unix
 - name: golang.org/x/text
-  version: a8b38433e35b65ba247bb267317037dee1b70cea
+  version: d69c40b4be55797923cec7457fac7a244d91a9b6
   subpackages:
   - transform
   - unicode/norm
-- name: gopkg.in/mgutz/dat.v1
-  version: c2a5759ae4b0303a8bf640d01a85ae3acc02455d
+- name: gopkg.in/mgutz/dat.v2
+  version: 98858ed6797785792b13dad45ce45abad036c6b7
   subpackages:
   - common
+  - dat
   - kvs
   - postgres
   - reflectx
   - sqlx-runner
 - name: gopkg.in/yaml.v2
-  version: a5b47d31c556af34a302ce5d659e6fea44d90de0
+  version: e4d366fc3c7938e2958e662b4258c7a89e1f0e3e
 testImports: []
