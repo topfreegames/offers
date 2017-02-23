@@ -108,6 +108,24 @@ var _ = Describe("Offer Handler", func() {
 			Expect(recorder.Body.String()).To(Equal("The game-id parameter cannot be empty."))
 			Expect(recorder.Code).To(Equal(http.StatusBadRequest))
 		})
+
+		It("should return status code of 500 if some error occurred", func() {
+			playerID := "player-1"
+			gameID := "offers-game"
+			url := "/offers?player-id=" + playerID + "&game-id=" + gameID
+			request, _ := http.NewRequest("GET", url, nil)
+
+			oldDB := app.DB
+			db, err := GetTestDB()
+			Expect(err).NotTo(HaveOccurred())
+			app.DB = db
+			app.DB.(*runner.DB).DB.Close() // make DB connection unavailable
+			app.Router.ServeHTTP(recorder, request)
+
+			Expect(recorder.Code).To(Equal(http.StatusInternalServerError))
+			Expect(recorder.Body.String()).To(Equal("Failed to retrieve offer for player"))
+			app.DB = oldDB // avoid errors in after each
+		})
 	})
 
 	Describe("PUT /offer/claim", func() {
