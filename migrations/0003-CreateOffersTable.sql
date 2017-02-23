@@ -13,5 +13,5 @@ CREATE TABLE offers (
     last_seen_at timestamp WITH TIME ZONE NULL
 );
 
-CREATE INDEX player_id
-ON offers (player_id)
+CREATE UNIQUE INDEX game_id_player_id_offer_template_id
+ON offers (game_id, player_id, offer_template_id)

@@ -195,6 +195,10 @@ func GetAvailableOffers(db runner.Connection, playerID, gameID string, t time.Ti
 		return map[string]*OfferTemplate{}, nil
 	}
 
+	playerOffersByOfferTemplateID := map[string]bool{}
+	for _, o := range playerOffers {
+		playerOffersByOfferTemplateID[o.OfferTemplateID] = true
+	}
 	offerTemplatesByPlacement := make(map[string]*OfferTemplate)
 	for _, ot := range filteredOts {
 		if _, otInMap := offerTemplatesByPlacement[ot.Placement]; !otInMap {
@@ -204,7 +208,10 @@ func GetAvailableOffers(db runner.Connection, playerID, gameID string, t time.Ti
 				OfferTemplateID: ot.ID,
 				PlayerID:        playerID,
 			}
-			InsertOffer(db, o, t, mr)
+
+			if _, playerHasOffer := playerOffersByOfferTemplateID[ot.ID]; !playerHasOffer {
+				InsertOffer(db, o, t, mr)
+			}
 		}
 	}
 
@@ -244,7 +251,7 @@ func getPlayerOffersByOfferTemplateIDs(
 	var offers []*Offer
 	err := mr.WithDatastoreSegment("offers", "select by id", func() error {
 		return db.
-			Select("id, offer_template_id, game_id, last_seen_at").
+			Select("id, offer_template_id, game_id, last_seen_at, seen_counter, bought_counter").
 			From("offers").
 			Where("player_id=$1 AND game_id=$2 AND offer_template_id IN $3", playerID, gameID, offerTemplateIDs).
 			QueryStructs(&offers)
@@ -252,26 +259,22 @@ func getPlayerOffersByOfferTemplateIDs(
 	return offers, err
 }
 
-func makeOffersByOfferTemplateIDs(offers []*Offer) map[string][]*Offer {
-	offersByOfferTemplateID := make(map[string][]*Offer)
+func makeOfferByOfferTemplateIDs(offers []*Offer) map[string]*Offer {
+	offerByOfferTemplateID := make(map[string]*Offer)
 
 	for _, offer := range offers {
-		if os, ok := offersByOfferTemplateID[offer.OfferTemplateID]; ok {
-			offersByOfferTemplateID[offer.OfferTemplateID] = append(os, offer)
-		} else {
-			offersByOfferTemplateID[offer.OfferTemplateID] = []*Offer{offer}
-		}
+		offerByOfferTemplateID[offer.OfferTemplateID] = offer
 	}
 
-	return offersByOfferTemplateID
+	return offerByOfferTemplateID
 }
 
 func filterTemplatesByFrequencyAndPeriod(offers []*Offer, ots []*OfferTemplate, t time.Time) ([]*OfferTemplate, error) {
-	offersByOfferTemplateID := makeOffersByOfferTemplateIDs(offers)
+	offerByOfferTemplateID := makeOfferByOfferTemplateIDs(offers)
 	var filteredOts []*OfferTemplate
 
 	for _, offerTemplate := range ots {
-		if os, ok := offersByOfferTemplateID[offerTemplate.ID]; ok {
+		if offer, ok := offerByOfferTemplateID[offerTemplate.ID]; ok {
 			var (
 				f Frequency
 				p Period
@@ -282,34 +285,32 @@ func filterTemplatesByFrequencyAndPeriod(offers []*Offer, ots []*OfferTemplate, 
 			if err := json.Unmarshal(offerTemplate.Period, &p); err != nil {
 				return nil, err
 			}
-			for _, offer := range os {
-				if f.Max != 0 && offer.SeenCounter >= f.Max {
-					continue
-				}
-				if f.Every != "" {
-					duration, err := time.ParseDuration(f.Every)
-					if err != nil {
-						return nil, err
-					}
-					if offer.LastSeenAt.Time.Add(duration).After(t) {
-						continue
-					}
-				}
-
-				if p.Max != 0 && offer.BoughtCounter >= p.Max {
-					continue
-				}
-				if p.Every != "" {
-					duration, err := time.ParseDuration(p.Every)
-					if err != nil {
-						return nil, err
-					}
-					if offer.LastSeenAt.Time.Add(duration).After(t) {
-						continue
-					}
-				}
-				filteredOts = append(filteredOts, offerTemplate)
+			if f.Max != 0 && offer.SeenCounter >= f.Max {
+				continue
 			}
+			if f.Every != "" {
+				duration, err := time.ParseDuration(f.Every)
+				if err != nil {
+					return nil, err
+				}
+				if offer.LastSeenAt.Time.Add(duration).After(t) {
+					continue
+				}
+			}
+
+			if p.Max != 0 && offer.BoughtCounter >= p.Max {
+				continue
+			}
+			if p.Every != "" {
+				duration, err := time.ParseDuration(p.Every)
+				if err != nil {
+					return nil, err
+				}
+				if offer.LastSeenAt.Time.Add(duration).After(t) {
+					continue
+				}
+			}
+			filteredOts = append(filteredOts, offerTemplate)
 		} else {
 			filteredOts = append(filteredOts, offerTemplate)
 		}
