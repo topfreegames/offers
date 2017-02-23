@@ -70,7 +70,6 @@ func GetOfferByID(db runner.Connection, gameID, id string, mr *MixedMetricsRepor
 
 //InsertOffer inserts an offer with the new UUID
 func InsertOffer(db runner.Connection, offer *Offer, t time.Time, mr *MixedMetricsReporter) error {
-	offer.CreatedAt = dat.NullTimeFrom(t)
 	err := mr.WithDatastoreSegment("offers", "insect", func() error {
 		return db.
 			InsertInto("offers").
@@ -93,7 +92,6 @@ func InsertOffer(db runner.Connection, offer *Offer, t time.Time, mr *MixedMetri
 //ClaimOffer sets claimed_at to time
 func ClaimOffer(db runner.Connection, offerID, playerID, gameID string, t time.Time, mr *MixedMetricsReporter) (dat.JSON, bool, error) {
 	var offer Offer
-
 	err := mr.WithDatastoreSegment("offers", "select by id", func() error {
 		return db.
 			Select("id, claimed_at, offer_template_id").
@@ -186,7 +184,6 @@ func GetAvailableOffers(db runner.Connection, playerID, gameID string, t time.Ti
 	if err != nil {
 		return nil, err
 	}
-
 	filteredOts, err = filterTemplatesByFrequencyAndPeriod(playerOffers, filteredOts, t)
 	if err != nil {
 		return nil, err
@@ -208,9 +205,11 @@ func GetAvailableOffers(db runner.Connection, playerID, gameID string, t time.Ti
 				OfferTemplateID: ot.ID,
 				PlayerID:        playerID,
 			}
-
 			if _, playerHasOffer := playerOffersByOfferTemplateID[ot.ID]; !playerHasOffer {
-				InsertOffer(db, o, t, mr)
+				err := InsertOffer(db, o, t, mr)
+				if err != nil {
+					return nil, err
+				}
 			}
 		}
 	}
@@ -259,19 +258,12 @@ func getPlayerOffersByOfferTemplateIDs(
 	return offers, err
 }
 
-func makeOfferByOfferTemplateIDs(offers []*Offer) map[string]*Offer {
+func filterTemplatesByFrequencyAndPeriod(offers []*Offer, ots []*OfferTemplate, t time.Time) ([]*OfferTemplate, error) {
+	var filteredOts []*OfferTemplate
 	offerByOfferTemplateID := make(map[string]*Offer)
-
 	for _, offer := range offers {
 		offerByOfferTemplateID[offer.OfferTemplateID] = offer
 	}
-
-	return offerByOfferTemplateID
-}
-
-func filterTemplatesByFrequencyAndPeriod(offers []*Offer, ots []*OfferTemplate, t time.Time) ([]*OfferTemplate, error) {
-	offerByOfferTemplateID := makeOfferByOfferTemplateIDs(offers)
-	var filteredOts []*OfferTemplate
 
 	for _, offerTemplate := range ots {
 		if offer, ok := offerByOfferTemplateID[offerTemplate.ID]; ok {

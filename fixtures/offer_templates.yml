@@ -18,6 +18,18 @@
     placement: popup
     enabled: true
 -
+    id: aa65a3f2-7cf8-4d76-957f-0a23a1bbbd32
+    name: limited-template
+    product_id: com.tfg.sample
+    game_id: limited-offers-game
+    contents: '{"gems": 5, "gold": 100}'
+    metadata: '{}'
+    period: '{"type": "once"}'
+    frequency: '{"max": 1}'
+    trigger: '{"from": 1486678000, "to": 1486679000}'
+    placement: store
+    enabled: true
+-
     id: d5114990-77d7-45c4-ba5f-462fc86b213f
     name: template-2
     product_id: com.tfg.sample
@@ -37,7 +49,7 @@
     contents: '{"gems": 5, "gold": 100}'
     metadata: '{}'
     period: '{"type": "once"}'
-    frequency: '{"every": 12, "unit": "hour"}'
+    frequency: '{"every": "1s", "max": 2}'
     trigger: '{"from": 1486678000, "to": 1486679000}'
     placement: store
     enabled: false

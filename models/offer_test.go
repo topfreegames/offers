@@ -499,5 +499,31 @@ var _ = Describe("Offers Model", func() {
 			Expect(err.Error()).To(Equal("sql: database is closed"))
 			db = oldDB // avoid errors in after each
 		})
+
+		FIt("should not return limited-template more than once", func() {
+			//Given
+			playerID := "player-1"
+			gameID := "limited-offers-game"
+			offerID := "5ba8848f-1df0-45b3-b8b1-27a7d5eedd6a"
+			currentTime := time.Unix(1486678000, 0)
+
+			//When
+			templatesBefore, err1 := models.GetAvailableOffers(db, playerID, gameID, currentTime, nil)
+			Expect(err1).NotTo(HaveOccurred())
+			Expect(templatesBefore).To(HaveLen(1))
+
+			err2 := models.UpdateOfferLastSeenAt(db, offerID, playerID, gameID, currentTime, nil)
+			Expect(err2).NotTo(HaveOccurred())
+
+			o, e := models.GetOfferByID(db, gameID, offerID, nil)
+			Expect(e).NotTo(HaveOccurred())
+			Expect(o.SeenCounter).To(Equal(1))
+
+			templatesAfter, err3 := models.GetAvailableOffers(db, playerID, gameID, currentTime, nil)
+			Expect(templatesAfter).To(HaveLen(0))
+			Expect(err3).NotTo(HaveOccurred())
+
+			//Then
+		})
 	})
 })

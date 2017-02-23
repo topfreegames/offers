@@ -25,3 +25,8 @@
     name: game-4
     created_at: 2016-01-01 12:30:12
     bundle_id: com.topfreegames.example
+-
+    id: limited-offers-game
+    name: game-4
+    created_at: 2016-01-01 12:30:12
+    bundle_id: com.topfreegames.example

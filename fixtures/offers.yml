@@ -45,3 +45,9 @@
     offer_template_id: cb06428b-71e1-47c5-a0e2-05e7c322f6fd
     created_at: 2016-01-01 12:30:12
     bought_counter: 1
+-
+    id: 5ba8848f-1df0-45b3-b8b1-27a7d5eedd6a
+    game_id: limited-offers-game
+    player_id: player-1
+    offer_template_id: aa65a3f2-7cf8-4d76-957f-0a23a1bbbd32
+    created_at: 2016-01-01 12:30:12
