@@ -11,6 +11,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 
 	runner "gopkg.in/mgutz/dat.v2/sqlx-runner"
 
@@ -26,6 +27,20 @@ var _ = Describe("Offer Handler", func() {
 	BeforeEach(func() {
 		// Record HTTP responses.
 		recorder = httptest.NewRecorder()
+	})
+
+	Describe("Invalid route", func() {
+		It("should return status code 404 if invalid route", func() {
+			//Given
+			url := "/invalid"
+			request, _ := http.NewRequest("GET", url, nil)
+
+			//When
+			app.Router.ServeHTTP(recorder, request)
+
+			//Then
+			Expect(recorder.Code).To(Equal(http.StatusNotFound))
+		})
 	})
 
 	Describe("GET /offers", func() {
@@ -64,6 +79,34 @@ var _ = Describe("Offer Handler", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(jsonBody).To(BeEmpty())
 			Expect(recorder.Code).To(Equal(http.StatusOK))
+		})
+
+		It("should return status code 400 if player-id is not informed available offers", func() {
+			//Given
+			gameID := "offers-game"
+			url := "/offers?game-id=" + gameID
+			request, _ := http.NewRequest("GET", url, nil)
+
+			//When
+			app.Router.ServeHTTP(recorder, request)
+
+			//Then
+			Expect(recorder.Body.String()).To(Equal("The player-id parameter cannot be empty."))
+			Expect(recorder.Code).To(Equal(http.StatusBadRequest))
+		})
+
+		It("should return status code 400 if game-id is not informed available offers", func() {
+			//Given
+			playerID := "player-1"
+			url := "/offers?player-id=" + playerID
+			request, _ := http.NewRequest("GET", url, nil)
+
+			//When
+			app.Router.ServeHTTP(recorder, request)
+
+			//Then
+			Expect(recorder.Body.String()).To(Equal("The game-id parameter cannot be empty."))
+			Expect(recorder.Code).To(Equal(http.StatusBadRequest))
 		})
 	})
 
@@ -209,6 +252,21 @@ var _ = Describe("Offer Handler", func() {
 			Expect(recorder.Code).To(Equal(http.StatusInternalServerError))
 			Expect(recorder.Body.String()).To(Equal("sql: database is closed"))
 			app.DB = oldDB // avoid errors in after each
+		})
+
+		It("should return status code 400 if invalid json is sent", func() {
+			//Given
+			invalidJSON := `"ID    "56fc047-39f1-485c-898e-4909e9155eb1",
+											"GameID:   "offers-g
+											"Player-1"`
+			request, _ := http.NewRequest("PUT", "/offer/claim", strings.NewReader(invalidJSON))
+
+			//When
+			app.Router.ServeHTTP(recorder, request)
+
+			//Then
+			Expect(recorder.Body.String()).To(Equal(`{"code":"OFF-002","description":"json: cannot unmarshal string into Go value of type models.OfferToUpdate","error":"ValidationFailedError"}`))
+			Expect(recorder.Code).To(Equal(http.StatusBadRequest))
 		})
 	})
 

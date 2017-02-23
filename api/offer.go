@@ -9,7 +9,6 @@ package api
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 
@@ -32,9 +31,6 @@ func (h *OfferRequestHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		h.claimOffer(w, r)
 	case "update_offer_last_seen_at":
 		h.updateOfferLastSeenAt(w, r)
-	default:
-		msg := "method not allowed"
-		h.App.HandleError(w, http.StatusMethodNotAllowed, msg, errors.New(msg))
 	}
 }
 

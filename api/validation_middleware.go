@@ -48,15 +48,6 @@ func offerTemplateFromCtx(ctx context.Context) *models.OfferTemplate {
 	return offerTemplate.(*models.OfferTemplate)
 }
 
-func offerFromCtx(ctx context.Context) *models.Offer {
-	offer := ctx.Value(payloadString)
-	if offer == nil {
-		return nil
-	}
-
-	return offer.(*models.Offer)
-}
-
 func offerToUpdateFromCtx(ctx context.Context) *models.OfferToUpdate {
 	offer := ctx.Value(payloadString)
 	if offer == nil {
