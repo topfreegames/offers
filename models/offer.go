@@ -299,7 +299,7 @@ func filterTemplatesByFrequencyAndPeriod(offers []*Offer, ots []*OfferTemplate, 
 				if err != nil {
 					return nil, err
 				}
-				if offer.LastSeenAt.Time.Add(duration).After(t) {
+				if offer.ClaimedAt.Time.Add(duration).After(t) {
 					continue
 				}
 			}

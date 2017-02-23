@@ -10,11 +10,14 @@ package models_test
 import (
 	"time"
 
+	runner "gopkg.in/mgutz/dat.v2/sqlx-runner"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	uuid "github.com/satori/go.uuid"
 	"github.com/topfreegames/offers/errors"
 	"github.com/topfreegames/offers/models"
+	. "github.com/topfreegames/offers/testing"
 )
 
 var _ = Describe("Offers Model", func() {
@@ -170,6 +173,23 @@ var _ = Describe("Offers Model", func() {
 			Expect(err).To(HaveOccurred())
 			Expect(err).To(MatchError(expectedError))
 		})
+
+		It("should fail if some error in the database", func() {
+			gameID := "offers-game"
+			offer := &models.Offer{
+				GameID:          gameID,
+				OfferTemplateID: defaultOfferTemplateID,
+				PlayerID:        "player-3",
+			}
+			oldDB := db
+			db, err := GetTestDB()
+			Expect(err).NotTo(HaveOccurred())
+			db.(*runner.DB).DB.Close() // make DB connection unavailable
+			err = models.InsertOffer(db, offer, time.Now(), nil)
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(Equal("sql: database is closed"))
+			db = oldDB // avoid errors in after each
+		})
 	})
 
 	Describe("Claim offer", func() {
@@ -257,6 +277,23 @@ var _ = Describe("Offers Model", func() {
 			//Then
 			Expect(err).To(HaveOccurred())
 		})
+
+		It("should fail if some error in the database", func() {
+			id := "56fc0477-39f1-485c-898e-4909e9155eb1"
+			playerID := "player-1"
+			gameID := "offers-game"
+			currentTime := time.Unix(from+500, 0)
+
+			oldDB := db
+			db, err := GetTestDB()
+			Expect(err).NotTo(HaveOccurred())
+			db.(*runner.DB).DB.Close() // make DB connection unavailable
+
+			_, _, err = models.ClaimOffer(db, id, playerID, gameID, currentTime, nil)
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(Equal("sql: database is closed"))
+			db = oldDB // avoid errors in after each
+		})
 	})
 
 	Describe("Update offer last seen at", func() {
@@ -314,7 +351,7 @@ var _ = Describe("Offers Model", func() {
 			Expect(templates["store"].ID).To(Equal("d5114990-77d7-45c4-ba5f-462fc86b213f"))
 		})
 
-		It("should return two offers for players of game offers-game", func() {
+		It("should return offers for two different players of game offers-game", func() {
 			//Given
 			playerID1 := "player-1"
 			playerID2 := "player-2"
@@ -346,7 +383,7 @@ var _ = Describe("Offers Model", func() {
 			Expect(err).NotTo(HaveOccurred())
 		})
 
-		It("should not return offer-template-1 if last_seen_at  is not long ago", func() {
+		It("should not return offer-template-1 if last_seen_at is not long ago", func() {
 			playerID := "player-1"
 			gameID := "offers-game"
 			currentTime := time.Unix(1486678000, 0)
@@ -401,6 +438,92 @@ var _ = Describe("Offers Model", func() {
 			Expect(alreadyClaimed).To(BeFalse())
 			Expect(templatesBefore).To(HaveLen(1))
 			Expect(templatesAfter).To(HaveLen(0))
+		})
+
+		It("should not return template if it has empty trigger", func() {
+			//Given
+			playerID := "player-1"
+			gameID := "offers-game-empty-trigger"
+			currentTime := time.Unix(1486678000, 0)
+
+			//When
+			templates, err := models.GetAvailableOffers(db, playerID, gameID, currentTime, nil)
+
+			//Then
+			Expect(err).NotTo(HaveOccurred())
+			Expect(templates).To(BeEmpty())
+		})
+
+		It("should not return template if it reached max frequency", func() {
+			//Given
+			playerID := "player-1"
+			gameID := "offers-game-max-freq"
+			currentTime := time.Unix(1486678000, 0)
+
+			//When
+			templates, err := models.GetAvailableOffers(db, playerID, gameID, currentTime, nil)
+
+			//Then
+			Expect(err).NotTo(HaveOccurred())
+			Expect(templates).To(BeEmpty())
+		})
+
+		It("should not return template if it reached max period", func() {
+			//Given
+			playerID := "player-1"
+			gameID := "offers-game-max-period"
+			currentTime := time.Unix(1486678000, 0)
+
+			//When
+			templates, err := models.GetAvailableOffers(db, playerID, gameID, currentTime, nil)
+
+			//Then
+			Expect(err).NotTo(HaveOccurred())
+			Expect(templates).To(BeEmpty())
+		})
+
+		It("should fail if template has invalid frequency", func() {
+			//Given
+			playerID := "player-1"
+			gameID := "offers-game-invalid-every-freq"
+			currentTime := time.Unix(1486678000, 0)
+
+			//When
+			_, err := models.GetAvailableOffers(db, playerID, gameID, currentTime, nil)
+
+			//Then
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(Equal("time: invalid duration invalid"))
+		})
+
+		It("should fail if template has invalid frequency", func() {
+			//Given
+			playerID := "player-1"
+			gameID := "offers-game-invalid-every-period"
+			currentTime := time.Unix(1486678000, 0)
+
+			//When
+			_, err := models.GetAvailableOffers(db, playerID, gameID, currentTime, nil)
+
+			//Then
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(Equal("time: invalid duration invalid"))
+		})
+
+		It("should fail if some error in the database", func() {
+			playerID := "player-1"
+			gameID := "offers-game"
+			currentTime := time.Unix(1486678000, 0)
+
+			oldDB := db
+			db, err := GetTestDB()
+			Expect(err).NotTo(HaveOccurred())
+			db.(*runner.DB).DB.Close() // make DB connection unavailable
+
+			_, err = models.GetAvailableOffers(db, playerID, gameID, currentTime, nil)
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(Equal("sql: database is closed"))
+			db = oldDB // avoid errors in after each
 		})
 	})
 })
