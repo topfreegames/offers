@@ -27,7 +27,7 @@ var _ = Describe("Offer Template Models", func() {
 			Expect(ot.Contents).To(Equal(dat.JSON([]byte(`{"gems": 5, "gold": 100}`))))
 			Expect(ot.Metadata).To(Equal(dat.JSON([]byte(`{}`))))
 			Expect(ot.Period).To(Equal(dat.JSON([]byte(`{"every": "1s"}`))))
-			Expect(ot.Frequency).To(BeEquivalentTo(dat.JSON([]byte(`{"max": 1, "every": "1s"}`))))
+			Expect(ot.Frequency).To(BeEquivalentTo(dat.JSON([]byte(`{"every": "1s"}`))))
 			Expect(ot.Trigger).To(Equal(dat.JSON([]byte(`{"to": 1486679000, "from": 1486678000}`))))
 			Expect(ot.Enabled).To(BeTrue())
 			Expect(ot.Placement).To(Equal("popup"))

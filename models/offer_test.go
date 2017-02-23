@@ -208,6 +208,11 @@ var _ = Describe("Offers Model", func() {
 			Expect(contents).NotTo(BeNil())
 			Expect(alreadyClaimed).To(BeFalse())
 			Expect(err).NotTo(HaveOccurred())
+
+			claimedOffer, err := models.GetOfferByID(db, "offers-game", defaultOfferID, nil)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(claimedOffer.ClaimedAt.Valid).To(BeTrue())
+			Expect(claimedOffer.ClaimedAt.Time.Unix()).To(Equal(currentTime.Unix()))
 		})
 
 		It("should claim valid offer before trigger begins", func() {
@@ -438,6 +443,27 @@ var _ = Describe("Offers Model", func() {
 			Expect(alreadyClaimed).To(BeFalse())
 			Expect(templatesBefore).To(HaveLen(1))
 			Expect(templatesAfter).To(HaveLen(0))
+		})
+
+		It("should not return offer-template-1 if last_seen_at is not long ago", func() {
+			//Given
+			playerID := "player-1"
+			gameID := "offers-game"
+			offerID := "56fc0477-39f1-485c-898e-4909e9155eb1"
+			currentTime := time.Unix(1486678000, 0)
+
+			//When
+			templatesBefore, err1 := models.GetAvailableOffers(db, playerID, gameID, currentTime, nil)
+			_, alreadyClaimed, err2 := models.ClaimOffer(db, offerID, playerID, gameID, currentTime, nil)
+			templatesAfter, err3 := models.GetAvailableOffers(db, playerID, gameID, currentTime, nil)
+
+			//Then
+			Expect(err1).NotTo(HaveOccurred())
+			Expect(err2).NotTo(HaveOccurred())
+			Expect(err3).NotTo(HaveOccurred())
+			Expect(alreadyClaimed).To(BeFalse())
+			Expect(templatesBefore).To(HaveLen(2))
+			Expect(templatesAfter).To(HaveLen(1))
 		})
 
 		It("should not return template if it has empty trigger", func() {

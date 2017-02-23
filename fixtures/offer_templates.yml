@@ -13,7 +13,7 @@
     contents: '{"gems": 5, "gold": 100}'
     metadata: '{}'
     period: '{"every": "1s"}'
-    frequency: '{"every": "1s", "max": 1}'
+    frequency: '{"every": "1s"}'
     trigger: '{"from": 1486678000, "to": 1486679000}'
     placement: popup
     enabled: true

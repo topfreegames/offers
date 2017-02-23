@@ -222,18 +222,11 @@ func filterTemplatesByTrigger(trigger Trigger, ots []*OfferTemplate, t time.Time
 	var (
 		filteredOts []*OfferTemplate
 		times       Times
-		bytes       []byte
-		err         error
 	)
 	for _, ot := range ots {
-		if bytes, err = ot.Trigger.MarshalJSON(); err != nil {
+		if err := json.Unmarshal(ot.Trigger, &times); err != nil {
 			return nil, err
 		}
-
-		if json.Unmarshal(bytes, &times) != nil {
-			return nil, err
-		}
-
 		if trigger.IsTriggered(times, t) {
 			filteredOts = append(filteredOts, ot)
 		}
@@ -251,7 +244,7 @@ func getPlayerOffersByOfferTemplateIDs(
 	var offers []*Offer
 	err := mr.WithDatastoreSegment("offers", "select by id", func() error {
 		return db.
-			Select("id, offer_template_id, game_id, last_seen_at, seen_counter, bought_counter").
+			Select("id, offer_template_id, game_id, last_seen_at, claimed_at, seen_counter, bought_counter").
 			From("offers").
 			Where("player_id=$1 AND game_id=$2 AND offer_template_id IN $3", playerID, gameID, offerTemplateIDs).
 			QueryStructs(&offers)
@@ -290,7 +283,6 @@ func filterTemplatesByFrequencyAndPeriod(offers []*Offer, ots []*OfferTemplate, 
 					continue
 				}
 			}
-
 			if p.Max != 0 && offer.BoughtCounter >= p.Max {
 				continue
 			}
