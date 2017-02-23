@@ -100,7 +100,11 @@ merge-profiles:
 	@gocovmerge _build/*.out > _build/coverage-all.out
 
 test-coverage-func coverage-func: merge-profiles
-	@go tool cover -func=_build/coverage-all.out
+	@echo
+	@echo "=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-"
+	@echo "Functions NOT COVERED by Tests"
+	@echo "=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-"
+	@go tool cover -func=_build/coverage-all.out | egrep -v "100.0[%]"
 
 test-coverage-html coverage-html: merge-profiles
 	@go tool cover -html=_build/coverage-all.out
