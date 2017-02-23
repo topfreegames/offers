@@ -18,25 +18,24 @@ import (
 )
 
 var _ = Describe("Offers Model", func() {
-	var defaultOfferTemplateID string
-	defaultOfferTemplateID = "dd21ec96-2890-4ba0-b8e2-40ea67196990"
+	defaultOfferTemplateID := "dd21ec96-2890-4ba0-b8e2-40ea67196990"
+	defaultOfferID := "56fc0477-39f1-485c-898e-4909e9155eb1"
 
 	Describe("Offer Instance", func() {
 		It("Should load a offer", func() {
 			//Given
-			offerID := "56fc0477-39f1-485c-898e-4909e9155eb1"
 
 			//When
 			var offer models.Offer
 			err := db.
 				Select("*").
 				From("offers").
-				Where("id = $1", offerID).
+				Where("id = $1", defaultOfferID).
 				QueryStruct(&offer)
 
 			//Then
 			Expect(err).NotTo(HaveOccurred())
-			Expect(offer.ID).To(Equal(offerID))
+			Expect(offer.ID).To(Equal(defaultOfferID))
 			Expect(offer.GameID).To(Equal("offers-game"))
 			Expect(offer.PlayerID).To(Equal("player-1"))
 			Expect(offer.OfferTemplateID).To(Equal(defaultOfferTemplateID))
@@ -77,14 +76,13 @@ var _ = Describe("Offers Model", func() {
 	Describe("Get offer by id", func() {
 		It("Should load offer by id", func() {
 			//Given
-			offerID := "56fc0477-39f1-485c-898e-4909e9155eb1"
 
 			//When
-			offer, err := models.GetOfferByID(db, "offers-game", offerID, nil)
+			offer, err := models.GetOfferByID(db, "offers-game", defaultOfferID, nil)
 
 			//Then
 			Expect(err).NotTo(HaveOccurred())
-			Expect(offer.ID).To(Equal(offerID))
+			Expect(offer.ID).To(Equal(defaultOfferID))
 			Expect(offer.GameID).To(Equal("offers-game"))
 			Expect(offer.PlayerID).To(Equal("player-1"))
 			Expect(offer.OfferTemplateID).To(Equal(defaultOfferTemplateID))
@@ -109,77 +107,70 @@ var _ = Describe("Offers Model", func() {
 		})
 	})
 
-	//InsertOffer still makes sense?
-	//Describe("Insert offer", func() {
-	//	It("should insert offer with new id", func() {
-	//		//Given
-	//		gameID := "offers-game"
-	//		offerID := uuid.NewV4().String()
-	//		offer := &models.Offer{
-	//			ID:              offerID,
-	//			GameID:          gameID,
-	//			OfferTemplateID: defaultOfferTemplateID,
-	//			PlayerID:        "player-3",
-	//		}
+	Describe("Insert offer", func() {
+		It("should insert offer with new id", func() {
+			//Given
+			gameID := "offers-game"
+			offer := &models.Offer{
+				GameID:          gameID,
+				OfferTemplateID: defaultOfferTemplateID,
+				PlayerID:        "player-3",
+			}
 
-	//		//When
-	//		err1 := models.InsertOffer(db, offer, time.Now(), nil)
-	//		offerFromDB, err2 := models.GetOfferByID(db, gameID, offerID, nil)
+			//When
+			err := models.InsertOffer(db, offer, time.Now(), nil)
 
-	//		//Then
-	//		Expect(err1).NotTo(HaveOccurred())
-	//		Expect(err2).NotTo(HaveOccurred())
-	//		Expect(offerFromDB.ID).To(Equal(offerID))
-	//	})
+			//Then
+			Expect(err).NotTo(HaveOccurred())
+		})
 
-	//	It("should fail if game does not exist", func() {
-	//		//Given
-	//		offer := &models.Offer{
-	//			GameID:          "non-existing-game",
-	//			OfferTemplateID: uuid.NewV4().String(),
-	//			PlayerID:        "player-3",
-	//		}
-	//		expectedError := errors.NewInvalidModelError(
-	//			"Offer",
-	//			"insert or update on table \"offers\" violates foreign key constraint \"offers_game_id_fkey\"",
-	//		)
+		It("should fail if game does not exist", func() {
+			//Given
+			offer := &models.Offer{
+				GameID:          "non-existing-game",
+				OfferTemplateID: uuid.NewV4().String(),
+				PlayerID:        "player-3",
+			}
+			expectedError := errors.NewInvalidModelError(
+				"Offer",
+				"insert or update on table \"offers\" violates foreign key constraint \"offers_game_id_fkey\"",
+			)
 
-	//		//When
-	//		err := models.InsertOffer(db, offer, time.Now(), nil)
+			//When
+			err := models.InsertOffer(db, offer, time.Now(), nil)
 
-	//		//Then
-	//		Expect(err).To(HaveOccurred())
-	//		Expect(err).To(MatchError(expectedError))
+			//Then
+			Expect(err).To(HaveOccurred())
+			Expect(err).To(MatchError(expectedError))
 
-	//		//Test that after error our connection is still usable
-	//		offerID := "56fc0477-39f1-485c-898e-4909e9155eb1"
-	//		//Must use CONN and not db here to skip transaction
-	//		dbOffer, err := models.GetOfferByID(conn, "offers-game", offerID, nil)
+			//Test that after error our connection is still usable
+			//Must use CONN and not db here to skip transaction
+			dbOffer, err := models.GetOfferByID(conn, "offers-game", defaultOfferID, nil)
 
-	//		Expect(err).NotTo(HaveOccurred())
-	//		Expect(dbOffer.ID).To(Equal(offerID))
-	//	})
+			Expect(err).NotTo(HaveOccurred())
+			Expect(dbOffer.ID).To(Equal(defaultOfferID))
+		})
 
-	//	It("should fail if offer template does not exist", func() {
-	//		//Given
-	//		offer := &models.Offer{
-	//			GameID:          "offers-game-2",
-	//			OfferTemplateID: uuid.NewV4().String(),
-	//			PlayerID:        "player-3",
-	//		}
-	//		expectedError := errors.NewInvalidModelError(
-	//			"Offer",
-	//			"insert or update on table \"offers\" violates foreign key constraint \"offers_offer_template_id_fkey\"",
-	//		)
+		It("should fail if offer template does not exist", func() {
+			//Given
+			offer := &models.Offer{
+				GameID:          "offers-game-2",
+				OfferTemplateID: uuid.NewV4().String(),
+				PlayerID:        "player-3",
+			}
+			expectedError := errors.NewInvalidModelError(
+				"Offer",
+				"insert or update on table \"offers\" violates foreign key constraint \"offers_offer_template_id_fkey\"",
+			)
 
-	//		//When
-	//		err := models.InsertOffer(db, offer, time.Now(), nil)
+			//When
+			err := models.InsertOffer(db, offer, time.Now(), nil)
 
-	//		//Then
-	//		Expect(err).To(HaveOccurred())
-	//		Expect(err).To(MatchError(expectedError))
-	//	})
-	//})
+			//Then
+			Expect(err).To(HaveOccurred())
+			Expect(err).To(MatchError(expectedError))
+		})
+	})
 
 	Describe("Claim offer", func() {
 		var from, to int64 = 1486678000, 148669000
@@ -271,15 +262,14 @@ var _ = Describe("Offers Model", func() {
 	Describe("Update offer last seen at", func() {
 		It("should update last seen offer at now and increment seen counter", func() {
 			//Given
-			offerID := "56fc0477-39f1-485c-898e-4909e9155eb1"
 			playerID := "player-1"
 			gameID := "offers-game"
 			currentTime := time.Now()
 
 			//When
-			offerBefore, err1 := models.GetOfferByID(db, "offers-game", offerID, nil)
-			err2 := models.UpdateOfferLastSeenAt(db, offerID, playerID, gameID, currentTime, nil)
-			offerAfter, err3 := models.GetOfferByID(db, "offers-game", offerID, nil)
+			offerBefore, err1 := models.GetOfferByID(db, "offers-game", defaultOfferID, nil)
+			err2 := models.UpdateOfferLastSeenAt(db, defaultOfferID, playerID, gameID, currentTime, nil)
+			offerAfter, err3 := models.GetOfferByID(db, "offers-game", defaultOfferID, nil)
 
 			//Then
 			Expect(err1).NotTo(HaveOccurred())
@@ -340,6 +330,36 @@ var _ = Describe("Offers Model", func() {
 			Expect(err2).NotTo(HaveOccurred())
 			Expect(templates1).To(HaveLen(2))
 			Expect(templates2).To(HaveLen(2))
+		})
+
+		It("should return empty offer template list if gameID doesn't exist", func() {
+			//Given
+			playerID := "player-1"
+			gameID := "non-existing-game"
+			currentTime := time.Unix(1486678000, 0)
+
+			//When
+			templates, err := models.GetAvailableOffers(db, playerID, gameID, currentTime, nil)
+
+			//Then
+			Expect(templates).To(BeEmpty())
+			Expect(err).NotTo(HaveOccurred())
+		})
+
+		It("should not return offer-template-1 if last_seen_at  is not long ago", func() {
+			playerID := "player-1"
+			gameID := "offers-game"
+			currentTime := time.Unix(1486678000, 0)
+
+			//When
+			err1 := models.UpdateOfferLastSeenAt(db, defaultOfferID, playerID, gameID, currentTime, nil)
+			templates, err2 := models.GetAvailableOffers(db, playerID, gameID, currentTime, nil)
+
+			//Then
+			Expect(err1).NotTo(HaveOccurred())
+			Expect(err2).NotTo(HaveOccurred())
+			Expect(templates).To(HaveLen(1))
+			Expect(templates).To(HaveKey("store"))
 		})
 	})
 })

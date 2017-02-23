@@ -145,8 +145,8 @@ func UpdateOfferLastSeenAt(db runner.Connection, offerID, playerID, gameID strin
               id = $2 AND
               player_id = $3 AND
               game_id = $4
-            RETURNING id`
-	err := mr.WithDatastoreSegment("offers", "select by id", func() error {
+            RETURNING id, last_seen_at`
+	err := mr.WithDatastoreSegment("offers", "update", func() error {
 		return db.SQL(query, t, offerID, playerID, gameID).QueryStruct(&offer)
 	})
 
@@ -244,7 +244,7 @@ func getPlayerOffersByOfferTemplateIDs(
 	var offers []*Offer
 	err := mr.WithDatastoreSegment("offers", "select by id", func() error {
 		return db.
-			Select("id, offer_template_id, game_id").
+			Select("id, offer_template_id, game_id, last_seen_at").
 			From("offers").
 			Where("player_id=$1 AND game_id=$2 AND offer_template_id IN $3", playerID, gameID, offerTemplateIDs).
 			QueryStructs(&offers)
@@ -252,9 +252,8 @@ func getPlayerOffersByOfferTemplateIDs(
 	return offers, err
 }
 
-func filterTemplatesByFrequencyAndPeriod(offers []*Offer, ots []*OfferTemplate, t time.Time) ([]*OfferTemplate, error) {
+func makeOffersByOfferTemplateIDs(offers []*Offer) map[string][]*Offer {
 	offersByOfferTemplateID := make(map[string][]*Offer)
-	var filteredOts []*OfferTemplate
 
 	for _, offer := range offers {
 		if os, ok := offersByOfferTemplateID[offer.OfferTemplateID]; ok {
@@ -264,16 +263,23 @@ func filterTemplatesByFrequencyAndPeriod(offers []*Offer, ots []*OfferTemplate, 
 		}
 	}
 
+	return offersByOfferTemplateID
+}
+
+func filterTemplatesByFrequencyAndPeriod(offers []*Offer, ots []*OfferTemplate, t time.Time) ([]*OfferTemplate, error) {
+	offersByOfferTemplateID := makeOffersByOfferTemplateIDs(offers)
+	var filteredOts []*OfferTemplate
+
 	for _, offerTemplate := range ots {
 		if os, ok := offersByOfferTemplateID[offerTemplate.ID]; ok {
-			var f Frequency
-			err := json.Unmarshal(offerTemplate.Frequency, &f)
-			if err != nil {
+			var (
+				f Frequency
+				p Period
+			)
+			if err := json.Unmarshal(offerTemplate.Frequency, &f); err != nil {
 				return nil, err
 			}
-			var p Period
-			err = json.Unmarshal(offerTemplate.Period, &p)
-			if err != nil {
+			if err := json.Unmarshal(offerTemplate.Period, &p); err != nil {
 				return nil, err
 			}
 			for _, offer := range os {

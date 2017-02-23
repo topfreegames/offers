@@ -13,6 +13,6 @@ import "time"
 type RealClock struct{}
 
 //GetTime returns the current time
-func (r *RealClock) GetTime() time.Time {
+func (r RealClock) GetTime() time.Time {
 	return time.Now()
 }

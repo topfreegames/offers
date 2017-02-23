@@ -8,6 +8,7 @@
 package api_test
 
 import (
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 
@@ -27,8 +28,43 @@ var _ = Describe("Offer Handler", func() {
 		recorder = httptest.NewRecorder()
 	})
 
-	Describe("GET /offers/available", func() {
+	Describe("GET /offers", func() {
+		It("should return available offers", func() {
+			//Given
+			playerID := "player-1"
+			gameID := "offers-game"
+			url := "/offers?player-id=" + playerID + "&game-id=" + gameID
+			request, _ := http.NewRequest("GET", url, nil)
+			var jsonBody map[string]map[string]interface{}
 
+			//When
+			app.Router.ServeHTTP(recorder, request)
+			err := json.Unmarshal(recorder.Body.Bytes(), &jsonBody)
+
+			//Then
+			Expect(err).NotTo(HaveOccurred())
+			Expect(jsonBody).To(HaveKey("popup"))
+			Expect(jsonBody).To(HaveKey("store"))
+			Expect(recorder.Code).To(Equal(http.StatusOK))
+		})
+
+		It("should return empty list of available offers", func() {
+			//Given
+			playerID := "player-1"
+			gameID := "non-existing-offers-game"
+			url := "/offers?player-id=" + playerID + "&game-id=" + gameID
+			request, _ := http.NewRequest("GET", url, nil)
+			var jsonBody map[string]map[string]interface{}
+
+			//When
+			app.Router.ServeHTTP(recorder, request)
+			err := json.Unmarshal(recorder.Body.Bytes(), &jsonBody)
+
+			//Then
+			Expect(err).NotTo(HaveOccurred())
+			Expect(jsonBody).To(BeEmpty())
+			Expect(recorder.Code).To(Equal(http.StatusOK))
+		})
 	})
 
 	Describe("PUT /offer/claim", func() {

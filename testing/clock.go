@@ -15,6 +15,6 @@ type MockClock struct {
 }
 
 //GetTime returns mock time
-func (m *MockClock) GetTime() time.Time {
+func (m MockClock) GetTime() time.Time {
 	return time.Unix(m.CurrentTime, 0)
 }

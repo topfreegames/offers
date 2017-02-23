@@ -13,7 +13,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/Sirupsen/logrus"
 	e "github.com/topfreegames/offers/errors"
 	"github.com/topfreegames/offers/models"
 )
@@ -40,48 +39,35 @@ func (h *OfferRequestHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 }
 
 func (h *OfferRequestHandler) getOffers(w http.ResponseWriter, r *http.Request) {
-	//mr := metricsReporterFromCtx(r.Context())
+	mr := metricsReporterFromCtx(r.Context())
 	playerID := r.URL.Query().Get("player-id")
+	gameID := r.URL.Query().Get("game-id")
 	if playerID == "" {
 		err := fmt.Errorf("The player-id parameter cannot be empty")
 		h.App.HandleError(w, http.StatusBadRequest, "The player-id parameter cannot be empty.", err)
 		return
+	} else if gameID == "" {
+		err := fmt.Errorf("The game-id parameter cannot be empty")
+		h.App.HandleError(w, http.StatusBadRequest, "The game-id parameter cannot be empty.", err)
+		return
 	}
 	currentTime := h.App.Clock.GetTime()
 
-	l := loggerFromContext(r.Context()).WithFields(logrus.Fields{
-		"playerID":    playerID,
-		"currentTime": currentTime,
-	})
-
-	l.Debug("Retrieving player info...")
-
-	//availableOffers, err := models.GetEnabledOfferTemplates(h.App.DB, mr)
-	//if err != nil {
-	//h.App.HandleError(w, http.StatusInternalServerError, "Failed to retrieve enabled offers", err)
-	//return
-	//}
-
-	//info := models.GetPlayerSeenOffers(h.App.DB, playerID, availableOffers, mr)
-
-	//fitOffers := []*OfferPayload
-	//for _, offer := range availableOffers {
-	//if offer.Fits(info) {
-	//fitOffers = append(fitOffers, OfferPayloadFrom(offer))
-	//}
-	//}
-
-	res, err := json.Marshal(map[string]interface{}{
-	//"offers": fitOffers,
-	})
+	ots, err := models.GetAvailableOffers(h.App.DB, playerID, gameID, currentTime, mr)
 
 	if err != nil {
 		h.App.HandleError(w, http.StatusInternalServerError, "Failed to retrieve offer for player", err)
 		return
 	}
 
-	WriteBytes(w, http.StatusOK, res)
-	l.Debug("Offer request done.")
+	bytes, err := json.Marshal(ots)
+
+	if err != nil {
+		h.App.HandleError(w, http.StatusInternalServerError, "Faild to parse structs to JSON", err)
+		return
+	}
+
+	WriteBytes(w, http.StatusOK, bytes)
 }
 
 func (h *OfferRequestHandler) claimOffer(w http.ResponseWriter, r *http.Request) {
