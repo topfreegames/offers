@@ -42,7 +42,7 @@ var _ = Describe("Mixed Metrics Reporter Model", func() {
 
 	Describe("WithSegment", func() {
 		It("Should execute the given function if mr is nil", func() {
-			var mixedMetricsReporter models.MixedMetricsReporter
+			var mixedMetricsReporter *models.MixedMetricsReporter
 			f := func() error {
 				sendToChan(testChan)
 				return nil
@@ -68,7 +68,7 @@ var _ = Describe("Mixed Metrics Reporter Model", func() {
 
 	Describe("WithDatastoreSegment", func() {
 		It("Should execute the given function if mr is nil", func() {
-			var mixedMetricsReporter models.MixedMetricsReporter
+			var mixedMetricsReporter *models.MixedMetricsReporter
 			f := func() error {
 				sendToChan(testChan)
 				return nil
@@ -94,7 +94,7 @@ var _ = Describe("Mixed Metrics Reporter Model", func() {
 
 	Describe("WithExternalSegment", func() {
 		It("Should execute the given function if mr is nil", func() {
-			var mixedMetricsReporter models.MixedMetricsReporter
+			var mixedMetricsReporter *models.MixedMetricsReporter
 			f := func() error {
 				sendToChan(testChan)
 				return nil
