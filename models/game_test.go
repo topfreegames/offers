@@ -18,7 +18,7 @@ import (
 
 var _ = Describe("Games Model", func() {
 	Describe("Game Instance", func() {
-		It("Shoud load a game", func() {
+		It("Should load a game", func() {
 			//Given
 			gameID := "game-id"
 			var game models.Game
@@ -34,6 +34,7 @@ var _ = Describe("Games Model", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(game.ID).To(Equal(gameID))
 			Expect(game.Name).To(Equal("game-1"))
+			Expect(game.BundleID).To(Equal("com.topfreegames.example"))
 
 			obj, err := game.GetMetadata()
 			Expect(err).NotTo(HaveOccurred())
@@ -58,7 +59,8 @@ var _ = Describe("Games Model", func() {
 				Record(game).
 				Returning("created_at", "updated_at").
 				QueryStruct(game)
-			_ = db.
+
+			err3 := db.
 				Select("*").
 				From("games").
 				Where("id = $1", game.ID).
@@ -67,9 +69,12 @@ var _ = Describe("Games Model", func() {
 
 			//Then
 			Expect(err1).NotTo(HaveOccurred())
-			Expect(game.ID).NotTo(Equal(""))
-			Expect(game.CreatedAt).NotTo(Equal(""))
 			Expect(err2).NotTo(HaveOccurred())
+			Expect(err3).NotTo(HaveOccurred())
+			Expect(game2.CreatedAt).NotTo(Equal(""))
+			Expect(game2.ID).To(Equal(game.ID))
+			Expect(game2.Name).To(Equal(game.Name))
+			Expect(game2.BundleID).To(Equal(game.BundleID))
 			Expect(obj.(map[string]interface{})["qwe"]).To(BeEquivalentTo(123))
 		})
 	})
@@ -87,6 +92,7 @@ var _ = Describe("Games Model", func() {
 			Expect(err1).NotTo(HaveOccurred())
 			Expect(game.ID).To(Equal(gameID))
 			Expect(game.Name).To(Equal("game-1"))
+			Expect(game.BundleID).To(Equal("com.topfreegames.example"))
 			Expect(err2).NotTo(HaveOccurred())
 			Expect(obj).To(BeEquivalentTo(map[string]interface{}{}))
 		})
@@ -102,7 +108,7 @@ var _ = Describe("Games Model", func() {
 			game, err := models.GetGameByID(db, gameID, nil)
 
 			//Then
-			Expect(game).To(BeNil())
+			Expect(game.ID).To(Equal(""))
 			Expect(err).To(HaveOccurred())
 			Expect(err).To(MatchError(expectedError))
 		})
@@ -127,6 +133,8 @@ var _ = Describe("Games Model", func() {
 			Expect(err1).NotTo(HaveOccurred())
 			Expect(err2).NotTo(HaveOccurred())
 			Expect(gameFromDB.ID).To(Equal(id))
+			Expect(gameFromDB.Name).To(Equal(game.Name))
+			Expect(gameFromDB.BundleID).To(Equal(game.BundleID))
 		})
 
 		It("should update game with existing id", func() {

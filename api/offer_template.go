@@ -23,8 +23,10 @@ func (g *OfferTemplateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	mr := metricsReporterFromCtx(r.Context())
 	ot := offerTemplateFromCtx(r.Context())
 
-	err := mr.WithSegment(models.SegmentModel, func() error {
-		return models.InsertOfferTemplate(g.App.DB, ot, mr)
+	var err error
+	err = mr.WithSegment(models.SegmentModel, func() error {
+		ot, err = models.InsertOfferTemplate(g.App.DB, ot, mr)
+		return err
 	})
 
 	if err != nil {

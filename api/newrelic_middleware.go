@@ -23,7 +23,7 @@ type NewRelicMiddleware struct {
 
 const newRelicTransactionKey string = "newRelicTransaction"
 
-func newContextWithNewRelicTransaction(txn newrelic.Transaction, ctx context.Context, r *http.Request) context.Context {
+func newContextWithNewRelicTransaction(ctx context.Context, txn newrelic.Transaction, r *http.Request) context.Context {
 	c := context.WithValue(ctx, newRelicTransactionKey, txn)
 	return c
 }
@@ -38,7 +38,7 @@ func (m *NewRelicMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if m.App.NewRelic != nil {
 		txn := m.App.NewRelic.StartTransaction(fmt.Sprintf("%s %s", r.Method, r.URL.Path), w, r)
 		defer txn.End()
-		ctx = newContextWithNewRelicTransaction(txn, r.Context(), r)
+		ctx = newContextWithNewRelicTransaction(r.Context(), txn, r)
 
 		mr := metricsReporterFromCtx(ctx)
 		if mr != nil {

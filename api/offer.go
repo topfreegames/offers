@@ -14,8 +14,8 @@ import (
 	"net/http"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/topfreegames/offers/models"
 	e "github.com/topfreegames/offers/errors"
+	"github.com/topfreegames/offers/models"
 )
 
 //OfferRequestHandler handler
@@ -34,8 +34,8 @@ func (h *OfferRequestHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	case "update_offer_last_seen_at":
 		h.updateOfferLastSeenAt(w, r)
 	default:
-		msg := "method not found"
-		h.App.HandleError(w, http.StatusBadRequest, msg, errors.New(msg))
+		msg := "method not allowed"
+		h.App.HandleError(w, http.StatusMethodNotAllowed, msg, errors.New(msg))
 	}
 }
 
@@ -92,40 +92,40 @@ func (h *OfferRequestHandler) claimOffer(w http.ResponseWriter, r *http.Request)
 	contents, alreadyClaimed, err := models.ClaimOffer(h.App.DB, offer.ID, offer.PlayerID, offer.GameID, currentTime, mr)
 
 	if err != nil {
-    if modelNotFound, ok := err.(*e.ModelNotFoundError); ok {
-      h.App.HandleError(w, http.StatusNotFound, modelNotFound.Error(), modelNotFound)
-      return
-    }
+		if modelNotFound, ok := err.(*e.ModelNotFoundError); ok {
+			h.App.HandleError(w, http.StatusNotFound, modelNotFound.Error(), modelNotFound)
+			return
+		}
 
-    h.App.HandleError(w, http.StatusInternalServerError, err.Error(), err)
-    return
+		h.App.HandleError(w, http.StatusInternalServerError, err.Error(), err)
+		return
 	}
 
-  if err != nil {
-    h.App.HandleError(w, http.StatusInternalServerError, err.Error(), err)
-    return
-  }
+	if alreadyClaimed {
+		WriteBytes(w, http.StatusConflict, contents)
+		return
+	}
 
-  if alreadyClaimed {
-    WriteBytes(w, http.StatusConflict, contents)
-    return
-  }
-
-  WriteBytes(w, http.StatusOK, contents)
+	WriteBytes(w, http.StatusOK, contents)
 }
 
 //UpdateOfferLastSeenAt updates the offer last seen at
 func (h *OfferRequestHandler) updateOfferLastSeenAt(w http.ResponseWriter, r *http.Request) {
 	mr := metricsReporterFromCtx(r.Context())
-	offer := offerFromCtx(r.Context())
+	offer := offerToUpdateFromCtx(r.Context())
 	currentTime := h.App.Clock.GetTime()
 
 	err := models.UpdateOfferLastSeenAt(h.App.DB, offer.ID, offer.PlayerID, offer.GameID, currentTime, mr)
 
 	if err != nil {
-		h.App.HandleError(w, http.StatusBadRequest, err.Error(), err)
+		if modelNotFound, ok := err.(*e.ModelNotFoundError); ok {
+			h.App.HandleError(w, http.StatusNotFound, modelNotFound.Error(), modelNotFound)
+			return
+		}
+
+		h.App.HandleError(w, http.StatusInternalServerError, err.Error(), err)
 		return
 	}
 
-	Write(w, http.StatusOK, offer.ClaimedAt.Time.String())
+	Write(w, http.StatusOK, "")
 }

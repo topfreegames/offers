@@ -11,8 +11,11 @@ import (
 	"net/http"
 	"net/http/httptest"
 
+	runner "gopkg.in/mgutz/dat.v2/sqlx-runner"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	. "github.com/topfreegames/offers/testing"
 )
 
 var _ = Describe("Healthcheck Handler", func() {
@@ -43,6 +46,19 @@ var _ = Describe("Healthcheck Handler", func() {
 			It("returns the version as a header", func() {
 				app.Router.ServeHTTP(recorder, request)
 				Expect(recorder.Header().Get("X-Offers-Version")).To(Equal("0.1.0"))
+			})
+
+			It("returns status code of 500 if database is unavailable", func() {
+				oldDB := app.DB
+				db, err := GetTestDB()
+				Expect(err).NotTo(HaveOccurred())
+				app.DB = db
+				app.DB.(*runner.DB).DB.Close() // make DB connection unavailable
+				app.Router.ServeHTTP(recorder, request)
+
+				Expect(recorder.Code).To(Equal(http.StatusInternalServerError))
+				Expect(recorder.Body.String()).To(Equal("Database is offline"))
+				app.DB = oldDB // avoid errors in after each
 			})
 		})
 	})

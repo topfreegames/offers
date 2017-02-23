@@ -60,17 +60,12 @@ func GetOfferByID(db runner.Connection, gameID, id string, mr *MixedMetricsRepor
 			QueryStruct(&offer)
 	})
 
-	if err != nil {
-		if IsNoRowsInResultSetError(err) {
-			return nil, errors.NewModelNotFoundError("Offer", map[string]interface{}{
-				"GameID": gameID,
-				"ID":     id,
-			})
-		}
-		return nil, err
-	}
+	err = HandleNotFoundError("Offer", map[string]interface{}{
+		"GameID": gameID,
+		"ID":     id,
+	}, err)
 
-	return &offer, nil
+	return &offer, err
 }
 
 //InsertOffer inserts an offer with the new UUID
@@ -107,14 +102,13 @@ func ClaimOffer(db runner.Connection, offerID, playerID, gameID string, t time.T
 			QueryStruct(&offer)
 	})
 
+	err = HandleNotFoundError("Offer", map[string]interface{}{
+		"ID":       offerID,
+		"GameID":   gameID,
+		"PlayerID": playerID,
+	}, err)
+
 	if err != nil {
-		if IsNoRowsInResultSetError(err) {
-			return nil, false, errors.NewModelNotFoundError("Offer", map[string]interface{}{
-				"ID":       offerID,
-				"GameID":   gameID,
-				"PlayerID": playerID,
-			})
-		}
 		return nil, false, err
 	}
 
@@ -144,7 +138,7 @@ func UpdateOfferLastSeenAt(db runner.Connection, offerID, playerID, gameID strin
 	var offer Offer
 
 	query := `UPDATE offers
-            SET 
+            SET
               last_seen_at = $1,
               seen_counter = seen_counter + 1
             WHERE
@@ -156,17 +150,13 @@ func UpdateOfferLastSeenAt(db runner.Connection, offerID, playerID, gameID strin
 		return db.SQL(query, t, offerID, playerID, gameID).QueryStruct(&offer)
 	})
 
-	if err != nil {
-		if IsNoRowsInResultSetError(err) {
-			return errors.NewModelNotFoundError("Offer", map[string]interface{}{
-				"ID":       offerID,
-				"GameID":   gameID,
-				"PlayerID": playerID,
-			})
-		}
-		return err
-	}
-	return nil
+	err = HandleNotFoundError("Offer", map[string]interface{}{
+		"ID":       offerID,
+		"GameID":   gameID,
+		"PlayerID": playerID,
+	}, err)
+
+	return err
 }
 
 //GetAvailableOffers returns the offers that match the criteria of enabled offer templates

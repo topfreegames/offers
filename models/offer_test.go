@@ -8,12 +8,13 @@
 package models_test
 
 import (
+	"time"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	uuid "github.com/satori/go.uuid"
 	"github.com/topfreegames/offers/errors"
 	"github.com/topfreegames/offers/models"
-	"time"
 )
 
 var _ = Describe("Offers Model", func() {
@@ -21,7 +22,7 @@ var _ = Describe("Offers Model", func() {
 	defaultOfferTemplateID = "dd21ec96-2890-4ba0-b8e2-40ea67196990"
 
 	Describe("Offer Instance", func() {
-		It("Shoud load a offer", func() {
+		It("Should load a offer", func() {
 			//Given
 			offerID := "56fc0477-39f1-485c-898e-4909e9155eb1"
 
@@ -68,7 +69,7 @@ var _ = Describe("Offers Model", func() {
 				From("offers").
 				Where("id = $1", offer.ID).
 				QueryStruct(&offer2)
-
+			Expect(err).NotTo(HaveOccurred())
 			Expect(offer2.ID).To(Equal(offer.ID))
 		})
 	})
@@ -102,7 +103,7 @@ var _ = Describe("Offers Model", func() {
 			offer, err := models.GetOfferByID(db, "offers-game", offerID, nil)
 
 			//Then
-			Expect(offer).To(BeNil())
+			Expect(offer.ID).To(Equal(""))
 			Expect(err).To(HaveOccurred())
 			Expect(err).To(MatchError(expectedError))
 		})

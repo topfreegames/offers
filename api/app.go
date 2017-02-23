@@ -98,7 +98,7 @@ func (a *App) getRouter() *mux.Router {
 	)).Methods("PUT").Name("offer")
 
 	r.Handle("/offer/last-seen-at", Chain(
-		&OfferRequestHandler{App: a, Method: "claim_offer"},
+		&OfferRequestHandler{App: a, Method: "update_offer_last_seen_at"},
 		&NewRelicMiddleware{App: a},
 		&LoggingMiddleware{App: a},
 		&VersionMiddleware{},

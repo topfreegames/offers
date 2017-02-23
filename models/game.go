@@ -10,7 +10,6 @@ package models
 import (
 	"time"
 
-	"github.com/topfreegames/offers/errors"
 	dat "gopkg.in/mgutz/dat.v2/dat"
 	runner "gopkg.in/mgutz/dat.v2/sqlx-runner"
 )
@@ -45,16 +44,8 @@ func GetGameByID(db runner.Connection, id string, mr *MixedMetricsReporter) (*Ga
 			QueryStruct(&game)
 	})
 
-	if err != nil {
-		if IsNoRowsInResultSetError(err) {
-			return nil, errors.NewModelNotFoundError("Game", map[string]interface{}{
-				"ID": id,
-			})
-		}
-		return nil, err
-	}
-
-	return &game, nil
+	err = HandleNotFoundError("Game", map[string]interface{}{"ID": id}, err)
+	return &game, err
 }
 
 //UpsertGame updates a game with new meta or insert with the new UUID
