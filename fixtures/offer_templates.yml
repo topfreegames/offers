@@ -24,7 +24,7 @@
     game_id: limited-offers-game
     contents: '{"gems": 5, "gold": 100}'
     metadata: '{}'
-    period: '{"type": "once"}'
+    period: '{"max": 1}'
     frequency: '{"max": 1}'
     trigger: '{"from": 1486678000, "to": 1486679000}'
     placement: store

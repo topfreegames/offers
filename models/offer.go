@@ -94,7 +94,7 @@ func ClaimOffer(db runner.Connection, offerID, playerID, gameID string, t time.T
 	var offer Offer
 	err := mr.WithDatastoreSegment("offers", "select by id", func() error {
 		return db.
-			Select("id, claimed_at, offer_template_id").
+			Select("id, claimed_at, offer_template_id, bought_counter").
 			From("offers").
 			Where("id=$1 AND player_id=$2 AND game_id=$3", offerID, playerID, gameID).
 			QueryStruct(&offer)
@@ -123,6 +123,7 @@ func ClaimOffer(db runner.Connection, offerID, playerID, gameID string, t time.T
 		return db.
 			Update("offers").
 			Set("claimed_at", t).
+			Set("bought_counter", offer.BoughtCounter+1).
 			Where("id=$1", offer.ID).
 			Returning("claimed_at").
 			QueryStruct(&offer)

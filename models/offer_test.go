@@ -381,5 +381,26 @@ var _ = Describe("Offers Model", func() {
 			Expect(templatesBefore).To(HaveLen(1))
 			Expect(templatesAfter).To(HaveLen(0))
 		})
+
+		It("should not return limited-template after claim", func() {
+			//Given
+			playerID := "player-1"
+			gameID := "limited-offers-game"
+			offerID := "5ba8848f-1df0-45b3-b8b1-27a7d5eedd6a"
+			currentTime := time.Unix(1486678000, 0)
+
+			//When
+			templatesBefore, err1 := models.GetAvailableOffers(db, playerID, gameID, currentTime, nil)
+			_, alreadyClaimed, err2 := models.ClaimOffer(db, offerID, playerID, gameID, currentTime, nil)
+			templatesAfter, err3 := models.GetAvailableOffers(db, playerID, gameID, currentTime, nil)
+
+			//Then
+			Expect(err1).NotTo(HaveOccurred())
+			Expect(err2).NotTo(HaveOccurred())
+			Expect(err3).NotTo(HaveOccurred())
+			Expect(alreadyClaimed).To(BeFalse())
+			Expect(templatesBefore).To(HaveLen(1))
+			Expect(templatesAfter).To(HaveLen(0))
+		})
 	})
 })
