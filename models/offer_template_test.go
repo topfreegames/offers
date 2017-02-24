@@ -37,7 +37,7 @@ var _ = Describe("Offer Template Models", func() {
 			id := uuid.NewV4().String()
 			_, err := models.GetOfferTemplateByID(db, id, nil)
 			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(Equal("Offer Template was not found with specified filters."))
+			Expect(err.Error()).To(Equal("OfferTemplate was not found with specified filters."))
 		})
 	})
 
@@ -95,7 +95,7 @@ var _ = Describe("Offer Template Models", func() {
 			}
 			_, err := models.InsertOfferTemplate(db, offerTemplate, nil)
 			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(Equal("pq: insert or update on table \"offer_templates\" violates foreign key constraint \"offer_templates_game_id_fkey\""))
+			Expect(err.Error()).To(Equal("OfferTemplate could not be saved due to: insert or update on table \"offer_templates\" violates foreign key constraint \"offer_templates_game_id_fkey\""))
 
 			var ot models.OfferTemplate
 			err = conn.

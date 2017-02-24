@@ -91,8 +91,14 @@ var _ = Describe("Offer Handler", func() {
 			app.Router.ServeHTTP(recorder, request)
 
 			//Then
-			Expect(recorder.Body.String()).To(Equal("The player-id parameter cannot be empty."))
 			Expect(recorder.Code).To(Equal(http.StatusBadRequest))
+			var obj map[string]interface{}
+			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(obj["code"]).To(Equal("OFF-004"))
+			Expect(obj["error"]).To(Equal("The player-id parameter cannot be empty."))
+			Expect(obj["description"]).To(Equal("The player-id parameter cannot be empty"))
+
 		})
 
 		It("should return status code 400 if game-id is not informed available offers", func() {
@@ -105,8 +111,13 @@ var _ = Describe("Offer Handler", func() {
 			app.Router.ServeHTTP(recorder, request)
 
 			//Then
-			Expect(recorder.Body.String()).To(Equal("The game-id parameter cannot be empty."))
 			Expect(recorder.Code).To(Equal(http.StatusBadRequest))
+			var obj map[string]interface{}
+			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(obj["code"]).To(Equal("OFF-004"))
+			Expect(obj["error"]).To(Equal("The game-id parameter cannot be empty."))
+			Expect(obj["description"]).To(Equal("The game-id parameter cannot be empty"))
 		})
 
 		It("should return status code of 500 if some error occurred", func() {
@@ -123,7 +134,12 @@ var _ = Describe("Offer Handler", func() {
 			app.Router.ServeHTTP(recorder, request)
 
 			Expect(recorder.Code).To(Equal(http.StatusInternalServerError))
-			Expect(recorder.Body.String()).To(Equal("Failed to retrieve offer for player"))
+			var obj map[string]interface{}
+			err = json.Unmarshal([]byte(recorder.Body.String()), &obj)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(obj["code"]).To(Equal("OFF-004"))
+			Expect(obj["error"]).To(Equal("Failed to retrieve offer for player"))
+			Expect(obj["description"]).To(Equal("sql: database is closed"))
 			app.DB = oldDB // avoid errors in after each
 		})
 	})
@@ -186,6 +202,12 @@ var _ = Describe("Offer Handler", func() {
 			//Then
 			Expect(recorder.Body.String()).To(Equal(`{"code":"OFF-002","description":"ID: 567-391-4c-8-4909eeb1 does not validate as uuidv4;","error":"ValidationFailedError"}`))
 			Expect(recorder.Code).To(Equal(http.StatusUnprocessableEntity))
+			var obj map[string]interface{}
+			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(obj["code"]).To(Equal("OFF-002"))
+			Expect(obj["error"]).To(Equal("ValidationFailedError"))
+			Expect(obj["description"]).To(Equal("ID: 567-391-4c-8-4909eeb1 does not validate as uuidv4;"))
 		})
 
 		It("should return 404 if non existing OfferID", func() {
@@ -218,6 +240,12 @@ var _ = Describe("Offer Handler", func() {
 
 			//Then
 			Expect(recorder.Code).To(Equal(http.StatusNotFound))
+			var obj map[string]interface{}
+			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(obj["code"]).To(Equal("OFF-001"))
+			Expect(obj["error"]).To(Equal("OfferNotFoundError"))
+			Expect(obj["description"]).To(Equal("Offer was not found with specified filters."))
 		})
 
 		It("should return 404 if non existing PlayerID", func() {
@@ -234,6 +262,12 @@ var _ = Describe("Offer Handler", func() {
 
 			//Then
 			Expect(recorder.Code).To(Equal(http.StatusNotFound))
+			var obj map[string]interface{}
+			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(obj["code"]).To(Equal("OFF-001"))
+			Expect(obj["error"]).To(Equal("OfferNotFoundError"))
+			Expect(obj["description"]).To(Equal("Offer was not found with specified filters."))
 		})
 
 		It("should return 422 if OfferID is not passed", func() {
@@ -249,13 +283,19 @@ var _ = Describe("Offer Handler", func() {
 
 			//Then
 			Expect(recorder.Code).To(Equal(http.StatusUnprocessableEntity))
+			var obj map[string]interface{}
+			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(obj["code"]).To(Equal("OFF-002"))
+			Expect(obj["error"]).To(Equal("ValidationFailedError"))
+			Expect(obj["description"]).To(Equal("ID: non zero value required;"))
 		})
 
 		It("should return status code of 500 if some error occurred", func() {
 			offerReader := JSONFor(JSON{
-				"ID":       "56fc0477-39f1-485c-898e-4909e9155eb1",
-				"GameID":   "offers-game",
-				"PlayerID": "player-1",
+				"id":       "56fc0477-39f1-485c-898e-4909e9155eb1",
+				"gameId":   "offers-game",
+				"playerId": "player-1",
 			})
 
 			oldDB := app.DB
@@ -268,7 +308,12 @@ var _ = Describe("Offer Handler", func() {
 			app.Router.ServeHTTP(recorder, request)
 
 			Expect(recorder.Code).To(Equal(http.StatusInternalServerError))
-			Expect(recorder.Body.String()).To(Equal("sql: database is closed"))
+			var obj map[string]interface{}
+			err = json.Unmarshal([]byte(recorder.Body.String()), &obj)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(obj["code"]).To(Equal("OFF-004"))
+			Expect(obj["error"]).To(Equal("sql: database is closed"))
+			Expect(obj["description"]).To(Equal("sql: database is closed"))
 			app.DB = oldDB // avoid errors in after each
 		})
 
@@ -283,8 +328,13 @@ var _ = Describe("Offer Handler", func() {
 			app.Router.ServeHTTP(recorder, request)
 
 			//Then
-			Expect(recorder.Body.String()).To(Equal(`{"code":"OFF-002","description":"json: cannot unmarshal string into Go value of type models.OfferToUpdate","error":"ValidationFailedError"}`))
 			Expect(recorder.Code).To(Equal(http.StatusBadRequest))
+			var obj map[string]interface{}
+			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(obj["code"]).To(Equal("OFF-002"))
+			Expect(obj["error"]).To(Equal("ValidationFailedError"))
+			Expect(obj["description"]).To(Equal("json: cannot unmarshal string into Go value of type models.OfferToUpdate"))
 		})
 	})
 
@@ -318,8 +368,13 @@ var _ = Describe("Offer Handler", func() {
 			app.Router.ServeHTTP(recorder, request)
 
 			//Then
-			Expect(recorder.Body.String()).To(Equal(`{"code":"OFF-002","description":"ID: invalid-uuid does not validate as uuidv4;","error":"ValidationFailedError"}`))
 			Expect(recorder.Code).To(Equal(http.StatusUnprocessableEntity))
+			var obj map[string]interface{}
+			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(obj["code"]).To(Equal("OFF-002"))
+			Expect(obj["error"]).To(Equal("ValidationFailedError"))
+			Expect(obj["description"]).To(Equal("ID: invalid-uuid does not validate as uuidv4;"))
 		})
 
 		It("should return status code 422 if ID is not passed", func() {
@@ -336,6 +391,12 @@ var _ = Describe("Offer Handler", func() {
 			//Then
 			Expect(recorder.Body.String()).To(Equal(`{"code":"OFF-002","description":"ID: non zero value required;","error":"ValidationFailedError"}`))
 			Expect(recorder.Code).To(Equal(http.StatusUnprocessableEntity))
+			var obj map[string]interface{}
+			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(obj["code"]).To(Equal("OFF-002"))
+			Expect(obj["error"]).To(Equal("ValidationFailedError"))
+			Expect(obj["description"]).To(Equal("ID: non zero value required;"))
 		})
 
 		It("should return status code 404 if offer with given ID does not exist", func() {
@@ -351,8 +412,13 @@ var _ = Describe("Offer Handler", func() {
 			app.Router.ServeHTTP(recorder, request)
 
 			//Then
-			Expect(recorder.Body.String()).To(Equal(`Offer was not found with specified filters.`))
 			Expect(recorder.Code).To(Equal(http.StatusNotFound))
+			var obj map[string]interface{}
+			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(obj["code"]).To(Equal("OFF-001"))
+			Expect(obj["error"]).To(Equal("OfferNotFoundError"))
+			Expect(obj["description"]).To(Equal("Offer was not found with specified filters."))
 		})
 
 		It("should return status code of 500 if some error occurred", func() {
@@ -372,7 +438,12 @@ var _ = Describe("Offer Handler", func() {
 			app.Router.ServeHTTP(recorder, request)
 
 			Expect(recorder.Code).To(Equal(http.StatusInternalServerError))
-			Expect(recorder.Body.String()).To(Equal("sql: database is closed"))
+			var obj map[string]interface{}
+			err = json.Unmarshal([]byte(recorder.Body.String()), &obj)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(obj["code"]).To(Equal("OFF-004"))
+			Expect(obj["error"]).To(Equal("sql: database is closed"))
+			Expect(obj["description"]).To(Equal("sql: database is closed"))
 			app.DB = oldDB // avoid errors in after each
 		})
 	})

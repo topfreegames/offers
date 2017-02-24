@@ -17,17 +17,17 @@ import (
 
 //Offer represents a tenant in offers API
 type Offer struct {
-	ID              string `db:"id" valid:"uuidv4,required"`
-	GameID          string `db:"game_id" valid:"matches(^[^-][a-z0-9-]*$),stringlength(1|255),required"`
-	OfferTemplateID string `db:"offer_template_id" valid:"uuidv4,required"`
-	PlayerID        string `db:"player_id" valid:"ascii,stringlength(1|1000),required"`
-	SeenCounter     int    `db:"seen_counter" valid:""`
-	BoughtCounter   int    `db:"bought_counter" valid:""`
+	ID              string `db:"id" valid:"uuidv4,required" json:"id"`
+	GameID          string `db:"game_id" valid:"matches(^[^-][a-z0-9-]*$),stringlength(1|255),required" json:"gameId"`
+	OfferTemplateID string `db:"offer_template_id" valid:"uuidv4,required" json:"offerTemplateId"`
+	PlayerID        string `db:"player_id" valid:"ascii,stringlength(1|1000),required" json:"playerId"`
+	SeenCounter     int    `db:"seen_counter" valid:"" json:"seenCounter"`
+	BoughtCounter   int    `db:"bought_counter" valid:"" json:"boughtCounter"`
 
-	CreatedAt  dat.NullTime `db:"created_at" valid:""`
-	UpdatedAt  dat.NullTime `db:"updated_at" valid:""`
-	ClaimedAt  dat.NullTime `db:"claimed_at" valid:""`
-	LastSeenAt dat.NullTime `db:"last_seen_at" valid:""`
+	CreatedAt  dat.NullTime `db:"created_at" valid:"" json:"createdAt"`
+	UpdatedAt  dat.NullTime `db:"updated_at" valid:"" json:"updatedAt"`
+	ClaimedAt  dat.NullTime `db:"claimed_at" valid:"" json:"claimedAt"`
+	LastSeenAt dat.NullTime `db:"last_seen_at" valid:"" json:"lastSeenAt"`
 }
 
 //OfferToUpdate has required fields for claiming an offer

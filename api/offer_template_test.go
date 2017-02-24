@@ -17,6 +17,7 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	uuid "github.com/satori/go.uuid"
 	. "github.com/topfreegames/offers/testing"
 )
 
@@ -231,7 +232,12 @@ var _ = Describe("Offer Template Handler", func() {
 
 			//Then
 			Expect(recorder.Code).To(Equal(http.StatusNotFound))
-			Expect(recorder.Body.String()).To(Equal("Offer template not found for this ID"))
+			var obj map[string]interface{}
+			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(obj["code"]).To(Equal("OFF-001"))
+			Expect(obj["error"]).To(Equal("OfferTemplateNotFoundError"))
+			Expect(obj["description"]).To(Equal("OfferTemplate was not found with specified filters."))
 		})
 	})
 })

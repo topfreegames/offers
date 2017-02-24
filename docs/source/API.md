@@ -152,11 +152,13 @@ Offers API
 
     It will return an error if the query on db (insert) failed
 
-    * Code: `500`
+    * Code: `500|422|400`
     * Content:
       ```
         {
-          "reason": [string]
+          "error": [string],       // error
+          "code":  [string],       // error code
+          "description": [string]  // error description
         }
       ```
 
@@ -254,9 +256,11 @@ Offers API
     * Code: `500`, if server failed in any other way
     * Content:
       ```
-        {
-          "reason": [string]
-        }
+      {
+        "error": [string],       // error
+        "code":  [string],       // error code
+        "description": [string]  // error description
+      }
       ```
 
   ### Claim Offer
@@ -282,9 +286,11 @@ Offers API
       * Code: `404`
       * Content:
         ```
-          {
-            "reason": [string]
-          }
+        {
+          "error": [string],       // error
+          "code":  [string],       // error code
+          "description": [string]  // error description
+        }
         ```
 
     * If any internal error occurred.
@@ -292,7 +298,9 @@ Offers API
       * Content:
         ```
           {
-            "reason": [string]
+            "error": [string],       // error
+            "code":  [string],       // error code
+            "description": [string]  // error description
           }
         ```
 
@@ -329,7 +337,9 @@ Offers API
       * Content:
         ```
           {
-            "reason": [string]
+            "error": [string],       // error
+            "code":  [string],       // error code
+            "description": [string]  // error description
           }
         ```
 
@@ -337,7 +347,9 @@ Offers API
       * Code: `500`
       * Content:
         ```
-          {
-            "reason": [string]
-          }
+        {
+          "error": [string],       // error
+          "code":  [string],       // error code
+          "description": [string]  // error description
+        }
         ```
