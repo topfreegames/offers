@@ -23,8 +23,14 @@ type OfferTemplate struct {
 	Period    dat.JSON `db:"period" valid:"required"`
 	Frequency dat.JSON `db:"frequency" valid:"required"`
 	Trigger   dat.JSON `db:"trigger" valid:"required"`
-	Enabled   bool     `db:"enabled" valid:"matches(^(true|false)$),optional"`
+	Enabled   bool     `db:"enabled" valid:"bool,optional"`
 	Placement string   `db:"placement" valid:"ascii,stringlength(1|255),required"`
+}
+
+//OfferTemplateToUpdate is used by api/app.go to call setEnabled
+type OfferTemplateToUpdate struct {
+	ID      string `db:"id" valid:"uuidv4,required"`
+	Enabled bool   `db:"enabled" valid:"bool,optional"`
 }
 
 const enabledOfferTemplates = `
@@ -90,7 +96,7 @@ func InsertOfferTemplate(db runner.Connection, ot *OfferTemplate, mr *MixedMetri
 //SetEnabledOfferTemplate can enable or disable an offer template
 func SetEnabledOfferTemplate(db runner.Connection, id string, enabled bool, mr *MixedMetricsReporter) error {
 	var offerTemplate OfferTemplate
-	err := mr.WithDatastoreSegment("offer_templates", "update", func() error {
+	err := mr.WithDatastoreSegment("offer_templates", SegmentUpdate, func() error {
 		return db.
 			Update("offer_templates").
 			Set("enabled", enabled).
@@ -98,5 +104,10 @@ func SetEnabledOfferTemplate(db runner.Connection, id string, enabled bool, mr *
 			Returning("id").
 			QueryStruct(&offerTemplate)
 	})
+
+	err = HandleNotFoundError("OfferTemplate", map[string]interface{}{
+		"ID": id,
+	}, err)
+
 	return err
 }

@@ -57,6 +57,15 @@ func offerToUpdateFromCtx(ctx context.Context) *models.OfferToUpdate {
 	return offer.(*models.OfferToUpdate)
 }
 
+func offerTemplateToUpdateFromCtx(ctx context.Context) *models.OfferTemplateToUpdate {
+	ot := ctx.Value(payloadString)
+	if ot == nil {
+		return nil
+	}
+
+	return ot.(*models.OfferTemplateToUpdate)
+}
+
 //ServeHTTP method
 func (m *ValidationMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()

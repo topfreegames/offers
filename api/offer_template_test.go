@@ -146,4 +146,78 @@ var _ = Describe("Offer Template Handler", func() {
 			app.DB = oldDB // avoid errors in after each
 		})
 	})
+
+	Describe("PUT /offer-templates/set-enabled", func() {
+		It("should disable an enabled offer template", func() {
+			//Given
+			templateID := "dd21ec96-2890-4ba0-b8e2-40ea67196990"
+			enabled := false
+			offerTemplateReader := JSONFor(JSON{
+				"ID":      templateID,
+				"Enabled": enabled,
+			})
+			request, _ := http.NewRequest("PUT", "/offer-templates/set-enabled", offerTemplateReader)
+
+			//When
+			app.Router.ServeHTTP(recorder, request)
+
+			//Then
+			Expect(recorder.Code).To(Equal(http.StatusOK))
+			Expect(recorder.Body.String()).To(Equal(templateID))
+		})
+
+		It("should enable an enabled offer template", func() {
+			//Given
+			templateID := "dd21ec96-2890-4ba0-b8e2-40ea67196990"
+			enabled := true
+			offerTemplateReader := JSONFor(JSON{
+				"ID":      templateID,
+				"Enabled": enabled,
+			})
+			request, _ := http.NewRequest("PUT", "/offer-templates/set-enabled", offerTemplateReader)
+
+			//When
+			app.Router.ServeHTTP(recorder, request)
+
+			//Then
+			Expect(recorder.Code).To(Equal(http.StatusOK))
+			Expect(recorder.Body.String()).To(Equal(templateID))
+		})
+
+		It("should enabled a disabled offer template", func() {
+			//Given
+			templateID := "27b0370f-bd61-4346-a10d-50ec052ae125"
+			enabled := true
+			offerTemplateReader := JSONFor(JSON{
+				"ID":      templateID,
+				"Enabled": enabled,
+			})
+			request, _ := http.NewRequest("PUT", "/offer-templates/set-enabled", offerTemplateReader)
+
+			//When
+			app.Router.ServeHTTP(recorder, request)
+
+			//Then
+			Expect(recorder.Code).To(Equal(http.StatusOK))
+			Expect(recorder.Body.String()).To(Equal(templateID))
+		})
+
+		It("should return status code 404 if id doesn't exist", func() {
+			//Given
+			templateID := uuid.NewV4().String()
+			enabled := true
+			offerTemplateReader := JSONFor(JSON{
+				"ID":      templateID,
+				"Enabled": enabled,
+			})
+			request, _ := http.NewRequest("PUT", "/offer-templates/set-enabled", offerTemplateReader)
+
+			//When
+			app.Router.ServeHTTP(recorder, request)
+
+			//Then
+			Expect(recorder.Code).To(Equal(http.StatusNotFound))
+			Expect(recorder.Body.String()).To(Equal("Offer template not found for this ID"))
+		})
+	})
 })

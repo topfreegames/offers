@@ -18,3 +18,6 @@ const SegmentModel = "Model"
 
 //SegmentInsert represents a segment
 const SegmentInsert = "Database/Insert"
+
+//SegmentUpdate represents a segment
+const SegmentUpdate = "Database/Update"

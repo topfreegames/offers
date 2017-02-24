@@ -10,6 +10,7 @@ package api
 import (
 	"net/http"
 
+	"github.com/topfreegames/offers/errors"
 	"github.com/topfreegames/offers/models"
 )
 
@@ -21,6 +22,17 @@ type OfferTemplateHandler struct {
 
 //ServeHTTP method
 func (g *OfferTemplateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	switch g.Method {
+	case "insert":
+		g.insertOfferTemplate(w, r)
+		return
+	case "set-enabled":
+		g.setEnabledOfferTemplate(w, r)
+		return
+	}
+}
+
+func (g *OfferTemplateHandler) insertOfferTemplate(w http.ResponseWriter, r *http.Request) {
 	mr := metricsReporterFromCtx(r.Context())
 	ot := offerTemplateFromCtx(r.Context())
 
@@ -32,6 +44,27 @@ func (g *OfferTemplateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 
 	if err != nil {
 		g.App.HandleError(w, http.StatusInternalServerError, "Insert offer template failed", err)
+		return
+	}
+
+	Write(w, http.StatusOK, ot.ID)
+}
+
+func (g *OfferTemplateHandler) setEnabledOfferTemplate(w http.ResponseWriter, r *http.Request) {
+	mr := metricsReporterFromCtx(r.Context())
+	ot := offerTemplateToUpdateFromCtx(r.Context())
+
+	var err error
+	err = mr.WithSegment(models.SegmentModel, func() error {
+		return models.SetEnabledOfferTemplate(g.App.DB, ot.ID, ot.Enabled, mr)
+	})
+
+	if err != nil {
+		if modelNotFound, ok := err.(*errors.ModelNotFoundError); ok {
+			g.App.HandleError(w, http.StatusNotFound, "Offer template not found for this ID", modelNotFound)
+			return
+		}
+		g.App.HandleError(w, http.StatusInternalServerError, "Update offer template failed", err)
 		return
 	}
 
