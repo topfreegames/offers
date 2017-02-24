@@ -14,10 +14,10 @@ import (
 
 //OfferTemplate contains the parameters of a template
 type OfferTemplate struct {
-	ID        string   `db:"id" valid:"matches(^[^-][a-z0-9-]*$),required"`
+	ID        string   `db:"id" valid:"uuidv4,required"`
 	Name      string   `db:"name" valid:"ascii,stringlength(1|255),required"`
 	ProductID string   `db:"product_id" valid:"ascii,stringlength(1|255),required"`
-	GameID    string   `db:"game_id" valid:"ascii,stringlength(1|255),required"`
+	GameID    string   `db:"game_id" valid:"matches(^[^-][a-z0-9-]*$),stringlength(1|255),required"`
 	Contents  dat.JSON `db:"contents" valid:"required"`
 	Metadata  dat.JSON `db:"metadata" valid:""`
 	Period    dat.JSON `db:"period" valid:"required"`

@@ -59,7 +59,7 @@ func (h *OfferRequestHandler) getOffers(w http.ResponseWriter, r *http.Request) 
 	bytes, err := json.Marshal(ots)
 
 	if err != nil {
-		h.App.HandleError(w, http.StatusInternalServerError, "Faild to parse structs to JSON", err)
+		h.App.HandleError(w, http.StatusInternalServerError, "Failed to parse structs to JSON", err)
 		return
 	}
 
