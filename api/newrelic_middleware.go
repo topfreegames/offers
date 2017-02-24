@@ -21,7 +21,7 @@ type NewRelicMiddleware struct {
 	Next http.Handler
 }
 
-const newRelicTransactionKey string = "newRelicTransaction"
+const newRelicTransactionKey = contextKey("newRelicTransaction")
 
 func newContextWithNewRelicTransaction(ctx context.Context, txn newrelic.Transaction, r *http.Request) context.Context {
 	c := context.WithValue(ctx, newRelicTransactionKey, txn)

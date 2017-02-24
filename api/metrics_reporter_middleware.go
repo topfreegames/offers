@@ -20,7 +20,7 @@ type MetricsReporterMiddleware struct {
 	Next http.Handler
 }
 
-const metricsReporterKey string = "metricsReporter"
+const metricsReporterKey = contextKey("metricsReporter")
 
 func newContextWithMetricsReporter(ctx context.Context, mr *models.MixedMetricsReporter) context.Context {
 	c := context.WithValue(ctx, metricsReporterKey, mr)

@@ -22,8 +22,8 @@ type LoggingMiddleware struct {
 	Next http.Handler
 }
 
-const requestIDKey string = "requestID"
-const loggerKey string = "logger"
+const requestIDKey = contextKey("requestID")
+const loggerKey = contextKey("logger")
 
 func newContextWithRequestIDAndLogger(ctx context.Context, logger logrus.FieldLogger, r *http.Request) context.Context {
 	reqID := uuid.NewV4().String()
