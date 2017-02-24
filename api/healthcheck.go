@@ -10,6 +10,7 @@ package api
 import (
 	"net/http"
 
+	"github.com/topfreegames/offers/errors"
 	"github.com/topfreegames/offers/models"
 )
 
@@ -30,13 +31,14 @@ func (h *HealthcheckHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return err
 	})
 	if err != nil {
-		Write(w, http.StatusInternalServerError, "Database is offline")
 		l.WithError(err).Error("Database is offline")
+		vErr := errors.NewDatabaseError(err)
+		WriteBytes(w, http.StatusInternalServerError, vErr.Serialize())
 		return
 	}
 
 	mr.WithSegment(models.SegmentSerialization, func() error {
-		Write(w, http.StatusOK, "WORKING")
+		Write(w, http.StatusOK, `{"healthy": true}`)
 		return nil
 	})
 	l.Debug("Healthcheck done.")

@@ -8,6 +8,7 @@
 package api_test
 
 import (
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 
@@ -40,7 +41,7 @@ var _ = Describe("Healthcheck Handler", func() {
 
 			It("returns working string", func() {
 				app.Router.ServeHTTP(recorder, request)
-				Expect(recorder.Body.String()).To(Equal("WORKING"))
+				Expect(recorder.Body.String()).To(Equal(`{"healthy": true}`))
 			})
 
 			It("returns the version as a header", func() {
@@ -57,7 +58,12 @@ var _ = Describe("Healthcheck Handler", func() {
 				app.Router.ServeHTTP(recorder, request)
 
 				Expect(recorder.Code).To(Equal(http.StatusInternalServerError))
-				Expect(recorder.Body.String()).To(Equal("Database is offline"))
+				var obj map[string]interface{}
+				err = json.Unmarshal([]byte(recorder.Body.String()), &obj)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(obj["code"]).To(Equal("OFF-000"))
+				Expect(obj["error"]).To(Equal("DatabaseError"))
+				Expect(obj["description"]).To(Equal("sql: database is closed"))
 				app.DB = oldDB // avoid errors in after each
 			})
 		})

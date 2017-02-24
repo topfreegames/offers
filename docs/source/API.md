@@ -24,6 +24,9 @@ Offers API
       ```
         {
           "healthy": false
+          "error": "DatabaseError",
+          "code": "OFF-000",
+          "description": [string]    // error description
         }
       ```
 
