@@ -154,6 +154,23 @@ var _ = Describe("Offers Model", func() {
 			Expect(dbOffer.ID).To(Equal(defaultOfferID))
 		})
 
+		It("should fail if some error in the database", func() {
+			gameID := "offers-game"
+			offer := &models.Offer{
+				GameID:          gameID,
+				OfferTemplateID: defaultOfferTemplateID,
+				PlayerID:        "player-3",
+			}
+			oldDB := db
+			db, err := GetTestDB()
+			Expect(err).NotTo(HaveOccurred())
+			db.(*runner.DB).DB.Close() // make DB connection unavailable
+			err = models.InsertOffer(db, offer, time.Now(), nil)
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(Equal("sql: database is closed"))
+			db = oldDB // avoid errors in after each
+		})
+
 		It("should fail if offer template does not exist", func() {
 			//Given
 			offer := &models.Offer{
@@ -172,23 +189,6 @@ var _ = Describe("Offers Model", func() {
 			//Then
 			Expect(err).To(HaveOccurred())
 			Expect(err).To(MatchError(expectedError))
-		})
-
-		It("should fail if some error in the database", func() {
-			gameID := "offers-game"
-			offer := &models.Offer{
-				GameID:          gameID,
-				OfferTemplateID: defaultOfferTemplateID,
-				PlayerID:        "player-3",
-			}
-			oldDB := db
-			db, err := GetTestDB()
-			Expect(err).NotTo(HaveOccurred())
-			db.(*runner.DB).DB.Close() // make DB connection unavailable
-			err = models.InsertOffer(db, offer, time.Now(), nil)
-			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(Equal("sql: database is closed"))
-			db = oldDB // avoid errors in after each
 		})
 	})
 
@@ -338,7 +338,7 @@ var _ = Describe("Offers Model", func() {
 	})
 
 	Describe("Get available offers", func() {
-		It("should return one offer template for each available placement", func() {
+		It("should return a list of offer templates for each available placement", func() {
 			//Given
 			playerID := "player-1"
 			gameID := "offers-game"
@@ -351,9 +351,12 @@ var _ = Describe("Offers Model", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(templates).To(HaveLen(2))
 			Expect(templates).To(HaveKey("popup"))
-			Expect(templates["popup"].ID).To(Equal("dd21ec96-2890-4ba0-b8e2-40ea67196990"))
+			Expect(templates["popup"]).To(HaveLen(1))
+			Expect(templates["popup"][0].ID).To(Equal("dd21ec96-2890-4ba0-b8e2-40ea67196990"))
 			Expect(templates).To(HaveKey("store"))
-			Expect(templates["store"].ID).To(Equal("d5114990-77d7-45c4-ba5f-462fc86b213f"))
+			Expect(templates["store"]).To(HaveLen(2))
+			Expect(templates["store"][0].ID).To(Equal("d5114990-77d7-45c4-ba5f-462fc86b213f"))
+			Expect(templates["store"][1].ID).To(Equal("a411fbcf-dddc-4153-b42b-3f9b2684c965"))
 		})
 
 		It("should return offers for two different players of game offers-game", func() {
@@ -522,20 +525,6 @@ var _ = Describe("Offers Model", func() {
 			Expect(err.Error()).To(Equal("time: invalid duration invalid"))
 		})
 
-		It("should fail if template has invalid frequency", func() {
-			//Given
-			playerID := "player-1"
-			gameID := "offers-game-invalid-every-period"
-			currentTime := time.Unix(1486678000, 0)
-
-			//When
-			_, err := models.GetAvailableOffers(db, playerID, gameID, currentTime, nil)
-
-			//Then
-			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(Equal("time: invalid duration invalid"))
-		})
-
 		It("should fail if some error in the database", func() {
 			playerID := "player-1"
 			gameID := "offers-game"
@@ -550,6 +539,20 @@ var _ = Describe("Offers Model", func() {
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(Equal("sql: database is closed"))
 			db = oldDB // avoid errors in after each
+		})
+
+		It("should fail if template has invalid frequency", func() {
+			//Given
+			playerID := "player-1"
+			gameID := "offers-game-invalid-every-period"
+			currentTime := time.Unix(1486678000, 0)
+
+			//When
+			_, err := models.GetAvailableOffers(db, playerID, gameID, currentTime, nil)
+
+			//Then
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(Equal("time: invalid duration invalid"))
 		})
 	})
 })

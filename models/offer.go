@@ -159,13 +159,13 @@ func UpdateOfferLastSeenAt(db runner.Connection, offerID, playerID, gameID strin
 }
 
 //GetAvailableOffers returns the offers that match the criteria of enabled offer templates
-func GetAvailableOffers(db runner.Connection, playerID, gameID string, t time.Time, mr *MixedMetricsReporter) (map[string]*OfferTemplate, error) {
+func GetAvailableOffers(db runner.Connection, playerID, gameID string, t time.Time, mr *MixedMetricsReporter) (map[string][]*OfferTemplate, error) {
 	eot, err := GetEnabledOfferTemplates(db, gameID, mr)
 	if err != nil {
 		return nil, err
 	}
 	if len(eot) == 0 {
-		return map[string]*OfferTemplate{}, nil
+		return map[string][]*OfferTemplate{}, nil
 	}
 
 	var trigger TimeTrigger
@@ -174,7 +174,7 @@ func GetAvailableOffers(db runner.Connection, playerID, gameID string, t time.Ti
 		return nil, err
 	}
 	if len(filteredOts) == 0 {
-		return map[string]*OfferTemplate{}, nil
+		return map[string][]*OfferTemplate{}, nil
 	}
 
 	offerTemplateIDs := make([]string, len(filteredOts))
@@ -190,27 +190,29 @@ func GetAvailableOffers(db runner.Connection, playerID, gameID string, t time.Ti
 		return nil, err
 	}
 	if len(filteredOts) == 0 {
-		return map[string]*OfferTemplate{}, nil
+		return map[string][]*OfferTemplate{}, nil
 	}
 
 	playerOffersByOfferTemplateID := map[string]bool{}
 	for _, o := range playerOffers {
 		playerOffersByOfferTemplateID[o.OfferTemplateID] = true
 	}
-	offerTemplatesByPlacement := make(map[string]*OfferTemplate)
+	offerTemplatesByPlacement := make(map[string][]*OfferTemplate)
 	for _, ot := range filteredOts {
 		if _, otInMap := offerTemplatesByPlacement[ot.Placement]; !otInMap {
-			offerTemplatesByPlacement[ot.Placement] = ot
-			o := &Offer{
-				GameID:          ot.GameID,
-				OfferTemplateID: ot.ID,
-				PlayerID:        playerID,
-			}
-			if _, playerHasOffer := playerOffersByOfferTemplateID[ot.ID]; !playerHasOffer {
-				err := InsertOffer(db, o, t, mr)
-				if err != nil {
-					return nil, err
-				}
+			offerTemplatesByPlacement[ot.Placement] = []*OfferTemplate{ot}
+		} else {
+			offerTemplatesByPlacement[ot.Placement] = append(offerTemplatesByPlacement[ot.Placement], ot)
+		}
+		o := &Offer{
+			GameID:          ot.GameID,
+			OfferTemplateID: ot.ID,
+			PlayerID:        playerID,
+		}
+		if _, playerHasOffer := playerOffersByOfferTemplateID[ot.ID]; !playerHasOffer {
+			err := InsertOffer(db, o, t, mr)
+			if err != nil {
+				return nil, err
 			}
 		}
 	}

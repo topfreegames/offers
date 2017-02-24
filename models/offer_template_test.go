@@ -113,7 +113,7 @@ var _ = Describe("Offer Template Models", func() {
 			ots, err := models.GetEnabledOfferTemplates(db, "offers-game", nil)
 
 			Expect(err).NotTo(HaveOccurred())
-			Expect(ots).To(HaveLen(2))
+			Expect(ots).To(HaveLen(3))
 			Expect(ots[0].Name).To(Equal("template-1"))
 			Expect(ots[1].ID).To(Equal("d5114990-77d7-45c4-ba5f-462fc86b213f"))
 			Expect(ots[1].Name).To(Equal("template-2"))
@@ -124,6 +124,7 @@ var _ = Describe("Offer Template Models", func() {
 			Expect(ots[1].Frequency).To(BeEquivalentTo(dat.JSON([]byte(`{"every": "1s"}`))))
 			Expect(ots[1].Trigger).To(Equal(dat.JSON([]byte(`{"to": 1486679000, "from": 1486678000}`))))
 			Expect(ots[1].Placement).To(Equal("store"))
+			Expect(ots[2].Name).To(Equal("template-3"))
 		})
 	})
 })

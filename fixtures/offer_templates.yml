@@ -52,7 +52,7 @@
     frequency: '{"every": "1s", "max": 2}'
     trigger: '{"from": 1486678000, "to": 1486679000}'
     placement: store
-    enabled: false
+    enabled: true
 -
     id: 14da46bc-9ad1-4d30-88da-d0ba7a1cbf62
     name: template-4

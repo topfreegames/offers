@@ -50,7 +50,7 @@ var _ = Describe("Offer Handler", func() {
 			gameID := "offers-game"
 			url := "/offers?player-id=" + playerID + "&game-id=" + gameID
 			request, _ := http.NewRequest("GET", url, nil)
-			var jsonBody map[string]map[string]interface{}
+			var jsonBody map[string][]map[string]interface{}
 
 			//When
 			app.Router.ServeHTTP(recorder, request)

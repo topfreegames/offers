@@ -1,7 +1,7 @@
 Offers API
 ==========
 
-## Healthcheck Route
+## Healthcheck Routes
 
   ### Healthcheck
 
@@ -11,7 +11,7 @@ Offers API
 
   * Success Response
     * Code: `200`
-    * Content: 
+    * Content:
       ```
         {
           "healthy": true
@@ -22,14 +22,14 @@ Offers API
     It will return an internal error if it failed to connect to the database.
 
     * Code: `500`
-    * Content: 
+    * Content:
       ```
         {
           "healthy": false
         }
       ```
 
-## App Routes
+## Game Routes
 
   ### Upsert Game
   `PUT /games`
@@ -73,6 +73,8 @@ Offers API
           "reason": [string]
         }
       ```
+
+## Offer Template Routes
 
   ### Insert Offer Template
   `PUT /offer-template`
@@ -140,41 +142,46 @@ Offers API
         }
       ```
 
+## Offer Routes
+
   ### Get Available Offers
   `GET /offers?player-id=<required-player-id>&game-id=<required-game-id>`
-  
-  Get the available offers for a player of a game. An offer is available if it respects the frequency (last time player saw the offer), respects the period (last time player claimed the offer), is triggered (current time is between "from" and "to") and is enabled. The success response is a JSON where each key is a placement on the UI and the value is the OfferTemplate.
+
+  Get the available offers for a player of a game. An offer is available if it respects the frequency (last time player saw the offer), respects the period (last time player claimed the offer), is triggered (current time is between "from" and "to") and is enabled. The success response is a JSON where each key is a placement on the UI and the value is a list of OfferTemplates.
 
   * Success Response
     * Code: `200`
     * Content:
       ```
         {
-          "placement-1": {
-            "id":        [uuidv4], // required
-              "name":      [string], // required, 255 characters max
-              "productId": [string], // required, 255 characters max
-              "gameId":    [string], // required, matches ^[^-][a-z0-9-]*$
-              "contents":  [json],   // required
-              "metadata":  [json],   // optional
-              "enabled":   [bool],   // optional
-              "placement": [string], // required, 255 characters max
-              "period":    {         // required
-                "every": [string],   // required
-                "max":   [int]       // required
-              },   
-              "frequency": {         // required
-                "every": [string],   // required
-                "max":   [int]       // required
-              },   
-              "trigger":   {         // required
-                "from":  [int],      // required
-                "to":    [int]       // required
-              }
-          },
-          "placement-2": {
+          "placement-1": [
+            {
+                "id":        [uuidv4], // required
+                "name":      [string], // required, 255 characters max
+                "productId": [string], // required, 255 characters max
+                "gameId":    [string], // required, matches ^[^-][a-z0-9-]*$
+                "contents":  [json],   // required
+                "metadata":  [json],   // optional
+                "enabled":   [bool],   // optional
+                "placement": [string], // required, 255 characters max
+                "period":    {         // required
+                  "every": [string],   // required
+                  "max":   [int]       // required
+                },   
+                "frequency": {         // required
+                  "every": [string],   // required
+                  "max":   [int]       // required
+                },   
+                "trigger":   {         // required
+                  "from":  [int],      // required
+                  "to":    [int]       // required
+                }
+            },
             ...
-          },
+          ]
+          "placement-2": [
+            ...
+          ],
           ...
         }
       ```
@@ -212,7 +219,7 @@ Offers API
 
     * If a offer with id, gameId and playerId was not found in database.
       * Code: `404`
-      * Content: 
+      * Content:
         ```
           {
             "reason": [string]
@@ -221,7 +228,7 @@ Offers API
 
     * If any internal error occurred.
       * Code: `500`
-      * Content: 
+      * Content:
         ```
           {
             "reason": [string]
@@ -230,7 +237,7 @@ Offers API
 
     * If the player claimed an offer before the time defined in OfferTemplate["period"]["every"] or more than what is defined in OfferTemplate["period"]["max"], the offer is not claimed anymore but its contents are returned.
       * Code: `409`
-      * Content: 
+      * Content:
         ```
           {
             "reason":   [string],
@@ -251,14 +258,14 @@ Offers API
         "playerId": [string]  // required, 255 characters max
       }
     ```
-  
+
   * Success Response
     * Code: `200`
 
   * Error Response
     * If a offer with id, gameId and playerId was not found in database.
       * Code: `404`
-      * Content: 
+      * Content:
         ```
           {
             "reason": [string]
@@ -267,7 +274,7 @@ Offers API
 
     * If any internal error occurred.
       * Code: `500`
-      * Content: 
+      * Content:
         ```
           {
             "reason": [string]
