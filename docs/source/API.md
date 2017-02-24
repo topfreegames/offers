@@ -139,6 +139,50 @@ Offers API
         }
       ```
 
+  ### Set enabled offer template
+  `PUT /offer-template/set-enabled`
+
+  Enable or disable an offer template
+
+  * Payload
+    ```
+      {
+        "id":      [uuidv4], // required
+        "enabled": [bool]    // required
+      }
+    ```
+
+  * Success Response
+    * Code: `200`
+    * Content:
+      ```
+        {
+          "id": [uuidv4]
+        }
+      ```
+
+  * Error Response
+
+    It will return status code 404 not found if the ID doesn't exist
+
+    * Code: `404`
+    * Content: 
+      ```
+        {
+          "reason": [string]
+        }
+      ```
+
+    It will return status code 500 internal error occurred
+
+    * Code: `500`
+    * Content: 
+      ```
+        {
+          "reason": [string]
+        }
+      ```
+
 ## Offer Routes
 
   ### Get Available Offers
