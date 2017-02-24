@@ -12,6 +12,8 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"gopkg.in/mgutz/dat.v2/dat"
+
 	"github.com/asaskevich/govalidator"
 	"github.com/topfreegames/offers/errors"
 	"github.com/topfreegames/offers/models"
@@ -26,6 +28,13 @@ type ValidationMiddleware struct {
 type contextKey string
 
 const payloadString = contextKey("payload")
+
+// NewValidationMiddleware creates a new validation middleware
+func NewValidationMiddleware(f func() interface{}) *ValidationMiddleware {
+	m := &ValidationMiddleware{GetPayload: f}
+	m.configureCustomValidators()
+	return m
+}
 
 func newContextWithPayload(ctx context.Context, payload interface{}, r *http.Request) context.Context {
 	c := context.WithValue(ctx, payloadString, payload)
@@ -64,6 +73,23 @@ func offerTemplateToUpdateFromCtx(ctx context.Context) *models.OfferTemplateToUp
 	}
 
 	return ot.(*models.OfferTemplateToUpdate)
+}
+
+func (m *ValidationMiddleware) configureCustomValidators() {
+	govalidator.CustomTypeTagMap.Set(
+		"JSONObject",
+		govalidator.CustomTypeValidator(
+			func(i interface{}, context interface{}) bool {
+				switch v := i.(type) {
+				case dat.JSON:
+					var msi map[string]interface{}
+					err := v.Unmarshal(&msi)
+					return err == nil
+				}
+				return false
+			},
+		),
+	)
 }
 
 //ServeHTTP method
