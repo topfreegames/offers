@@ -90,7 +90,6 @@ func getDB() (*sql.DB, error) {
 	maxOpenConns := config.GetInt("postgres.maxOpenConns")
 	connectionTimeoutMS := config.GetInt("postgres.connectionTimeoutMS")
 
-	fmt.Println(host, port, user, dbName)
 	db, err := models.GetDB(
 		host, user, port, sslMode, dbName,
 		password, maxIdleConns, maxOpenConns,

@@ -85,13 +85,10 @@ Offers API
   * Payload
     ```
       {
-        "id":        [uuidv4], // required
         "name":      [string], // required, 255 characters max
         "productId": [string], // required, 255 characters max
         "gameId":    [string], // required, matches ^[^-][a-z0-9-]*$
         "contents":  [json],   // required
-        "metadata":  [json],   // optional
-        "enabled":   [bool],   // optional
         "placement": [string], // required, 255 characters max
         "period":    {         // required
           "every": [string],   // required
@@ -104,29 +101,50 @@ Offers API
         "trigger":   {         // required
           "from":  [int],      // required
           "to":    [int]       // required
-        }
+        },
+        "metadata":  [json]    // optional
       }
     ```
 
     * Field Descriptions
-       - id:           Unique ID that identifies the offer template.  
-       - name:         Prettier game identifier to show on UI.  
-       - productId:    Identifier of the item to be bought on PlayStore or AppStore.  
-       - gameId:       ID of the game this template was made for (must exist on Games table on DB).  
-       - contents:     What the offer provides (ex.: { "gem": 5, "gold": 100 }).  
-       - metadata:     Any information the Front wants to access later.  
-       - period:       Enable player to buy offer every x times, at most y times. <ul><li>every: decimal number with unit suffix, such as "300ms", "-1.5h" or "2h45m". Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h"</li><li>max: maximum number of times this offer can be bought by the player</li></ul>If "every" is an empty string, then the offer can be bought max times with no time restriction.  If "max" is 0, then the offer can be bought infinite times with time restriction.  They can`t be "" and 0 at the same time.  
-       - frequency:    Enable player to see offer on UI x/unit of time, at most y times. <ul><li>every: decimal number with unit suffix, such as "300ms", "-1.5h" or "2h45m". Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h"</li><li>max: maximum number of times this offer can be seen by the player</li></ul>If "every" is an empty string, then the offer can be seen max times with no time restriction.  If "max" is 0, then the offer can be seen infinite times with time restriction.  They can`t be "" and 0 at the same time.  
-       - trigger:      Time when the offer is available.  
-       - enabled:      True if the offer is enabled.  
-       - placement:    Where the offer is shown in the UI.  
+       - **id**:           Unique ID that identifies the offer template.  
+       - **name**:         Prettier game identifier to show on UI.  
+       - **productId**:    Identifier of the item to be bought on PlayStore or AppStore.  
+       - **gameId**:       ID of the game this template was made for (must exist on Games table on DB).  
+       - **contents**:     What the offer provides (ex.: { "gem": 5, "gold": 100 }).  
+       - **metadata**:     Any information the Front wants to access later.  
+       - **period**:       Enable player to buy offer every x times, at most y times. <ul><li>every: decimal number with unit suffix, such as "300ms", "-1.5h" or "2h45m". Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h"</li><li>max: maximum number of times this offer can be bought by the player</li></ul>If "every" is an empty string, then the offer can be bought max times with no time restriction.  If "max" is 0, then the offer can be bought infinite times with time restriction.  They can`t be "" and 0 at the same time.  
+       - **frequency**:    Enable player to see offer on UI x/unit of time, at most y times. <ul><li>every: decimal number with unit suffix, such as "300ms", "-1.5h" or "2h45m". Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h"</li><li>max: maximum number of times this offer can be seen by the player</li></ul>If "every" is an empty string, then the offer can be seen max times with no time restriction.  If "max" is 0, then the offer can be seen infinite times with time restriction.  They can`t be "" and 0 at the same time.  
+       - **trigger**:      Time when the offer is available.  
+       - **enabled**:      True if the offer is enabled.  
+       - **placement**:    Where the offer is shown in the UI.  
 
   * Success Response
     * Code: `200`
     * Content:
       ```
         {
-          "OfferTemplateId": [string]
+          "id":        [uuid],   // offer template unique identifier
+          "name":      [string],
+          "productId": [string],
+          "gameId":    [string],
+          "contents":  [json],  
+          "metadata":  [json],  
+          "enabled":   [bool],  
+          "placement": [string],
+          "period":    {        
+            "every": [string],  
+            "max":   [int]      
+          },   
+          "frequency": {        
+            "every": [string],  
+            "max":   [int]      
+          },   
+          "trigger":   {        
+            "from":  [int],     
+            "to":    [int]      
+          },
+          "enabled": true     // created templates are enabled by default
         }
       ```
 

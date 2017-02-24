@@ -8,6 +8,7 @@
 package api
 
 import (
+	"encoding/json"
 	"net/http"
 
 	"github.com/topfreegames/offers/errors"
@@ -47,7 +48,13 @@ func (g *OfferTemplateHandler) insertOfferTemplate(w http.ResponseWriter, r *htt
 		return
 	}
 
-	Write(w, http.StatusOK, ot.ID)
+	bytesRes, err := json.Marshal(ot)
+	if err != nil {
+		g.App.HandleError(w, http.StatusInternalServerError, "Failed to build offer template response", err)
+		return
+	}
+
+	WriteBytes(w, http.StatusOK, bytesRes)
 }
 
 func (g *OfferTemplateHandler) setEnabledOfferTemplate(w http.ResponseWriter, r *http.Request) {

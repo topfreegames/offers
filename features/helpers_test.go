@@ -72,7 +72,6 @@ func performRequest(a *api.App, method, url string, payload map[string]interface
 		if err != nil {
 			return 500, "", err
 		}
-		//fmt.Println(string(data))
 		body = strings.NewReader(string(data))
 	}
 	req := httptest.NewRequest(method, url, body)

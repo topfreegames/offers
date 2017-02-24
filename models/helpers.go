@@ -110,3 +110,14 @@ func HandleNotFoundError(model string, filters map[string]interface{}, err error
 	}
 	return nil
 }
+
+//HandleForeignKeyViolationError returns the proper error if nothing happens
+func HandleForeignKeyViolationError(model string, err error) error {
+	if err != nil {
+		if pqErr, ok := IsForeignKeyViolationError(err); ok {
+			return errors.NewInvalidModelError(model, pqErr.Message)
+		}
+		return err
+	}
+	return nil
+}

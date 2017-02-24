@@ -14,17 +14,17 @@ import (
 
 //OfferTemplate contains the parameters of a template
 type OfferTemplate struct {
-	ID        string   `db:"id" valid:"uuidv4,required"`
-	Name      string   `db:"name" valid:"ascii,stringlength(1|255),required"`
-	ProductID string   `db:"product_id" valid:"ascii,stringlength(1|255),required"`
-	GameID    string   `db:"game_id" valid:"matches(^[^-][a-z0-9-]*$),stringlength(1|255),required"`
-	Contents  dat.JSON `db:"contents" valid:"required"`
-	Metadata  dat.JSON `db:"metadata" valid:""`
-	Period    dat.JSON `db:"period" valid:"required"`
-	Frequency dat.JSON `db:"frequency" valid:"required"`
-	Trigger   dat.JSON `db:"trigger" valid:"required"`
-	Enabled   bool     `db:"enabled" valid:"bool,optional"`
-	Placement string   `db:"placement" valid:"ascii,stringlength(1|255),required"`
+	ID        string   `db:"id" json:"id" valid:"uuidv4"`
+	Name      string   `db:"name" json:"name" valid:"ascii,stringlength(1|255),required"`
+	ProductID string   `db:"product_id" json:"productId" valid:"ascii,stringlength(1|255),required"`
+	GameID    string   `db:"game_id" json:"gameId" valid:"matches(^[^-][a-z0-9-]*$),stringlength(1|255),required"`
+	Contents  dat.JSON `db:"contents" json:"contents" valid:"JSONObject,required"`
+	Metadata  dat.JSON `db:"metadata" json:"metadata" valid:""` // TODO: check if valid
+	Period    dat.JSON `db:"period" json:"period" valid:"JSONObject,required"`
+	Frequency dat.JSON `db:"frequency" json:"frequency" valid:"JSONObject,required"`
+	Trigger   dat.JSON `db:"trigger" json:"trigger" valid:"JSONObject,required"`
+	Enabled   bool     `db:"enabled" json:"enabled" valid:"matches(^(true|false)$),optional"`
+	Placement string   `db:"placement" json:"placement" valid:"ascii,stringlength(1|255),required"`
 }
 
 //OfferTemplateToUpdate is used by api/app.go to call setEnabled
@@ -54,7 +54,7 @@ func GetOfferTemplateByID(db runner.Connection, id string, mr *MixedMetricsRepor
 			QueryStruct(&ot)
 	})
 
-	err = HandleNotFoundError("Offer Template", map[string]interface{}{"ID": id}, err)
+	err = HandleNotFoundError("OfferTemplate", map[string]interface{}{"ID": id}, err)
 	return &ot, err
 }
 
@@ -73,7 +73,7 @@ func GetEnabledOfferTemplates(db runner.Connection, gameID string, mr *MixedMetr
 			OrderBy("name asc").
 			QueryStructs(&ots)
 	})
-	err = HandleNotFoundError("Offer Template", map[string]interface{}{"enabled": true}, err)
+	err = HandleNotFoundError("OfferTemplate", map[string]interface{}{"enabled": true}, err)
 	return ots, err
 }
 
@@ -90,6 +90,7 @@ func InsertOfferTemplate(db runner.Connection, ot *OfferTemplate, mr *MixedMetri
 			Returning("id, enabled").
 			QueryStruct(ot)
 	})
+	err = HandleForeignKeyViolationError("OfferTemplate", err)
 	return ot, err
 }
 

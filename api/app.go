@@ -57,7 +57,6 @@ func NewApp(host string, port int, config *viper.Viper, debug bool, logger logru
 
 func (a *App) getRouter() *mux.Router {
 	r := mux.NewRouter()
-
 	r.Handle("/healthcheck", Chain(
 		&HealthcheckHandler{App: a},
 		&MetricsReporterMiddleware{App: a},
@@ -72,7 +71,7 @@ func (a *App) getRouter() *mux.Router {
 		&NewRelicMiddleware{App: a},
 		&LoggingMiddleware{App: a},
 		&VersionMiddleware{},
-		&ValidationMiddleware{GetPayload: func() interface{} { return &models.Game{} }},
+		NewValidationMiddleware(func() interface{} { return &models.Game{} }),
 	)).Methods("PUT").Name("game")
 
 	r.Handle("/offer-templates", Chain(
@@ -80,8 +79,8 @@ func (a *App) getRouter() *mux.Router {
 		&NewRelicMiddleware{App: a},
 		&LoggingMiddleware{App: a},
 		&VersionMiddleware{},
-		&ValidationMiddleware{GetPayload: func() interface{} { return &models.OfferTemplate{} }},
-	)).Methods("PUT").Name("offer_templates")
+		NewValidationMiddleware(func() interface{} { return &models.OfferTemplate{} }),
+	)).Methods("POST").Name("offer_templates")
 
 	r.Handle("/offer-templates/set-enabled", Chain(
 		&OfferTemplateHandler{App: a, Method: "set-enabled"},
@@ -103,7 +102,7 @@ func (a *App) getRouter() *mux.Router {
 		&NewRelicMiddleware{App: a},
 		&LoggingMiddleware{App: a},
 		&VersionMiddleware{},
-		&ValidationMiddleware{GetPayload: func() interface{} { return &models.OfferToUpdate{} }},
+		NewValidationMiddleware(func() interface{} { return &models.OfferToUpdate{} }),
 	)).Methods("PUT").Name("offer")
 
 	r.Handle("/offer/last-seen-at", Chain(
@@ -111,7 +110,7 @@ func (a *App) getRouter() *mux.Router {
 		&NewRelicMiddleware{App: a},
 		&LoggingMiddleware{App: a},
 		&VersionMiddleware{},
-		&ValidationMiddleware{GetPayload: func() interface{} { return &models.OfferToUpdate{} }},
+		NewValidationMiddleware(func() interface{} { return &models.OfferToUpdate{} }),
 	)).Methods("PUT").Name("offer")
 
 	return r

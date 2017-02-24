@@ -82,8 +82,8 @@ func (m *ValidationMiddleware) configureCustomValidators() {
 			func(i interface{}, context interface{}) bool {
 				switch v := i.(type) {
 				case dat.JSON:
-					var msi map[string]interface{}
-					err := v.Unmarshal(&msi)
+					var val map[string]interface{}
+					err := v.Unmarshal(&val)
 					return err == nil
 				}
 				return false
