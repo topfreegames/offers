@@ -6,3 +6,6 @@ postgres:
   sslMode: "disable"
   maxIdleConns: 10
   maxOpenConns: 10
+newrelic:
+  app: offers
+  key: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa

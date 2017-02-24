@@ -28,10 +28,6 @@ func newContextWithNewRelicTransaction(ctx context.Context, txn newrelic.Transac
 	return c
 }
 
-func newrelicTransactionFromCtx(ctx context.Context) newrelic.Transaction {
-	return ctx.Value(newRelicTransactionKey).(newrelic.Transaction)
-}
-
 func (m *NewRelicMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
