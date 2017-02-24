@@ -97,8 +97,6 @@ var _ = Describe("Offer Template Models", func() {
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(Equal("pq: insert or update on table \"offer_templates\" violates foreign key constraint \"offer_templates_game_id_fkey\""))
 
-			// TODO: test if was not created in the db
-			// currently it returns "pq: current transaction is aborted, commands ignored until end of transaction block"
 			var ot models.OfferTemplate
 			err = conn.
 				Select("id").

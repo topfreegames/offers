@@ -111,3 +111,8 @@ test-coverage-html coverage-html: merge-profiles
 
 run:
 	@go run main.go start -v3 -c ./config/local.yaml
+
+rtfd:
+	@rm -rf docs/_build
+	@sphinx-build -b html -d ./docs/_build/doctrees ./docs/source/ docs/_build/html
+	@open docs/_build/html/index.html

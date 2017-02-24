@@ -28,3 +28,4 @@ _testmain.go
 *.coverprofile
 /bin
 /_build
+docs/_build/
