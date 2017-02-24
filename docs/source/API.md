@@ -18,9 +18,7 @@ Offers API
         }
       ```
   * Error Response
-
     It will return an internal error if it failed to connect to the database.
-
     * Code: `500`
     * Content:
       ```
@@ -45,14 +43,11 @@ Offers API
       "metadata": [json],   // optional
     }
     ```
-
-  | Parameter   | Description                                     |
-  | ----------- | -------------                                   |
-  | id          | Unique ID that identifies the game              |
-  | name        | Prettier game identifier to show on UI          |
-  | bundleId    | App identifier on PlayStore or AppStore         |
-  | metadata    | Any information the Front wants to access later |
-
+    * Field Descriptions
+      - id:       Unique ID that identifies the game              
+      - name:     Prettier game identifier to show on UI          
+      - bundleId: App identifier on PlayStore or AppStore         
+      - metadata: Any information the Front wants to access later 
   * Success Response
     * Code: `200`
     * Content:
@@ -107,19 +102,18 @@ Offers API
       }
     ```
 
-  | Parameter   | Description                                                                                                                                                                                                                                                                                               |
-  | ----------- | -------------                                                                                                                                                                                                                                                                                             |
-  | id          | Unique ID that identifies the offer template                                                                                                                                                                                                                                                              |
-  | name        | Prettier game identifier to show on UI                                                                                                                                                                                                                                                                    |
-  | productId   | Identifier of the item to be bought on PlayStore or AppStore                                                                                                                                                                                                                                              |
-  | gameId      | ID of the game this template was made for (must exist on Games table on DB)                                                                                                                                                                                                                               |
-  | contents    | What the offer provides (ex.: { "gem": 5, "gold": 100 })                                                                                                                                                                                                                                                  |
-  | metadata    | Any information the Front wants to access later                                                                                                                                                                                                                                                           |
-  | period      | Enable player to buy offer every x times, at most y times. <ul><li>every: decimal number with unit suffix, such as "300ms", "-1.5h" or "2h45m". Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h"</li><li>max: maximum number of times this offer can be bought by the player</li></ul>If "every" is an empty string, then the offer can be bought max times with no time restriction.  If "max" is 0, then the offer can be bought infinite times with time restriction.  They can`t be "" and 0 at the same time.      |
-  | frequency   | Enable player to see offer on UI x/unit of time, at most y times. <ul><li>every: decimal number with unit suffix, such as "300ms", "-1.5h" or "2h45m". Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h"</li><li>max: maximum number of times this offer can be seen by the player</li></ul>If "every" is an empty string, then the offer can be seen max times with no time restriction.  If "max" is 0, then the offer can be seen infinite times with time restriction.  They can`t be "" and 0 at the same time. |
-  | trigger     | Time when the offer is available                                                                                                                                                                                                                                                                          |
-  | enabled     | True if the offer is enabled                                                                                                                                                                                                                                                                              |
-  | placement   | Where the offer is shown in the UI                                                                                                                                                                                                                                                                        |
+    * Field Descriptions
+       - id:           Unique ID that identifies the offer template.  
+       - name:         Prettier game identifier to show on UI.  
+       - productId:    Identifier of the item to be bought on PlayStore or AppStore.  
+       - gameId:       ID of the game this template was made for (must exist on Games table on DB).  
+       - contents:     What the offer provides (ex.: { "gem": 5, "gold": 100 }).  
+       - metadata:     Any information the Front wants to access later.  
+       - period:       Enable player to buy offer every x times, at most y times. <ul><li>every: decimal number with unit suffix, such as "300ms", "-1.5h" or "2h45m". Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h"</li><li>max: maximum number of times this offer can be bought by the player</li></ul>If "every" is an empty string, then the offer can be bought max times with no time restriction.  If "max" is 0, then the offer can be bought infinite times with time restriction.  They can`t be "" and 0 at the same time.  
+       - frequency:    Enable player to see offer on UI x/unit of time, at most y times. <ul><li>every: decimal number with unit suffix, such as "300ms", "-1.5h" or "2h45m". Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h"</li><li>max: maximum number of times this offer can be seen by the player</li></ul>If "every" is an empty string, then the offer can be seen max times with no time restriction.  If "max" is 0, then the offer can be seen infinite times with time restriction.  They can`t be "" and 0 at the same time.  
+       - trigger:      Time when the offer is available.  
+       - enabled:      True if the offer is enabled.  
+       - placement:    Where the offer is shown in the UI.  
 
   * Success Response
     * Code: `200`
@@ -216,7 +210,6 @@ Offers API
     * Content: JSON with the offer contents, got from the key contents in OfferTemplate
 
   * Error Response
-
     * If a offer with id, gameId and playerId was not found in database.
       * Code: `404`
       * Content:
