@@ -15,7 +15,8 @@ import (
 
 //OfferTemplateHandler handler
 type OfferTemplateHandler struct {
-	App *App
+	App    *App
+	Method string
 }
 
 //ServeHTTP method

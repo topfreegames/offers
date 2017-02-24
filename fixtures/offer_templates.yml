@@ -113,3 +113,15 @@
     trigger: '{"from": 1486678000, "to": 1486679000}'
     placement: store
     enabled: true
+-
+    id: 27b0370f-bd61-4346-a10d-50ec052ae125
+    name: template-9
+    product_id: com.tfg.sample
+    game_id: offers-game
+    contents: '{"gems": 5, "gold": 100}'
+    metadata: '{}'
+    period: '{"every": "invalid"}'
+    frequency: '{}'
+    trigger: '{"from": 1486678000, "to": 1486679000}'
+    placement: store
+    enabled: false

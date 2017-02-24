@@ -86,3 +86,17 @@ func InsertOfferTemplate(db runner.Connection, ot *OfferTemplate, mr *MixedMetri
 	})
 	return ot, err
 }
+
+//SetEnabledOfferTemplate can enable or disable an offer template
+func SetEnabledOfferTemplate(db runner.Connection, id string, enabled bool, mr *MixedMetricsReporter) error {
+	var offerTemplate OfferTemplate
+	err := mr.WithDatastoreSegment("offer_templates", "update", func() error {
+		return db.
+			Update("offer_templates").
+			Set("enabled", enabled).
+			Where("id=$1", id).
+			Returning("id").
+			QueryStruct(&offerTemplate)
+	})
+	return err
+}

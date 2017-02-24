@@ -127,4 +127,63 @@ var _ = Describe("Offer Template Models", func() {
 			Expect(ots[2].Name).To(Equal("template-3"))
 		})
 	})
+
+	Describe("Set enabled offer template", func() {
+		It("should disable an enabled offer", func() {
+			//Given
+			templateID := "dd21ec96-2890-4ba0-b8e2-40ea67196990"
+			enabled := false
+
+			//When
+			err1 := models.SetEnabledOfferTemplate(db, templateID, enabled, nil)
+			ot, err2 := models.GetOfferTemplateByID(db, templateID, nil)
+
+			//Then
+			Expect(err1).NotTo(HaveOccurred())
+			Expect(err2).NotTo(HaveOccurred())
+			Expect(ot.Enabled).To(BeFalse())
+		})
+
+		It("should enable an enabled offer", func() {
+			//Given
+			templateID := "dd21ec96-2890-4ba0-b8e2-40ea67196990"
+			enabled := true
+
+			//When
+			err1 := models.SetEnabledOfferTemplate(db, templateID, enabled, nil)
+			ot, err2 := models.GetOfferTemplateByID(db, templateID, nil)
+
+			//Then
+			Expect(err1).NotTo(HaveOccurred())
+			Expect(err2).NotTo(HaveOccurred())
+			Expect(ot.Enabled).To(BeTrue())
+		})
+
+		It("should enable a disabled offer", func() {
+			//Given
+			templateID := "27b0370f-bd61-4346-a10d-50ec052ae125"
+			enabled := true
+
+			//When
+			err1 := models.SetEnabledOfferTemplate(db, templateID, enabled, nil)
+			ot, err2 := models.GetOfferTemplateByID(db, templateID, nil)
+
+			//Then
+			Expect(err1).NotTo(HaveOccurred())
+			Expect(err2).NotTo(HaveOccurred())
+			Expect(ot.Enabled).To(BeTrue())
+		})
+
+		It("should return error if id doesn't exist", func() {
+			//Given
+			templateID := uuid.NewV4().String()
+			enabled := true
+
+			//When
+			err1 := models.SetEnabledOfferTemplate(db, templateID, enabled, nil)
+
+			//Then
+			Expect(err1).To(HaveOccurred())
+		})
+	})
 })
