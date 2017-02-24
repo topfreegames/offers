@@ -47,10 +47,11 @@ Offers API
     }
     ```
     * Field Descriptions
-      - id:       Unique ID that identifies the game              
-      - name:     Prettier game identifier to show on UI          
-      - bundleId: App identifier on PlayStore or AppStore         
-      - metadata: Any information the Front wants to access later 
+      - **id**:       Unique ID that identifies the game              
+      - **name**:     Prettier game identifier to show on UI          
+      - **bundleId**: App identifier on PlayStore or AppStore         
+      - **metadata**: Any additional information one would like to access later
+
   * Success Response
     * Code: `200`
     * Content:
@@ -68,7 +69,9 @@ Offers API
     * Content:
       ```
         {
-          "reason": [string]
+          "error": [string],       // error
+          "code":  [string],       // error code
+          "description": [string]  // error description
         }
       ```
 

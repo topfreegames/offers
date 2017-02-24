@@ -17,6 +17,7 @@ import (
 	"github.com/gorilla/mux"
 	newrelic "github.com/newrelic/go-agent"
 	"github.com/spf13/viper"
+	"github.com/topfreegames/offers/errors"
 	"github.com/topfreegames/offers/metadata"
 	"github.com/topfreegames/offers/models"
 	runner "gopkg.in/mgutz/dat.v2/sqlx-runner"
@@ -216,9 +217,16 @@ func (a *App) configureServer() {
 }
 
 //HandleError writes an error response with message and status
-func (a *App) HandleError(w http.ResponseWriter, status int, msg string, err error) {
+func (a *App) HandleError(w http.ResponseWriter, status int, msg string, err interface{}) {
 	w.WriteHeader(status)
-	w.Write([]byte(msg))
+	var sErr errors.SerializableError
+	val, ok := err.(errors.SerializableError)
+	if ok {
+		sErr = val
+	} else {
+		sErr = errors.NewGenericError(msg, err.(error))
+	}
+	w.Write(sErr.Serialize())
 }
 
 //ListenAndServe requests

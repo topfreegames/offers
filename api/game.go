@@ -8,6 +8,7 @@
 package api
 
 import (
+	"encoding/json"
 	"net/http"
 
 	"github.com/topfreegames/offers/models"
@@ -32,6 +33,6 @@ func (g *GameHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		g.App.HandleError(w, http.StatusInternalServerError, "Upserting game failed", err)
 		return
 	}
-
-	Write(w, http.StatusOK, game.ID)
+	bytesRes, _ := json.Marshal(map[string]interface{}{"gameId": game.ID})
+	WriteBytes(w, http.StatusOK, bytesRes)
 }

@@ -29,8 +29,9 @@ var _ = Describe("Game Handler", func() {
 
 	Describe("PUT /games", func() {
 		It("should return status code of 200", func() {
+			id := uuid.NewV4().String()
 			gameReader := JSONFor(JSON{
-				"ID":       uuid.NewV4().String(),
+				"ID":       id,
 				"Name":     "Game Awesome Name",
 				"BundleID": "com.topfreegames.example",
 			})
@@ -39,6 +40,10 @@ var _ = Describe("Game Handler", func() {
 			app.Router.ServeHTTP(recorder, request)
 
 			Expect(recorder.Code).To(Equal(http.StatusOK))
+			var obj map[string]interface{}
+			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(obj["gameId"]).To(Equal(id))
 		})
 
 		It("should return status code of 422 if missing parameter", func() {
@@ -50,6 +55,12 @@ var _ = Describe("Game Handler", func() {
 			app.Router.ServeHTTP(recorder, request)
 
 			Expect(recorder.Code).To(Equal(http.StatusUnprocessableEntity))
+			var obj map[string]interface{}
+			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(obj["code"]).To(Equal("OFF-002"))
+			Expect(obj["error"]).To(Equal("ValidationFailedError"))
+			Expect(obj["description"]).To(Equal("ID: non zero value required;BundleID: non zero value required;"))
 		})
 
 		It("should return status code of 422 if invalid name", func() {
@@ -72,6 +83,7 @@ var _ = Describe("Game Handler", func() {
 			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(obj["code"]).To(BeEquivalentTo("OFF-002"))
+			Expect(obj["error"]).To(Equal("ValidationFailedError"))
 			Expect(obj["description"]).To(ContainSubstring("does not validate as stringlength(1|255);"))
 		})
 
@@ -96,6 +108,7 @@ var _ = Describe("Game Handler", func() {
 			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(obj["code"]).To(BeEquivalentTo("OFF-002"))
+			Expect(obj["error"]).To(Equal("ValidationFailedError"))
 			Expect(obj["description"]).To(ContainSubstring("does not validate as stringlength(1|255);"))
 		})
 
@@ -117,6 +130,7 @@ var _ = Describe("Game Handler", func() {
 			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(obj["code"]).To(BeEquivalentTo("OFF-002"))
+			Expect(obj["error"]).To(Equal("ValidationFailedError"))
 			Expect(obj["description"]).To(ContainSubstring("ID: abc123!@#xyz456 does not validate as matches(^[^-][a-z0-9-]*$);"))
 		})
 
@@ -139,6 +153,7 @@ var _ = Describe("Game Handler", func() {
 			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(obj["code"]).To(BeEquivalentTo("OFF-002"))
+			Expect(obj["error"]).To(Equal("ValidationFailedError"))
 			Expect(obj["description"]).To(ContainSubstring("ID: non zero value required;"))
 		})
 
@@ -159,7 +174,12 @@ var _ = Describe("Game Handler", func() {
 			app.Router.ServeHTTP(recorder, request)
 
 			Expect(recorder.Code).To(Equal(http.StatusInternalServerError))
-			Expect(recorder.Body.String()).To(Equal("Upserting game failed"))
+			var obj map[string]interface{}
+			err = json.Unmarshal([]byte(recorder.Body.String()), &obj)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(obj["code"]).To(Equal("OFF-004"))
+			Expect(obj["error"]).To(Equal("Upserting game failed"))
+			Expect(obj["description"]).To(Equal("sql: database is closed"))
 			app.DB = oldDB // avoid errors in after each
 		})
 	})
