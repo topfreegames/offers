@@ -2,7 +2,7 @@ postgres:
   user: "offers_test"
   dbName: "offers_test"
   host: "localhost"
-  port: 8585
+  port: 0000
   sslMode: "disable"
   maxIdleConns: 10
   maxOpenConns: 10

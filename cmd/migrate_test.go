@@ -65,6 +65,13 @@ var _ = Describe("Migrate Command", func() {
 			Expect(out).To(ContainSubstring("CreateGamesTable.sql"))
 			Expect(out).To(ContainSubstring("Database migrated successfully."))
 		})
+
+		It("Should not run migrations if failed to connect to db", func() {
+			ConfigFile = "../config/test_bad_db.yaml"
+			InitConfig()
+			w, _ := testing.MockStdout()
+			Expect(func() { RunMigrations(false, w) }).To(Panic())
+		})
 	})
 
 	Describe("Migrate Info Cmd", func() {

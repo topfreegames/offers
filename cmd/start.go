@@ -1,5 +1,5 @@
-// khan
-// https://github.com/topfreegames/khan
+// offers
+// https://github.com/topfreegames/offers
 //
 // Licensed under the MIT license:
 // http://www.opensource.org/licenses/mit-license
@@ -76,8 +76,8 @@ environment variables to override configuration keys.`,
 func init() {
 	RootCmd.AddCommand(startCmd)
 
-	startCmd.Flags().StringVarP(&host, "bind", "b", "0.0.0.0", "Host to bind khan to")
-	startCmd.Flags().IntVarP(&port, "port", "p", 8888, "Port to bind khan to")
+	startCmd.Flags().StringVarP(&host, "bind", "b", "0.0.0.0", "Host to bind offers to")
+	startCmd.Flags().IntVarP(&port, "port", "p", 8888, "Port to bind offers to")
 	startCmd.Flags().BoolVarP(&debug, "debug", "d", false, "Debug mode")
 	startCmd.Flags().BoolVarP(&quiet, "quiet", "q", false, "Quiet mode (log level error)")
 }
