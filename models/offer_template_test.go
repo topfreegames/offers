@@ -106,6 +106,27 @@ var _ = Describe("Offer Template Models", func() {
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(Equal("sql: no rows in result set"))
 		})
+
+		It("should return error if inserting offer template with repeated name", func() {
+			//Given
+			offerTemplate := &models.OfferTemplate{
+				Name:      "template-1",
+				ProductID: "com.tfg.example",
+				GameID:    "game-id",
+				Contents:  dat.JSON([]byte(`{"gems": 5, "gold": 100}`)),
+				Period:    dat.JSON([]byte(`{"every": "10m"}`)),
+				Frequency: dat.JSON([]byte(`{"every": "24h"}`)),
+				Trigger:   dat.JSON([]byte(`{"from": 1487280506875}`)),
+				Placement: "popup",
+			}
+
+			//When
+			_, err := models.InsertOfferTemplate(db, offerTemplate, nil)
+
+			//Then
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(Equal("pq: duplicate key value violates unique constraint \"offer_templates_name_key\""))
+		})
 	})
 
 	Describe("Get enabled offer templates", func() {
@@ -117,9 +138,9 @@ var _ = Describe("Offer Template Models", func() {
 			Expect(ots[0].Name).To(Equal("template-1"))
 			Expect(ots[1].ID).To(Equal("d5114990-77d7-45c4-ba5f-462fc86b213f"))
 			Expect(ots[1].Name).To(Equal("template-2"))
-			Expect(ots[1].ProductID).To(Equal("com.tfg.sample.2"))
-			Expect(ots[1].Contents).To(Equal(dat.JSON([]byte(`{"gems": 100, "gold": 5}`))))
-			Expect(ots[1].Metadata).To(Equal(dat.JSON([]byte(`{"meta": "data"}`))))
+			Expect(ots[1].ProductID).To(Equal("com.tfg.sample"))
+			Expect(ots[1].Contents).To(Equal(dat.JSON([]byte(`{"gems": 5, "gold": 100}`))))
+			Expect(ots[1].Metadata).To(Equal(dat.JSON([]byte(`{}`))))
 			Expect(ots[1].Period).To(Equal(dat.JSON([]byte(`{"every": "1s"}`))))
 			Expect(ots[1].Frequency).To(BeEquivalentTo(dat.JSON([]byte(`{"every": "1s"}`))))
 			Expect(ots[1].Trigger).To(Equal(dat.JSON([]byte(`{"to": 1486679000, "from": 1486678000}`))))
@@ -184,6 +205,45 @@ var _ = Describe("Offer Template Models", func() {
 
 			//Then
 			Expect(err1).To(HaveOccurred())
+		})
+	})
+
+	Describe("Get offer template by name", func() {
+		It("should return offer template by its name", func() {
+			//Given
+			name := "template-1"
+			expectedOt := &models.OfferTemplate{
+				ID:        "dd21ec96-2890-4ba0-b8e2-40ea67196990",
+				Name:      name,
+				ProductID: "com.tfg.sample",
+				GameID:    "offers-game",
+				Contents:  dat.JSON([]byte(`{"gems": 5, "gold": 100}`)),
+				Metadata:  dat.JSON([]byte(`{}`)),
+				Period:    dat.JSON([]byte(`{"every": "1s"}`)),
+				Frequency: dat.JSON([]byte(`{"every": "1s"}`)),
+				Trigger:   dat.JSON([]byte(`{"to": 1486679000, "from": 1486678000}`)),
+				Placement: "popup",
+				Enabled:   true,
+			}
+
+			//When
+			ot, err := models.GetOfferTemplateByName(db, name, nil)
+
+			//Then
+			Expect(err).NotTo(HaveOccurred())
+			Expect(ot).To(Equal(expectedOt))
+		})
+
+		It("should return empty if name not found", func() {
+			//Given
+			name := "non-existing-template"
+
+			//When
+			_, err := models.GetOfferTemplateByName(db, name, nil)
+
+			//Then
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(Equal(OfferTemplate was not found with specified filters.
 		})
 	})
 })

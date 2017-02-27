@@ -28,7 +28,6 @@ import (
 	"net/http/httptest"
 	"strings"
 
-	uuid "github.com/satori/go.uuid"
 	"github.com/topfreegames/offers/api"
 	"github.com/topfreegames/offers/models"
 	"gopkg.in/mgutz/dat.v2/dat"
@@ -51,7 +50,6 @@ func newGame(db runner.Connection, id, bundleID string) (*models.Game, error) {
 
 func insertOfferTemplate(db runner.Connection, name, gameID string) error {
 	offerTemplate := &models.OfferTemplate{
-		ID:        uuid.NewV4().String(),
 		Name:      name,
 		ProductID: "com.tfg.example",
 		GameID:    gameID,

@@ -24,6 +24,7 @@ package features
 
 import (
 	"encoding/json"
+	e "errors"
 	"fmt"
 	"strings"
 
@@ -86,6 +87,34 @@ func requestGameWithIDAndBundleID(id, bundleID string) error {
 	return err
 }
 
+func requestInsertOfferTemplate(name, productID, gameID, contents, period, frequency, trigger, placement string) error {
+	code, body, err := performRequest(app, "POST", "/offer-templates", map[string]interface{}{
+		"name":      name,
+		"productID": productID,
+		"gameID":    gameID,
+		"contents":  contents,
+		"period":    period,
+		"frequency": frequency,
+		"trigger":   trigger,
+		"placement": placement,
+	})
+
+	if err != nil {
+		return err
+	}
+
+	if code != 200 {
+		return e.New(body)
+	}
+
+	var ot models.OfferTemplate
+	json.Unmarshal([]byte(body), &ot)
+	if ot.GameID != gameID {
+		return e.New("GameID doesn't match")
+	}
+	return nil
+}
+
 //ALIAS to update
 func aGameNamedIsCreatedWithBundleIDOf(id, bundleID string) error {
 	return requestGameWithIDAndBundleID(id, bundleID)
@@ -106,14 +135,14 @@ func theGameHasBundleIDOf(id, bundleID string) error {
 		return err
 	}
 	if game.BundleID != bundleID {
-		return fmt.Errorf("Expected game to have bundle ID of %s, but it has %s.", bundleID, game.BundleID)
+		return fmt.Errorf("Expected game to have bundle ID of %s, but it has %s", bundleID, game.BundleID)
 	}
 	return nil
 }
 
 func theLastRequestReturnedStatusCode(statusCode int) error {
 	if lastStatus != statusCode {
-		return fmt.Errorf("Expected last request to have status code of %d but it had %d.", statusCode, lastStatus)
+		return fmt.Errorf("Expected last request to have status code of %d but it had %d", statusCode, lastStatus)
 	}
 	return nil
 }
@@ -161,7 +190,7 @@ func theGameDoesNotExist(id string) error {
 		}
 		return err
 	}
-	return fmt.Errorf("The game %s should not exist but it does.", game.ID)
+	return fmt.Errorf("The game %s should not exist but it does", game.ID)
 }
 
 func aGameWithNameExists(name string) error {
@@ -169,7 +198,7 @@ func aGameWithNameExists(name string) error {
 	return err
 }
 
-func theFollowingOfferTemplatesExistInTheGame(arg1 string, arg2 *gherkin.DataTable) error {
+func theFollowingOfferTemplatesExistInTheGame(offerTemplateID *gherkin.DataTable) error {
 	return godog.ErrPending
 }
 
@@ -194,23 +223,21 @@ func theCurrentTimeIsD(arg1 int) error {
 }
 
 func anOfferTemplateIsCreatedInTheGameWith(gameID string, otArgs *gherkin.DataTable) error {
-	return godog.ErrPending
-	// payload := map[string]interface{}{
-	// 	"id":        uuid.NewV4().String(),
-	// 	"gameId":    gameID,
-	// 	"name":      otArgs.Rows[0].Cells[0].Value,
-	// 	"productId": otArgs.Rows[0].Cells[1].Value,
-	// 	"contents":  otArgs.Rows[0].Cells[2].Value,
-	// 	"metadata":  otArgs.Rows[0].Cells[3].Value,
-	// 	"period":    otArgs.Rows[0].Cells[4].Value,
-	// 	"frequency": otArgs.Rows[0].Cells[5].Value,
-	// 	"trigger":   otArgs.Rows[0].Cells[6].Value,
-	// 	"placement": otArgs.Rows[0].Cells[7].Value,
-	// }
-	//
-	// var err error
-	// lastStatus, lastBody, err = performRequest(app, "PUT", "/offer-templates", payload)
-	// return err
+	payload := map[string]interface{}{
+		"gameId":    gameID,
+		"name":      otArgs.Rows[1].Cells[0].Value,
+		"productId": otArgs.Rows[1].Cells[1].Value,
+		"contents":  otArgs.Rows[1].Cells[2].Value,
+		"metadata":  otArgs.Rows[1].Cells[3].Value,
+		"period":    otArgs.Rows[1].Cells[4].Value,
+		"frequency": otArgs.Rows[1].Cells[5].Value,
+		"trigger":   otArgs.Rows[1].Cells[6].Value,
+		"placement": otArgs.Rows[1].Cells[7].Value,
+	}
+
+	var err error
+	lastStatus, lastBody, err = performRequest(app, "PUT", "/offer-templates", payload)
+	return err
 }
 
 func anOfferTemplateWithNameExistsInGame(arg1, arg2 string) error {

@@ -21,3 +21,6 @@ const SegmentInsert = "Database/Insert"
 
 //SegmentUpdate represents a segment
 const SegmentUpdate = "Database/Update"
+
+//SegmentUpsert represents a segment
+const SegmentUpsert = "Database/Upsert"

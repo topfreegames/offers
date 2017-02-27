@@ -36,7 +36,7 @@ func (g *Game) GetMetadata() (interface{}, error) {
 //GetGameByID returns a game by it's pk
 func GetGameByID(db runner.Connection, id string, mr *MixedMetricsReporter) (*Game, error) {
 	var game Game
-	err := mr.WithDatastoreSegment("games", "select by id", func() error {
+	err := mr.WithDatastoreSegment("games", SegmentInsert, func() error {
 		return db.
 			Select("*").
 			From("games").
@@ -64,7 +64,7 @@ func ListGames(db runner.Connection, mr *MixedMetricsReporter) ([]*Game, error) 
 //func UpsertGame(db runner.Connection, game *Game, t time.Time, mr *MixedMetricsReporter) error {
 func UpsertGame(db runner.Connection, game *Game, t time.Time, mr *MixedMetricsReporter) error {
 	game.UpdatedAt = dat.NullTimeFrom(t)
-	return mr.WithDatastoreSegment("games", "upsert", func() error {
+	return mr.WithDatastoreSegment("games", SegmentUpsert, func() error {
 		return db.
 			Upsert("games").
 			Columns("id", "name", "bundle_id", "updated_at").
