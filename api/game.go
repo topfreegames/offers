@@ -46,6 +46,11 @@ func (g *GameHandler) list(w http.ResponseWriter, r *http.Request) {
 		g.App.HandleError(w, http.StatusInternalServerError, "Upserting game failed", err)
 		return
 	}
+
+	if len(games) == 0 {
+		Write(w, http.StatusOK, "[]")
+		return
+	}
 	bytes, _ := json.Marshal(games)
 	WriteBytes(w, http.StatusOK, bytes)
 }

@@ -203,6 +203,20 @@ var _ = Describe("Game Handler", func() {
 			}
 		})
 
+		It("should return empty list if no games", func() {
+			_, err := app.DB.DeleteFrom("offers").Exec()
+			Expect(err).NotTo(HaveOccurred())
+			_, err = app.DB.DeleteFrom("offer_templates").Exec()
+			Expect(err).NotTo(HaveOccurred())
+			_, err = app.DB.DeleteFrom("games").Exec()
+			Expect(err).NotTo(HaveOccurred())
+			request, _ := http.NewRequest("GET", "/games", nil)
+
+			app.Router.ServeHTTP(recorder, request)
+			Expect(recorder.Code).To(Equal(http.StatusOK))
+			Expect(recorder.Body.String()).To(Equal("[]"))
+		})
+
 		It("should return status code of 500 if some error occurred", func() {
 			oldDB := app.DB
 			db, err := GetTestDB()
