@@ -48,6 +48,18 @@ func GetGameByID(db runner.Connection, id string, mr *MixedMetricsReporter) (*Ga
 	return &game, err
 }
 
+//ListGames returns a the full list of games
+func ListGames(db runner.Connection, mr *MixedMetricsReporter) ([]*Game, error) {
+	var games []*Game
+	err := mr.WithDatastoreSegment("games", "select all", func() error {
+		return db.
+			Select("*").
+			From("games").
+			QueryStructs(&games)
+	})
+	return games, err
+}
+
 //UpsertGame updates a game with new meta or insert with the new UUID
 //func UpsertGame(db runner.Connection, game *Game, t time.Time, mr *MixedMetricsReporter) error {
 func UpsertGame(db runner.Connection, game *Game, t time.Time, mr *MixedMetricsReporter) error {

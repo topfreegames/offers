@@ -16,11 +16,41 @@ import (
 
 //GameHandler handler
 type GameHandler struct {
-	App *App
+	App    *App
+	Method string
 }
 
 //ServeHTTP method
 func (g *GameHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	switch g.Method {
+	case "list":
+		g.list(w, r)
+		return
+	case "upsert":
+		g.upsert(w, r)
+		return
+	}
+}
+
+func (g *GameHandler) list(w http.ResponseWriter, r *http.Request) {
+	mr := metricsReporterFromCtx(r.Context())
+
+	var err error
+	var games []*models.Game
+	err = mr.WithSegment(models.SegmentModel, func() error {
+		games, err = models.ListGames(g.App.DB, mr)
+		return err
+	})
+
+	if err != nil {
+		g.App.HandleError(w, http.StatusInternalServerError, "Upserting game failed", err)
+		return
+	}
+	bytes, _ := json.Marshal(games)
+	WriteBytes(w, http.StatusOK, bytes)
+}
+
+func (g *GameHandler) upsert(w http.ResponseWriter, r *http.Request) {
 	mr := metricsReporterFromCtx(r.Context())
 	game := gameFromCtx(r.Context())
 

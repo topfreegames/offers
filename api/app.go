@@ -66,7 +66,15 @@ func (a *App) getRouter() *mux.Router {
 	)).Methods("GET").Name("healthcheck")
 
 	r.Handle("/games", Chain(
-		&GameHandler{App: a},
+		&GameHandler{App: a, Method: "list"},
+		&MetricsReporterMiddleware{App: a},
+		&NewRelicMiddleware{App: a},
+		&LoggingMiddleware{App: a},
+		&VersionMiddleware{},
+	)).Methods("GET").Name("game")
+
+	r.Handle("/games", Chain(
+		&GameHandler{App: a, Method: "upsert"},
 		&MetricsReporterMiddleware{App: a},
 		&NewRelicMiddleware{App: a},
 		&LoggingMiddleware{App: a},

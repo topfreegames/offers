@@ -80,6 +80,14 @@ var _ = Describe("Games Model", func() {
 	})
 
 	Describe("Get game by id", func() {
+		It("Should return the full list of games", func() {
+			games, err := models.ListGames(db, nil)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(games).To(HaveLen(5))
+		})
+	})
+
+	Describe("Get game by id", func() {
 		It("Should load game by id", func() {
 			//Given
 			gameID := "game-id"

@@ -31,7 +31,6 @@ Offers API
       ```
 
 ## Game Routes
-
   ### Upsert Game
   `PUT /games`
 
@@ -62,8 +61,52 @@ Offers API
       ```
 
   * Error response
+    * If missing or invalid arguments.
+      * Code: `422`
+      * Content:
+        ```
+          {
+            "error": [string],       // error
+            "code":  [string],       // error code
+            "description": [string]  // error description
+          }
+      ```
 
-    It will return an error if the query on db (upsert) failed
+    * It will return an error if the query on db (upsert) failed
+      * Code: `500`
+      * Content:
+        ```
+          {
+            "error": [string],       // error
+            "code":  [string],       // error code
+            "description": [string]  // error description
+          }
+        ```
+
+  ### List Games
+  `GET /games`
+
+  List all existing games.
+
+  * Success Response
+    * Code: `200`
+    * Content:
+
+    ```
+    [    
+      {
+        "id":       [string],
+        "name":     [string],
+        "bundleId": [string],
+        "metadata": [json]
+      },
+      ...
+    ]
+    ```
+
+  * Error response
+
+    It will return an error if the query on db failed
 
     * Code: `500`
     * Content:

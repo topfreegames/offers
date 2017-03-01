@@ -183,4 +183,44 @@ var _ = Describe("Game Handler", func() {
 			app.DB = oldDB // avoid errors in after each
 		})
 	})
+
+	Describe("GET /games", func() {
+		It("should return status code of 200 and a list of games", func() {
+			request, _ := http.NewRequest("GET", "/games", nil)
+
+			app.Router.ServeHTTP(recorder, request)
+
+			Expect(recorder.Code).To(Equal(http.StatusOK))
+			var obj []map[string]interface{}
+			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(obj).To(HaveLen(5))
+			for i := 0; i < len(obj); i++ {
+				Expect(obj[i]).To(HaveKey("id"))
+				Expect(obj[i]).To(HaveKey("name"))
+				Expect(obj[i]).To(HaveKey("bundleId"))
+				Expect(obj[i]).To(HaveKey("metadata"))
+			}
+		})
+
+		It("should return status code of 500 if some error occurred", func() {
+			oldDB := app.DB
+			db, err := GetTestDB()
+			Expect(err).NotTo(HaveOccurred())
+			app.DB = db
+			app.DB.(*runner.DB).DB.Close() // make DB connection unavailable
+			request, _ := http.NewRequest("GET", "/games", nil)
+
+			app.Router.ServeHTTP(recorder, request)
+
+			Expect(recorder.Code).To(Equal(http.StatusInternalServerError))
+			var obj map[string]interface{}
+			err = json.Unmarshal([]byte(recorder.Body.String()), &obj)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(obj["code"]).To(Equal("OFF-004"))
+			Expect(obj["error"]).To(Equal("Upserting game failed"))
+			Expect(obj["description"]).To(Equal("sql: database is closed"))
+			app.DB = oldDB // avoid errors in after each
+		})
+	})
 })
