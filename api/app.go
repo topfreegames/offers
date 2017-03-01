@@ -99,14 +99,14 @@ func (a *App) getRouter() *mux.Router {
 	)).Methods("PUT").Name("offer_templates")
 
 	r.Handle("/offers", Chain(
-		&OfferRequestHandler{App: a, Method: "get_offers"},
+		&OfferRequestHandler{App: a, Method: "get-offers"},
 		&NewRelicMiddleware{App: a},
 		&LoggingMiddleware{App: a},
 		&VersionMiddleware{},
 	)).Methods("GET").Name("offer")
 
 	r.Handle("/offer/claim", Chain(
-		&OfferRequestHandler{App: a, Method: "claim_offer"},
+		&OfferRequestHandler{App: a, Method: "claim-offer"},
 		&NewRelicMiddleware{App: a},
 		&LoggingMiddleware{App: a},
 		&VersionMiddleware{},
@@ -114,7 +114,7 @@ func (a *App) getRouter() *mux.Router {
 	)).Methods("PUT").Name("offer")
 
 	r.Handle("/offer/last-seen-at", Chain(
-		&OfferRequestHandler{App: a, Method: "update_offer_last_seen_at"},
+		&OfferRequestHandler{App: a, Method: "update-offer-last-seen-at"},
 		&NewRelicMiddleware{App: a},
 		&LoggingMiddleware{App: a},
 		&VersionMiddleware{},

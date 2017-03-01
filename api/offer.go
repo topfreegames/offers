@@ -25,11 +25,11 @@ type OfferRequestHandler struct {
 //ServeHTTP method
 func (h *OfferRequestHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	switch h.Method {
-	case "get_offers":
+	case "get-offers":
 		h.getOffers(w, r)
-	case "claim_offer":
+	case "claim-offer":
 		h.claimOffer(w, r)
-	case "update_offer_last_seen_at":
+	case "update-offer-last-seen-at":
 		h.updateOfferLastSeenAt(w, r)
 	}
 }
