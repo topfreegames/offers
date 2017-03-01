@@ -49,6 +49,11 @@ func (g *OfferTemplateHandler) insertOfferTemplate(w http.ResponseWriter, r *htt
 			return
 		}
 
+		if conflictedKeyError, ok := err.(*errors.ConflictedModelError); ok {
+			g.App.HandleError(w, http.StatusConflict, conflictedKeyError.Error(), conflictedKeyError)
+			return
+		}
+
 		g.App.HandleError(w, http.StatusInternalServerError, "Insert offer template failed", err)
 		return
 	}

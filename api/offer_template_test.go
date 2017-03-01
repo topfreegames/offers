@@ -183,7 +183,7 @@ var _ = Describe("Offer Template Handler", func() {
 
 			app.Router.ServeHTTP(recorder, request)
 
-			Expect(recorder.Code).To(Equal(http.StatusUnprocessableEntity))
+			Expect(recorder.Code).To(Equal(http.StatusConflict))
 		})
 	})
 

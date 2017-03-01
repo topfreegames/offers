@@ -70,3 +70,32 @@ func (e *InvalidModelError) Serialize() []byte {
 
 	return g
 }
+
+//ConflictedModelError happens when a model could not be saved due to repeated key
+type ConflictedModelError struct {
+	Model   string
+	Message string
+}
+
+//NewConflictedModelError ctor
+func NewConflictedModelError(model, message string) *ConflictedModelError {
+	return &ConflictedModelError{
+		Model:   model,
+		Message: message,
+	}
+}
+
+func (e *ConflictedModelError) Error() string {
+	return fmt.Sprintf("%s could not be saved due to: %s", e.Model, e.Message)
+}
+
+//Serialize returns the error serialized
+func (e *ConflictedModelError) Serialize() []byte {
+	g, _ := json.Marshal(map[string]interface{}{
+		"code":        "OFF-003",
+		"error":       fmt.Sprintf("Conflicted%sError", e.Model),
+		"description": e.Error(),
+	})
+
+	return g
+}

@@ -125,7 +125,7 @@ var _ = Describe("Offer Template Models", func() {
 
 			//Then
 			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(Equal("pq: duplicate key value violates unique constraint \"offer_templates_game_id_name_key\""))
+			Expect(err.Error()).To(Equal(`OfferTemplate could not be saved due to: duplicate key value violates unique constraint "offer_templates_game_id_name_key"`))
 		})
 
 		It("should return error if inserting offer template with missing parameters", func() {

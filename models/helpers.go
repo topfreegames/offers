@@ -129,8 +129,16 @@ func HandleForeignKeyViolationError(model string, err error) error {
 		if pqErr, ok := IsForeignKeyViolationError(err); ok {
 			return errors.NewInvalidModelError(model, pqErr.Message)
 		}
+		return err
+	}
+	return nil
+}
+
+//HandleUniqueKeyViolationError returns the proper error if nothing happens
+func HandleUniqueKeyViolationError(model string, err error) error {
+	if err != nil {
 		if pqErr, ok := IsUniqueKeyViolationError(err); ok {
-			return errors.NewInvalidModelError(model, pqErr.Message)
+			return errors.NewConflictedModelError(model, pqErr.Message)
 		}
 		return err
 	}

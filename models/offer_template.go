@@ -110,8 +110,14 @@ func InsertOfferTemplate(db runner.Connection, ot *OfferTemplate, mr *MixedMetri
 			QueryStruct(ot)
 	})
 
-	err = HandleForeignKeyViolationError("OfferTemplate", err)
-	return ot, err
+	foreignKeyErr := HandleForeignKeyViolationError("OfferTemplate", err)
+
+	if err != foreignKeyErr {
+		return ot, foreignKeyErr
+	}
+
+	conflictedKeyError := HandleUniqueKeyViolationError("OfferTemplate", err)
+	return ot, conflictedKeyError
 }
 
 //SetEnabledOfferTemplate can enable or disable an offer template
