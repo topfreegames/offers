@@ -18,11 +18,11 @@ type OfferTemplate struct {
 	Name      string   `db:"name" json:"name" valid:"ascii,stringlength(1|255),required"`
 	ProductID string   `db:"product_id" json:"productId" valid:"ascii,stringlength(1|255),required"`
 	GameID    string   `db:"game_id" json:"gameId" valid:"matches(^[^-][a-z0-9-]*$),stringlength(1|255),required"`
-	Contents  dat.JSON `db:"contents" json:"contents" valid:"JSONObject,required"`
-	Metadata  dat.JSON `db:"metadata" json:"metadata" valid:""` // TODO: check if valid
-	Period    dat.JSON `db:"period" json:"period" valid:"JSONObject,required"`
-	Frequency dat.JSON `db:"frequency" json:"frequency" valid:"JSONObject,required"`
-	Trigger   dat.JSON `db:"trigger" json:"trigger" valid:"JSONObject,required"`
+	Contents  dat.JSON `db:"contents" json:"contents" valid:"RequiredJSONObject"`
+	Metadata  dat.JSON `db:"metadata" json:"metadata" valid:"JSONObject"`
+	Period    dat.JSON `db:"period" json:"period" valid:"RequiredJSONObject"`
+	Frequency dat.JSON `db:"frequency" json:"frequency" valid:"RequiredJSONObject"`
+	Trigger   dat.JSON `db:"trigger" json:"trigger" valid:"RequiredJSONObject"`
 	Enabled   bool     `db:"enabled" json:"enabled" valid:"matches(^(true|false)$),optional"`
 	Placement string   `db:"placement" json:"placement" valid:"ascii,stringlength(1|255),required"`
 }

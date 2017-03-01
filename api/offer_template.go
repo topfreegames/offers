@@ -44,6 +44,10 @@ func (g *OfferTemplateHandler) insertOfferTemplate(w http.ResponseWriter, r *htt
 	})
 
 	if err != nil {
+		if foreignKeyError, ok := err.(*errors.InvalidModelError); ok {
+			g.App.HandleError(w, http.StatusUnprocessableEntity, foreignKeyError.Error(), foreignKeyError)
+			return
+		}
 		g.App.HandleError(w, http.StatusInternalServerError, "Insert offer template failed", err)
 		return
 	}

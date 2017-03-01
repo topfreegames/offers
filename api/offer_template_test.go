@@ -80,7 +80,7 @@ var _ = Describe("Offer Template Handler", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(obj["code"]).To(Equal("OFF-002"))
 			Expect(obj["error"]).To(Equal("ValidationFailedError"))
-			Expect(obj["description"]).To(Equal("Name: non zero value required;ProductID: non zero value required;GameID: non zero value required;Contents: [] does not validate as JSONObject;;Period: [] does not validate as JSONObject;;Frequency: [] does not validate as JSONObject;;Trigger: [] does not validate as JSONObject;;Placement: non zero value required;"))
+			Expect(obj["description"]).To(Equal("Name: non zero value required;ProductID: non zero value required;GameID: non zero value required;Contents: [] does not validate as RequiredJSONObject;;Period: [] does not validate as RequiredJSONObject;;Frequency: [] does not validate as RequiredJSONObject;;Trigger: [] does not validate as RequiredJSONObject;;Placement: non zero value required;"))
 		})
 
 		It("should return status code 422 if invalid arguments", func() {
@@ -103,7 +103,7 @@ var _ = Describe("Offer Template Handler", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(obj["code"]).To(Equal("OFF-002"))
 			Expect(obj["error"]).To(Equal("ValidationFailedError"))
-			Expect(obj["description"]).To(Equal("Name: non zero value required;ProductID: non zero value required;GameID: ___ does not validate as matches(^[^-][a-z0-9-]*$);Contents: [34 123 110 111 116 45 97 45 106 115 111 110 125 34] does not validate as JSONObject;;Period: [34 123 110 111 116 45 97 45 106 115 111 110 125 34] does not validate as JSONObject;;Frequency: [34 123 110 111 116 45 97 45 106 115 111 110 125 34] does not validate as JSONObject;;Trigger: [34 123 110 111 116 45 97 45 106 115 111 110 125 34] does not validate as JSONObject;;Placement: non zero value required;"))
+			Expect(obj["description"]).To(Equal("Name: non zero value required;ProductID: non zero value required;GameID: ___ does not validate as matches(^[^-][a-z0-9-]*$);Contents: [34 123 110 111 116 45 97 45 106 115 111 110 125 34] does not validate as RequiredJSONObject;;Period: [34 123 110 111 116 45 97 45 106 115 111 110 125 34] does not validate as RequiredJSONObject;;Frequency: [34 123 110 111 116 45 97 45 106 115 111 110 125 34] does not validate as RequiredJSONObject;;Trigger: [34 123 110 111 116 45 97 45 106 115 111 110 125 34] does not validate as RequiredJSONObject;;Placement: non zero value required;"))
 		})
 
 		It("should return status code 422 if game-id doesn`t exist", func() {
@@ -120,8 +120,7 @@ var _ = Describe("Offer Template Handler", func() {
 
 			request, _ := http.NewRequest("POST", "/offer-templates", offerTemplateReader)
 			app.Router.ServeHTTP(recorder, request)
-			// TODO: should be 422
-			Expect(recorder.Code).To(Equal(http.StatusInternalServerError), recorder.Body.String())
+			Expect(recorder.Code).To(Equal(http.StatusUnprocessableEntity), recorder.Body.String())
 			var obj map[string]interface{}
 			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
 			Expect(err).NotTo(HaveOccurred())

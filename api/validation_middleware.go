@@ -77,7 +77,7 @@ func offerTemplateToUpdateFromCtx(ctx context.Context) *models.OfferTemplateToUp
 
 func (m *ValidationMiddleware) configureCustomValidators() {
 	govalidator.CustomTypeTagMap.Set(
-		"JSONObject",
+		"RequiredJSONObject",
 		govalidator.CustomTypeValidator(
 			func(i interface{}, context interface{}) bool {
 				switch v := i.(type) {
@@ -85,6 +85,24 @@ func (m *ValidationMiddleware) configureCustomValidators() {
 					var val map[string]interface{}
 					err := v.Unmarshal(&val)
 					return err == nil
+				}
+				return false
+			},
+		),
+	)
+	govalidator.CustomTypeTagMap.Set(
+		"JSONObject",
+		govalidator.CustomTypeValidator(
+			func(i interface{}, context interface{}) bool {
+				switch v := i.(type) {
+				case dat.JSON:
+					var val map[string]interface{}
+					err := v.Unmarshal(&val)
+					if err == nil {
+						return true
+					}
+					m, err := v.MarshalJSON()
+					return err == nil && string(m) == "null"
 				}
 				return false
 			},
