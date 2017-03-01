@@ -107,12 +107,12 @@ var _ = Describe("Offer Template Models", func() {
 			Expect(err.Error()).To(Equal("sql: no rows in result set"))
 		})
 
-		It("should return error if inserting offer template with repeated name", func() {
+		It("should return error if inserting offer template with repeated name and game", func() {
 			//Given
 			offerTemplate := &models.OfferTemplate{
 				Name:      "template-1",
 				ProductID: "com.tfg.example",
-				GameID:    "game-id",
+				GameID:    "offers-game",
 				Contents:  dat.JSON([]byte(`{"gems": 5, "gold": 100}`)),
 				Period:    dat.JSON([]byte(`{"every": "10m"}`)),
 				Frequency: dat.JSON([]byte(`{"every": "24h"}`)),
@@ -125,7 +125,22 @@ var _ = Describe("Offer Template Models", func() {
 
 			//Then
 			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(Equal("pq: duplicate key value violates unique constraint \"offer_templates_name_key\""))
+			Expect(err.Error()).To(Equal("pq: duplicate key value violates unique constraint \"offer_templates_game_id_name_key\""))
+		})
+
+		It("should return error if inserting offer template with missing parameters", func() {
+			//Given
+			offerTemplate := &models.OfferTemplate{
+				Name:      "non-existing-template",
+				ProductID: "com.tfg.example",
+				GameID:    "game-id",
+			}
+
+			//When
+			_, err := models.InsertOfferTemplate(db, offerTemplate, nil)
+
+			//Then
+			Expect(err).To(HaveOccurred())
 		})
 	})
 
@@ -212,11 +227,12 @@ var _ = Describe("Offer Template Models", func() {
 		It("should return offer template by its name", func() {
 			//Given
 			name := "template-1"
+			gameID := "offers-game"
 			expectedOt := &models.OfferTemplate{
 				ID:        "dd21ec96-2890-4ba0-b8e2-40ea67196990",
 				Name:      name,
 				ProductID: "com.tfg.sample",
-				GameID:    "offers-game",
+				GameID:    gameID,
 				Contents:  dat.JSON([]byte(`{"gems": 5, "gold": 100}`)),
 				Metadata:  dat.JSON([]byte(`{}`)),
 				Period:    dat.JSON([]byte(`{"every": "1s"}`)),
@@ -227,7 +243,7 @@ var _ = Describe("Offer Template Models", func() {
 			}
 
 			//When
-			ot, err := models.GetOfferTemplateByName(db, name, nil)
+			ot, err := models.GetOfferTemplateByNameAndGame(db, name, gameID, nil)
 
 			//Then
 			Expect(err).NotTo(HaveOccurred())
@@ -236,10 +252,11 @@ var _ = Describe("Offer Template Models", func() {
 
 		It("should return empty if name not found", func() {
 			//Given
+			gameID := "offers-game"
 			name := "non-existing-template"
 
 			//When
-			_, err := models.GetOfferTemplateByName(db, name, nil)
+			_, err := models.GetOfferTemplateByNameAndGame(db, name, gameID, nil)
 
 			//Then
 			Expect(err).To(HaveOccurred())

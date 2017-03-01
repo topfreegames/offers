@@ -58,8 +58,8 @@ func GetOfferTemplateByID(db runner.Connection, id string, mr *MixedMetricsRepor
 	return &ot, err
 }
 
-//GetOfferTemplateByName returns OfferTemplate by Name
-func GetOfferTemplateByName(db runner.Connection, name string, mr *MixedMetricsReporter) (*OfferTemplate, error) {
+//GetOfferTemplateByNameAndGame returns OfferTemplate by Name
+func GetOfferTemplateByNameAndGame(db runner.Connection, name, gameID string, mr *MixedMetricsReporter) (*OfferTemplate, error) {
 	var ot OfferTemplate
 	err := mr.WithDatastoreSegment("offer_templates", "select by name", func() error {
 		return db.
@@ -69,7 +69,7 @@ func GetOfferTemplateByName(db runner.Connection, name string, mr *MixedMetricsR
 				frequency, trigger, placement, enabled
 			`).
 			From("offer_templates").
-			Where("name = $1", name).
+			Where("name = $1 AND game_id = $2", name, gameID).
 			QueryStruct(&ot)
 	})
 
