@@ -109,6 +109,7 @@ func InsertOfferTemplate(db runner.Connection, ot *OfferTemplate, mr *MixedMetri
 			Returning("id, enabled").
 			QueryStruct(ot)
 	})
+
 	err = HandleForeignKeyViolationError("OfferTemplate", err)
 	return ot, err
 }

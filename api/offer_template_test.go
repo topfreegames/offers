@@ -159,6 +159,32 @@ var _ = Describe("Offer Template Handler", func() {
 			Expect(obj["description"]).To(Equal("sql: database is closed"))
 			app.DB = oldDB // avoid errors in after each
 		})
+
+		It("should return status code 409 if pair offer template name and game already exists", func() {
+			name := "template-1"
+			productID := "com.tfg.example"
+			gameID := "offers-game"
+			contents := "{\"gems\": 5, \"gold\": 100}"
+			period := "{\"max\": 1}"
+			frequency := "{\"every\": \"24h\"}"
+			trigger := "{\"from\": 1487280506875, \"to\": 1487366964730}"
+			placement := "popup"
+			offerTemplateReader := JSONFor(JSON{
+				"name":      name,
+				"productId": productID,
+				"gameId":    gameID,
+				"contents":  dat.JSON([]byte(contents)),
+				"period":    dat.JSON([]byte(period)),
+				"frequency": dat.JSON([]byte(frequency)),
+				"trigger":   dat.JSON([]byte(trigger)),
+				"placement": placement,
+			})
+			request, _ := http.NewRequest("POST", "/offer-templates", offerTemplateReader)
+
+			app.Router.ServeHTTP(recorder, request)
+
+			Expect(recorder.Code).To(Equal(http.StatusUnprocessableEntity))
+		})
 	})
 
 	Describe("PUT /offer-templates/set-enabled", func() {
