@@ -150,9 +150,21 @@ Offers API
 
   * Error response
 
+    It will return an error if the request has missing or invalid arguments
+
+    * Code: `422`
+    * Content:
+      ```
+        {
+          "error": [string],       // error
+          "code":  [string],       // error code
+          "description": [string]  // error description
+        }
+      ```
+
     It will return an error if the query on db (insert) failed
 
-    * Code: `500|422|400`
+    * Code: `500`
     * Content:
       ```
         {
@@ -189,7 +201,7 @@ Offers API
     It will return status code 404 not found if the ID doesn't exist
 
     * Code: `404`
-    * Content: 
+    * Content:
       ```
         {
           "reason": [string]
@@ -199,7 +211,7 @@ Offers API
     It will return status code 500 internal error occurred
 
     * Code: `500`
-    * Content: 
+    * Content:
       ```
         {
           "reason": [string]
@@ -279,7 +291,21 @@ Offers API
 
   * Success Response
     * Code: `200`
-    * Content: JSON with the offer contents, got from the key contents in OfferTemplate
+    * Content:
+      ```
+        {
+          "contents": [json]
+        }
+      ```
+
+  * If the player claimed an offer that he already claimed its contents are returned but with another status code, so the caller can decide whether to give the player the offer contents or not.
+    * Code: `409`
+    * Content:
+      ```
+        {
+          "contents": [json]
+        }
+      ```
 
   * Error Response
     * If a offer with id, gameId and playerId was not found in database.
@@ -304,20 +330,10 @@ Offers API
           }
         ```
 
-    * If the player claimed an offer before the time defined in OfferTemplate["period"]["every"] or more than what is defined in OfferTemplate["period"]["max"], the offer is not claimed anymore but its contents are returned.
-      * Code: `409`
-      * Content:
-        ```
-          {
-            "reason":   [string],
-            "contents": [json]
-          }
-        ```
-
   ### Update Offer Last Seen At
   `PUT /offer/last-seen-at`
 
-  Updates the time when the offer was last seen in the UI by the player
+  Updates the time when the offer was last seen by the player
 
   * Payload
     ```
