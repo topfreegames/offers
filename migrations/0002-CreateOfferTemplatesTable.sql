@@ -14,3 +14,5 @@ CREATE TABLE offer_templates (
   placement varchar(255) NOT NULL,
   created_at timestamp WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
+
+CREATE UNIQUE INDEX name ON offer_templates (name);

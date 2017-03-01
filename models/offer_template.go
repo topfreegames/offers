@@ -58,6 +58,25 @@ func GetOfferTemplateByID(db runner.Connection, id string, mr *MixedMetricsRepor
 	return &ot, err
 }
 
+//GetOfferTemplateByName returns OfferTemplate by Name
+func GetOfferTemplateByName(db runner.Connection, name string, mr *MixedMetricsReporter) (*OfferTemplate, error) {
+	var ot OfferTemplate
+	err := mr.WithDatastoreSegment("offer_templates", "select by name", func() error {
+		return db.
+			Select(`
+				id, name, product_id, game_id,
+				contents, metadata, period,
+				frequency, trigger, placement, enabled
+			`).
+			From("offer_templates").
+			Where("name = $1", name).
+			QueryStruct(&ot)
+	})
+
+	err = HandleNotFoundError("OfferTemplate", map[string]interface{}{"Name": name}, err)
+	return &ot, err
+}
+
 //GetEnabledOfferTemplates returns all the enabled offers
 func GetEnabledOfferTemplates(db runner.Connection, gameID string, mr *MixedMetricsReporter) ([]*OfferTemplate, error) {
 	var ots []*OfferTemplate

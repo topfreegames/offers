@@ -243,7 +243,7 @@ var _ = Describe("Offer Template Models", func() {
 
 			//Then
 			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(Equal(OfferTemplate was not found with specified filters.
+			Expect(err.Error()).To(Equal("OfferTemplate was not found with specified filters."))
 		})
 	})
 })
