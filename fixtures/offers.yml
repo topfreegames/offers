@@ -51,3 +51,10 @@
     player_id: player-1
     offer_template_id: aa65a3f2-7cf8-4d76-957f-0a23a1bbbd32
     created_at: 2016-01-01 12:30:12
+-
+    id: 6c4a79f2-24b8-4be9-93d4-12413b789823
+    game_id: offers-game
+    player_id: player-1
+    offer_template_id: a411fbcf-dddc-4153-b42b-3f9b2684c965
+    created_at: 2016-01-01 12:30:12
+    seen_counter: 1

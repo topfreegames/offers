@@ -32,10 +32,10 @@
 -
     id: d5114990-77d7-45c4-ba5f-462fc86b213f
     name: template-2
-    product_id: com.tfg.sample
+    product_id: com.tfg.sample.2
     game_id: offers-game
-    contents: '{"gems": 5, "gold": 100}'
-    metadata: '{}'
+    contents: '{"gems": 100, "gold": 5}'
+    metadata: '{"meta": "data"}'
     period: '{"every": "1s"}'
     frequency: '{"every": "1s"}'
     trigger: '{"from": 1486678000, "to": 1486679000}'
@@ -44,11 +44,11 @@
 -
     id: a411fbcf-dddc-4153-b42b-3f9b2684c965
     name: template-3
-    product_id: com.tfg.sample
+    product_id: com.tfg.sample.3
     game_id: offers-game
     contents: '{"gems": 5, "gold": 100}'
     metadata: '{}'
-    period: '{"type": "once"}'
+    period: '{"max": 1}'
     frequency: '{"every": "1s", "max": 2}'
     trigger: '{"from": 1486678000, "to": 1486679000}'
     placement: store

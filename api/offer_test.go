@@ -59,9 +59,27 @@ var _ = Describe("Offer Handler", func() {
 
 			//Then
 			Expect(err).NotTo(HaveOccurred())
+			Expect(recorder.Code).To(Equal(http.StatusOK))
 			Expect(jsonBody).To(HaveKey("popup"))
 			Expect(jsonBody).To(HaveKey("store"))
-			Expect(recorder.Code).To(Equal(http.StatusOK))
+			popup := jsonBody["popup"]
+			Expect(popup).To(HaveLen(1))
+			Expect(popup[0]).To(HaveKey("id"))
+			Expect(popup[0]).To(HaveKey("productId"))
+			Expect(popup[0]).To(HaveKey("contents"))
+			Expect(popup[0]).To(HaveKey("metadata"))
+			store := jsonBody["store"]
+			Expect(store).To(HaveLen(2))
+			Expect(store[0]).To(HaveKey("id"))
+			Expect(store[0]).To(HaveKey("productId"))
+			Expect(store[0]).To(HaveKey("contents"))
+			Expect(store[0]).To(HaveKey("metadata"))
+			Expect(store[1]).To(HaveKey("id"))
+			Expect(store[1]).To(HaveKey("productId"))
+			Expect(store[1]).To(HaveKey("contents"))
+			Expect(store[1]).To(HaveKey("metadata"))
+			Expect(store[1]).To(HaveKey("remainingPurchases"))
+			Expect(store[1]).To(HaveKey("remainingImpressions"))
 		})
 
 		It("should return empty list of available offers", func() {

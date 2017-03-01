@@ -113,8 +113,8 @@ Offers API
        - **gameId**:       ID of the game this template was made for (must exist on Games table on DB).  
        - **contents**:     What the offer provides (ex.: { "gem": 5, "gold": 100 }).  
        - **metadata**:     Any information the Front wants to access later.  
-       - **period**:       Enable player to buy offer every x times, at most y times. <ul><li>every: decimal number with unit suffix, such as "300ms", "-1.5h" or "2h45m". Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h"</li><li>max: maximum number of times this offer can be bought by the player</li></ul>If "every" is an empty string, then the offer can be bought max times with no time restriction.  If "max" is 0, then the offer can be bought infinite times with time restriction.  They can`t be "" and 0 at the same time.  
-       - **frequency**:    Enable player to see offer on UI x/unit of time, at most y times. <ul><li>every: decimal number with unit suffix, such as "300ms", "-1.5h" or "2h45m". Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h"</li><li>max: maximum number of times this offer can be seen by the player</li></ul>If "every" is an empty string, then the offer can be seen max times with no time restriction.  If "max" is 0, then the offer can be seen infinite times with time restriction.  They can`t be "" and 0 at the same time.  
+       - **period**:       Enable player to buy offer every x times, at most y times. <ul><li>every: decimal number with unit suffix, such as "300ms", "-1.5h" or "2h45m". Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h"</li><li>max: maximum number of times this offer can be bought by the player</li></ul>If "every" is an empty string, then the offer can be bought max times with no time restriction.  If "max" is 0, then the offer can be bought infinite times with time restriction.  They can't be "" and 0 at the same time.
+       - **frequency**:    Enable player to see offer on UI x/unit of time, at most y times. <ul><li>every: decimal number with unit suffix, such as "300ms", "-1.5h" or "2h45m". Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h"</li><li>max: maximum number of times this offer can be seen by the player</li></ul>If "every" is an empty string, then the offer can be seen max times with no time restriction.  If "max" is 0, then the offer can be seen infinite times with time restriction.  They can't be "" and 0 at the same time.  
        - **trigger**:      Time when the offer is available.  
        - **enabled**:      True if the offer is enabled.  
        - **placement**:    Where the offer is shown in the UI.  
@@ -223,7 +223,7 @@ Offers API
   ### Get Available Offers
   `GET /offers?player-id=<required-player-id>&game-id=<required-game-id>`
 
-  Get the available offers for a player of a game. An offer is available if it respects the frequency (last time player saw the offer), respects the period (last time player claimed the offer), is triggered (current time is between "from" and "to") and is enabled. The success response is a JSON where each key is a placement on the UI and the value is a list of OfferTemplates.
+  Get the available offers for a player of a game. An offer is available if it respects the frequency (last time player saw the offer), respects the period (last time player claimed the offer), is triggered (current time is between "from" and "to") and is enabled. The success response is a JSON where each key is a placement on the UI and the value is a list of available offers.
 
   * Success Response
     * Code: `200`
@@ -232,26 +232,12 @@ Offers API
         {
           "placement-1": [
             {
-                "id":        [uuidv4], // required
-                "name":      [string], // required, 255 characters max
-                "productId": [string], // required, 255 characters max
-                "gameId":    [string], // required, matches ^[^-][a-z0-9-]*$
-                "contents":  [json],   // required
-                "metadata":  [json],   // optional
-                "enabled":   [bool],   // optional
-                "placement": [string], // required, 255 characters max
-                "period":    {         // required
-                  "every": [string],   // required
-                  "max":   [int]       // required
-                },   
-                "frequency": {         // required
-                  "every": [string],   // required
-                  "max":   [int]       // required
-                },   
-                "trigger":   {         // required
-                  "from":  [int],      // required
-                  "to":    [int]       // required
-                }
+                "id":                   [uuidv4], // offer id
+                "productId":            [string], // required, 255 characters max
+                "contents":             [json],   // offer contents as registered in the offer template
+                "metadata":             [json],   // offer metadata as registered in the offer template
+                "remainingPurchases":   [int],    // if the template has a max period, how many purchases are still available for this offer
+                "remainingImpressions": [int]     // if the template has a max frequency, how many purchases are still available for this offer
             },
             ...
           ]
@@ -348,6 +334,17 @@ Offers API
     * Code: `200`
 
   * Error Response
+    * If missing or invalid arguments.
+      * Code: `422`
+      * Content:
+        ```
+          {
+            "error": [string],       // error
+            "code":  [string],       // error code
+            "description": [string]  // error description
+          }
+        ```
+
     * If a offer with id, gameId and playerId was not found in database.
       * Code: `404`
       * Content:

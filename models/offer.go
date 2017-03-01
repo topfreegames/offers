@@ -17,17 +17,17 @@ import (
 
 //Offer represents a tenant in offers API
 type Offer struct {
-	ID              string `db:"id" valid:"uuidv4,required" json:"id"`
-	GameID          string `db:"game_id" valid:"matches(^[^-][a-z0-9-]*$),stringlength(1|255),required" json:"gameId"`
-	OfferTemplateID string `db:"offer_template_id" valid:"uuidv4,required" json:"offerTemplateId"`
-	PlayerID        string `db:"player_id" valid:"ascii,stringlength(1|1000),required" json:"playerId"`
-	SeenCounter     int    `db:"seen_counter" valid:"" json:"seenCounter"`
-	BoughtCounter   int    `db:"bought_counter" valid:"" json:"boughtCounter"`
+	ID              string `db:"id" json:"id" valid:"uuidv4,required" json:"id"`
+	GameID          string `db:"game_id" json:"gameId" valid:"matches(^[^-][a-z0-9-]*$),stringlength(1|255),required" json:"gameId"`
+	OfferTemplateID string `db:"offer_template_id" json:"offerTemplateId" valid:"uuidv4,required" json:"offerTemplateId"`
+	PlayerID        string `db:"player_id" json:"playerId" valid:"ascii,stringlength(1|1000),required" json:"playerId"`
+	SeenCounter     int    `db:"seen_counter" json:"seenCounter" valid:"" json:"seenCounter"`
+	BoughtCounter   int    `db:"bought_counter" json:"boughtCounter" valid:"" json:"boughtCounter"`
 
-	CreatedAt  dat.NullTime `db:"created_at" valid:"" json:"createdAt"`
-	UpdatedAt  dat.NullTime `db:"updated_at" valid:"" json:"updatedAt"`
-	ClaimedAt  dat.NullTime `db:"claimed_at" valid:"" json:"claimedAt"`
-	LastSeenAt dat.NullTime `db:"last_seen_at" valid:"" json:"lastSeenAt"`
+	CreatedAt  dat.NullTime `db:"created_at" json:"createdAt" valid:"" json:"createdAt"`
+	UpdatedAt  dat.NullTime `db:"updated_at" json:"updatedAt" valid:"" json:"updatedAt"`
+	ClaimedAt  dat.NullTime `db:"claimed_at" json:"claimedAt" valid:"" json:"claimedAt"`
+	LastSeenAt dat.NullTime `db:"last_seen_at" json:"lastSeenAt" valid:"" json:"lastSeenAt"`
 }
 
 //OfferToUpdate has required fields for claiming an offer
@@ -37,14 +37,18 @@ type OfferToUpdate struct {
 	PlayerID string `db:"player_id" valid:"ascii,stringlength(1|1000),required"`
 }
 
-//Frequency is how many times per unit of time that the offers is shown to player
-type Frequency struct {
-	Every string
-	Max   int
+//OfferToReturn has the fields for the returned offer
+type OfferToReturn struct {
+	ID                   string   `json:"id"`
+	ProductID            string   `json:"productId"`
+	Contents             dat.JSON `json:"contents"`
+	Metadata             dat.JSON `json:"metadata"`
+	RemainingPurchases   int      `json:"remainingPurchases,omitempty"`
+	RemainingImpressions int      `json:"remainingImpressions,omitempty"`
 }
 
-//Period is how many times per unit of time that the offer can be bought by player
-type Period struct {
+//FrequencyOrPeriod is the struct for basic Frequecy and Period types
+type FrequencyOrPeriod struct {
 	Every string
 	Max   int
 }
@@ -159,13 +163,13 @@ func UpdateOfferLastSeenAt(db runner.Connection, offerID, playerID, gameID strin
 }
 
 //GetAvailableOffers returns the offers that match the criteria of enabled offer templates
-func GetAvailableOffers(db runner.Connection, playerID, gameID string, t time.Time, mr *MixedMetricsReporter) (map[string][]*OfferTemplate, error) {
+func GetAvailableOffers(db runner.Connection, playerID, gameID string, t time.Time, mr *MixedMetricsReporter) (map[string][]*OfferToReturn, error) {
 	eot, err := GetEnabledOfferTemplates(db, gameID, mr)
 	if err != nil {
 		return nil, err
 	}
 	if len(eot) == 0 {
-		return map[string][]*OfferTemplate{}, nil
+		return map[string][]*OfferToReturn{}, nil
 	}
 
 	var trigger TimeTrigger
@@ -174,7 +178,7 @@ func GetAvailableOffers(db runner.Connection, playerID, gameID string, t time.Ti
 		return nil, err
 	}
 	if len(filteredOts) == 0 {
-		return map[string][]*OfferTemplate{}, nil
+		return map[string][]*OfferToReturn{}, nil
 	}
 
 	offerTemplateIDs := make([]string, len(filteredOts))
@@ -190,30 +194,55 @@ func GetAvailableOffers(db runner.Connection, playerID, gameID string, t time.Ti
 		return nil, err
 	}
 	if len(filteredOts) == 0 {
-		return map[string][]*OfferTemplate{}, nil
+		return map[string][]*OfferToReturn{}, nil
 	}
 
-	playerOffersByOfferTemplateID := map[string]bool{}
+	playerOffersByOfferTemplateID := map[string]*Offer{}
 	for _, o := range playerOffers {
-		playerOffersByOfferTemplateID[o.OfferTemplateID] = true
+		playerOffersByOfferTemplateID[o.OfferTemplateID] = o
 	}
-	offerTemplatesByPlacement := make(map[string][]*OfferTemplate)
+	offerTemplatesByPlacement := make(map[string][]*OfferToReturn)
 	for _, ot := range filteredOts {
-		if _, otInMap := offerTemplatesByPlacement[ot.Placement]; !otInMap {
-			offerTemplatesByPlacement[ot.Placement] = []*OfferTemplate{ot}
-		} else {
-			offerTemplatesByPlacement[ot.Placement] = append(offerTemplatesByPlacement[ot.Placement], ot)
+		offerToReturn := &OfferToReturn{
+			ProductID: ot.ProductID,
+			Contents:  ot.Contents,
+			Metadata:  ot.Metadata,
+		}
+		var f FrequencyOrPeriod
+		var p FrequencyOrPeriod
+		json.Unmarshal(ot.Frequency, &f)
+		json.Unmarshal(ot.Period, &p)
+		if f.Max > 0 {
+			offerToReturn.RemainingImpressions = f.Max
+		}
+		if p.Max > 0 {
+			offerToReturn.RemainingPurchases = p.Max
 		}
 		o := &Offer{
 			GameID:          ot.GameID,
 			OfferTemplateID: ot.ID,
 			PlayerID:        playerID,
 		}
-		if _, playerHasOffer := playerOffersByOfferTemplateID[ot.ID]; !playerHasOffer {
+		playerOffer, playerHasOffer := playerOffersByOfferTemplateID[ot.ID]
+		if playerHasOffer {
+			offerToReturn.ID = playerOffer.ID
+			if offerToReturn.RemainingImpressions > 0 {
+				offerToReturn.RemainingImpressions = offerToReturn.RemainingImpressions - playerOffer.SeenCounter
+			}
+			if offerToReturn.RemainingPurchases > 0 {
+				offerToReturn.RemainingPurchases = offerToReturn.RemainingPurchases - playerOffer.BoughtCounter
+			}
+		} else {
 			err := InsertOffer(db, o, t, mr)
 			if err != nil {
 				return nil, err
 			}
+			offerToReturn.ID = o.ID
+		}
+		if _, otInMap := offerTemplatesByPlacement[ot.Placement]; !otInMap {
+			offerTemplatesByPlacement[ot.Placement] = []*OfferToReturn{offerToReturn}
+		} else {
+			offerTemplatesByPlacement[ot.Placement] = append(offerTemplatesByPlacement[ot.Placement], offerToReturn)
 		}
 	}
 
@@ -264,8 +293,8 @@ func filterTemplatesByFrequencyAndPeriod(offers []*Offer, ots []*OfferTemplate, 
 	for _, offerTemplate := range ots {
 		if offer, ok := offerByOfferTemplateID[offerTemplate.ID]; ok {
 			var (
-				f Frequency
-				p Period
+				f FrequencyOrPeriod
+				p FrequencyOrPeriod
 			)
 			if err := json.Unmarshal(offerTemplate.Frequency, &f); err != nil {
 				return nil, err

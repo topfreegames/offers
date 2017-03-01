@@ -10,6 +10,7 @@ package models_test
 import (
 	"time"
 
+	"gopkg.in/mgutz/dat.v2/dat"
 	runner "gopkg.in/mgutz/dat.v2/sqlx-runner"
 
 	. "github.com/onsi/ginkgo"
@@ -352,11 +353,28 @@ var _ = Describe("Offers Model", func() {
 			Expect(templates).To(HaveLen(2))
 			Expect(templates).To(HaveKey("popup"))
 			Expect(templates["popup"]).To(HaveLen(1))
-			Expect(templates["popup"][0].ID).To(Equal("dd21ec96-2890-4ba0-b8e2-40ea67196990"))
+			Expect(templates["popup"][0].ID).To(Equal("56fc0477-39f1-485c-898e-4909e9155eb1"))
+			Expect(templates["popup"][0].ProductID).To(Equal("com.tfg.sample"))
+			Expect(templates["popup"][0].Contents).To(Equal(dat.JSON([]byte(`{"gems": 5, "gold": 100}`))))
+			Expect(templates["popup"][0].Metadata).To(Equal(dat.JSON([]byte(`{}`))))
+			Expect(templates["popup"][0].RemainingPurchases).To(Equal(0))
+			Expect(templates["popup"][0].RemainingImpressions).To(Equal(0))
+
 			Expect(templates).To(HaveKey("store"))
 			Expect(templates["store"]).To(HaveLen(2))
-			Expect(templates["store"][0].ID).To(Equal("d5114990-77d7-45c4-ba5f-462fc86b213f"))
-			Expect(templates["store"][1].ID).To(Equal("a411fbcf-dddc-4153-b42b-3f9b2684c965"))
+			Expect(templates["store"][0].ID).NotTo(BeNil())
+			Expect(templates["store"][0].ProductID).To(Equal("com.tfg.sample.2"))
+			Expect(templates["store"][0].Contents).To(Equal(dat.JSON([]byte(`{"gems": 100, "gold": 5}`))))
+			Expect(templates["store"][0].Metadata).To(Equal(dat.JSON([]byte(`{"meta": "data"}`))))
+			Expect(templates["store"][0].RemainingPurchases).To(Equal(0))
+			Expect(templates["store"][0].RemainingImpressions).To(Equal(0))
+
+			Expect(templates["store"][1].ID).To(Equal("6c4a79f2-24b8-4be9-93d4-12413b789823"))
+			Expect(templates["store"][1].ProductID).To(Equal("com.tfg.sample.3"))
+			Expect(templates["store"][1].Contents).To(Equal(dat.JSON([]byte(`{"gems": 5, "gold": 100}`))))
+			Expect(templates["store"][1].Metadata).To(Equal(dat.JSON([]byte(`{}`))))
+			Expect(templates["store"][1].RemainingPurchases).To(Equal(1))
+			Expect(templates["store"][1].RemainingImpressions).To(Equal(1))
 		})
 
 		It("should return offers for two different players of game offers-game", func() {
