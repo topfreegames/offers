@@ -36,12 +36,14 @@ import (
 	"github.com/topfreegames/offers/errors"
 	"github.com/topfreegames/offers/models"
 	"github.com/topfreegames/offers/testing"
+	"gopkg.in/mgutz/dat.v2/dat"
 )
 
 var app *api.App
 var logger logrus.Logger
 var lastStatus int
 var lastBody string
+var lastOffers map[string][]*models.OfferTemplate
 var clock *testing.MockClock
 
 func theServerIsUp() error {
@@ -198,24 +200,77 @@ func aGameWithNameExists(name string) error {
 	return err
 }
 
-func theFollowingOfferTemplatesExistInTheGame(offerTemplateID *gherkin.DataTable) error {
-	return godog.ErrPending
+func theFollowingOfferTemplatesExistInTheGame(gameID string, otArgs *gherkin.DataTable) error {
+	for i := 1; i < len(otArgs.Rows); i++ {
+		ot := &models.OfferTemplate{
+			Name:      otArgs.Rows[i].Cells[1].Value,
+			ProductID: otArgs.Rows[i].Cells[2].Value,
+			Contents:  dat.JSON([]byte(otArgs.Rows[i].Cells[3].Value)),
+			Placement: otArgs.Rows[i].Cells[4].Value,
+			Period:    dat.JSON([]byte(otArgs.Rows[i].Cells[5].Value)),
+			Frequency: dat.JSON([]byte(otArgs.Rows[i].Cells[6].Value)),
+			Trigger:   dat.JSON([]byte(otArgs.Rows[i].Cells[7].Value)),
+			GameID:    gameID,
+		}
+
+		_, err := models.InsertOfferTemplate(app.DB, ot, nil)
+
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
-func theFollowingPlayersExistInTheGame(arg1 string, arg2 *gherkin.DataTable) error {
-	return godog.ErrPending
+func theFollowingPlayersExistInTheGame(gameID string, players *gherkin.DataTable) error {
+	for i := 1; i < len(players.Rows); i++ {
+		if _, err := models.GetAvailableOffers(app.DB, players.Rows[i].Cells[0].Value, gameID, app.Clock.GetTime(), nil); err != nil {
+			return err
+		}
+
+		//TODO: call update offer last seen at
+	}
+
+	return nil
 }
 
-func theCurrentTimeIs(arg1 int) error {
-	return godog.ErrPending
+func theCurrentTimeIs(currentTime int64) error {
+	mockClock := testing.MockClock{
+		CurrentTime: currentTime,
+	}
+
+	app.Clock = mockClock
+
+	return nil
 }
 
-func playerClaimsOfferInGame(arg1, arg2, arg3 string) error {
-	return godog.ErrPending
+func playerClaimsOfferInGame(playerID, offerID, gameID string) error {
+	_, alreadyClaimed, err := models.ClaimOffer(app.DB, offerID, playerID, gameID, app.Clock.GetTime(), nil)
+
+	if alreadyClaimed {
+		return fmt.Errorf("Offer %s has already been claimed", offerID)
+	}
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
-func theLastRequestReturnedStatusCodeStatusAndBody(arg1 string) error {
-	return godog.ErrPending
+func theLastRequestReturnedStatusCodeStatusAndBody(code int, body string) error {
+	codeErr := theLastRequestReturnedStatusCode(code)
+
+	if codeErr != nil {
+		return codeErr
+	}
+
+	if lastBody != body {
+		return fmt.Errorf("Expected last request to have body %s but it had %s", body, lastBody)
+	}
+
+	return nil
 }
 
 func theCurrentTimeIsD(arg1 int) error {
@@ -234,38 +289,88 @@ func anOfferTemplateIsCreatedInTheGameWith(gameID string, otArgs *gherkin.DataTa
 		"trigger":   otArgs.Rows[1].Cells[6].Value,
 		"placement": otArgs.Rows[1].Cells[7].Value,
 	}
-
 	var err error
 	lastStatus, lastBody, err = performRequest(app, "PUT", "/offer-templates", payload)
+
+	fmt.Println(payload)
+	fmt.Println(err)
+
 	return err
 }
 
-func anOfferTemplateWithNameExistsInGame(arg1, arg2 string) error {
+func anOfferTemplateWithNameExistsInGame(offerTemplateName, gameID string) error {
+	offerTemplate, err := models.GetOfferTemplateByName(app.DB, offerTemplateName, nil)
+
+	if err != nil {
+		return err
+	}
+
+	if offerTemplate.GameID != gameID {
+		return fmt.Errorf("Offer template %s doesn't exist in game %s", offerTemplateName, gameID)
+	}
+
+	return nil
+}
+
+func anOfferTemplateExistsWithNameInGame(offerID, gameID string) error {
+	return anOfferTemplateWithNameExistsInGame(offerID, gameID)
+}
+
+func anOfferTemplateWithNameDoesNotExistInGame(offerID, gameID string) error {
+	err := anOfferTemplateWithNameExistsInGame(offerID, gameID)
+
+	if err != nil {
+		return nil
+	}
+
+	return fmt.Errorf("Expected offer %s to not exist in game %s", offerID, gameID)
+}
+
+func theGameRequestsOffersForPlayerIn(gameID, playerID, placement string) error {
+	var err error
+	lastOffers, err = models.GetAvailableOffers(app.DB, playerID, gameID, app.Clock.GetTime(), nil)
+
+	if err != nil {
+		return err
+	}
+
+	if _, ok := lastOffers[placement]; !ok {
+		return fmt.Errorf("Expected to have an offer for placement %s to player %s but the is not", placement, playerID)
+	}
+
+	return nil
+}
+
+func anOfferWithNameIsReturned(offerID string) error {
+	// To continue, I need the offer ID returned by GetAvailableOffers
 	return godog.ErrPending
 }
 
-func anOfferTemplateExistsWithNameInGame(name, gameID string) error {
-	return insertOfferTemplate(app.DB, name, gameID)
-}
-
-func anOfferTemplateWithNameDoesNotExistInGame(arg1, arg2 string) error {
+func playerHasSeenOffer(playerID, gameID, offerID string) error {
+	// To continue, I need the offer ID returned by GetAvailableOffers
+	//	offers, err := models.GetAvailableOffers(app.DB, playerID, gameID, app.Clock.GetTime(), nil)
+	//
+	//	if err != nil {
+	//		return err
+	//	}
+	//
+	//	for _, ots : range offers {
+	//		for _, offerTemplate := range ots {
+	//
+	//		}
+	//	}
+	//
 	return godog.ErrPending
 }
 
-func theGameRequestsOffersForPlayerIn(arg1, arg2, arg3 string) error {
-	return godog.ErrPending
-}
+func playerHasNotSeenOffer(playerID, gameID, offerID string) error {
+	err := playerHasSeenOffer(playerID, gameID, offerID)
 
-func anOfferWithNameIsReturned(arg1 string) error {
-	return godog.ErrPending
-}
+	if err == nil {
+		return fmt.Errorf("Expected player %s of game %s not to has seen offer %s", playerID, gameID, offerID)
+	}
 
-func playerHasSeenOffer(arg1, arg2 string) error {
-	return godog.ErrPending
-}
-
-func playerHasNotSeenOffer(arg1, arg2 string) error {
-	return godog.ErrPending
+	return nil
 }
 
 func FeatureContext(s *godog.Suite) {
@@ -282,14 +387,13 @@ func FeatureContext(s *godog.Suite) {
 	s.Step(`^the following players exist in the "([^"]*)" game:$`, theFollowingPlayersExistInTheGame)
 	s.Step(`^the current time is (\d+)$`, theCurrentTimeIs)
 	s.Step(`^player "([^"]*)" claims offer "([^"]*)" in game "([^"]*)"$`, playerClaimsOfferInGame)
-	s.Step(`^the last request returned status code <status> and body "([^"]*)"$`, theLastRequestReturnedStatusCodeStatusAndBody)
-	s.Step(`^the current time is (\d+)d$`, theCurrentTimeIsD)
+	s.Step(`^the last request returned status code "([^"]*)" and body "([^"]*)"$`, theLastRequestReturnedStatusCodeStatusAndBody)
 	s.Step(`^an offer template is created in the "([^"]*)" game with:$`, anOfferTemplateIsCreatedInTheGameWith)
 	s.Step(`^an offer template with name "([^"]*)" exists in game "([^"]*)"$`, anOfferTemplateWithNameExistsInGame)
 	s.Step(`^an offer template exists with name "([^"]*)" in game "([^"]*)"$`, anOfferTemplateExistsWithNameInGame)
 	s.Step(`^an offer template with name "([^"]*)" does not exist in game "([^"]*)"$`, anOfferTemplateWithNameDoesNotExistInGame)
 	s.Step(`^the game "([^"]*)" requests offers for player "([^"]*)" in "([^"]*)"$`, theGameRequestsOffersForPlayerIn)
 	s.Step(`^an offer with name "([^"]*)" is returned$`, anOfferWithNameIsReturned)
-	s.Step(`^player "([^"]*)" has seen offer "([^"]*)"$`, playerHasSeenOffer)
-	s.Step(`^player "([^"]*)"> has not seen offer "([^"]*)"$`, playerHasNotSeenOffer)
+	s.Step(`^player "([^"]*)" of game "([^"]*)" has seen offer "([^"]*)"$`, playerHasSeenOffer)
+	s.Step(`^player "([^"]*)" of game "([^"]*)" has not seen offer "([^"]*)"$`, playerHasNotSeenOffer)
 }
