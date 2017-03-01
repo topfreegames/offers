@@ -18,6 +18,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	uuid "github.com/satori/go.uuid"
+	"github.com/topfreegames/offers/models"
 	. "github.com/topfreegames/offers/testing"
 )
 
@@ -147,10 +148,12 @@ var _ = Describe("Offer Handler", func() {
 	Describe("PUT /offer/claim", func() {
 		It("should claim valid offer", func() {
 			//Given
+			id := "56fc0477-39f1-485c-898e-4909e9155eb1"
+			gameID := "offers-game"
 			offerReader := JSONFor(JSON{
-				"ID":       "56fc0477-39f1-485c-898e-4909e9155eb1",
-				"GameID":   "offers-game",
-				"PlayerID": "player-1",
+				"id":       id,
+				"playerId": "player-1",
+				"gameId":   gameID,
 			})
 			request, _ := http.NewRequest("PUT", "/offer/claim", offerReader)
 
@@ -160,20 +163,25 @@ var _ = Describe("Offer Handler", func() {
 			//Then
 			Expect(recorder.Body.String()).To(Equal(`{"gems": 5, "gold": 100}`))
 			Expect(recorder.Code).To(Equal(http.StatusOK))
+
+			offer, err := models.GetOfferByID(app.DB, gameID, id, nil)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(offer).NotTo(BeNil())
+			Expect(offer.ClaimedAt.Time.Unix()).To(Equal(app.Clock.GetTime().Unix()))
+			Expect(offer.BoughtCounter).To(Equal(1))
 		})
 
 		It("should not claim a claimed offer", func() {
 			//Given
-			offerReader1 := JSONFor(JSON{
-				"ID":       "56fc0477-39f1-485c-898e-4909e9155eb1",
-				"GameID":   "offers-game",
-				"PlayerID": "player-1",
-			})
-			offerReader2 := JSONFor(JSON{
-				"ID":       "56fc0477-39f1-485c-898e-4909e9155eb1",
-				"GameID":   "offers-game",
-				"PlayerID": "player-1",
-			})
+			id := "56fc0477-39f1-485c-898e-4909e9155eb1"
+			gameID := "offers-game"
+			json := JSON{
+				"id":       id,
+				"playerId": "player-1",
+				"gameId":   gameID,
+			}
+			offerReader1 := JSONFor(json)
+			offerReader2 := JSONFor(json)
 			request1, _ := http.NewRequest("PUT", "/offer/claim", offerReader1)
 			request2, _ := http.NewRequest("PUT", "/offer/claim", offerReader2)
 
@@ -185,14 +193,20 @@ var _ = Describe("Offer Handler", func() {
 			//Then
 			Expect(recorder.Body.String()).To(Equal(`{"gems": 5, "gold": 100}`))
 			Expect(recorder.Code).To(Equal(http.StatusConflict))
+
+			offer, err := models.GetOfferByID(app.DB, gameID, id, nil)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(offer).NotTo(BeNil())
+			Expect(offer.ClaimedAt.Time.Unix()).To(Equal(app.Clock.GetTime().Unix()))
+			Expect(offer.BoughtCounter).To(Equal(1))
 		})
 
 		It("should return 422 if invalid OfferID", func() {
 			//Given
 			offerReader := JSONFor(JSON{
-				"ID":       "567-391-4c-8-4909eeb1",
-				"GameID":   "offers-game",
-				"PlayerID": "player-1",
+				"id":       "567-391-4c-8-4909eeb1",
+				"gameId":   "offers-game",
+				"playerId": "player-1",
 			})
 			request, _ := http.NewRequest("PUT", "/offer/claim", offerReader)
 
@@ -200,7 +214,6 @@ var _ = Describe("Offer Handler", func() {
 			app.Router.ServeHTTP(recorder, request)
 
 			//Then
-			Expect(recorder.Body.String()).To(Equal(`{"code":"OFF-002","description":"ID: 567-391-4c-8-4909eeb1 does not validate as uuidv4;","error":"ValidationFailedError"}`))
 			Expect(recorder.Code).To(Equal(http.StatusUnprocessableEntity))
 			var obj map[string]interface{}
 			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
@@ -210,12 +223,30 @@ var _ = Describe("Offer Handler", func() {
 			Expect(obj["description"]).To(Equal("ID: 567-391-4c-8-4909eeb1 does not validate as uuidv4;"))
 		})
 
+		It("should return 422 if missing parameters", func() {
+			//Given
+			offerReader := JSONFor(JSON{})
+			request, _ := http.NewRequest("PUT", "/offer/claim", offerReader)
+
+			//When
+			app.Router.ServeHTTP(recorder, request)
+
+			//Then
+			Expect(recorder.Code).To(Equal(http.StatusUnprocessableEntity))
+			var obj map[string]interface{}
+			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(obj["code"]).To(Equal("OFF-002"))
+			Expect(obj["error"]).To(Equal("ValidationFailedError"))
+			Expect(obj["description"]).To(Equal("ID: non zero value required;GameID: non zero value required;PlayerID: non zero value required;"))
+		})
+
 		It("should return 404 if non existing OfferID", func() {
 			//Given
 			offerReader := JSONFor(JSON{
-				"ID":       uuid.NewV4().String(),
-				"GameID":   "offers-game",
-				"PlayerID": "player-1",
+				"id":       uuid.NewV4().String(),
+				"gameId":   "offers-game",
+				"playerId": "player-1",
 			})
 			request, _ := http.NewRequest("PUT", "/offer/claim", offerReader)
 
@@ -229,9 +260,9 @@ var _ = Describe("Offer Handler", func() {
 		It("should return 404 if non existing GameID", func() {
 			//Given
 			offerReader := JSONFor(JSON{
-				"ID":       "56fc0477-39f1-485c-898e-4909e9155eb1",
-				"GameID":   "non-existing-offers-game",
-				"PlayerID": "player-1",
+				"id":       "56fc0477-39f1-485c-898e-4909e9155eb1",
+				"gameId":   "non-existing-offers-game",
+				"playerId": "player-1",
 			})
 			request, _ := http.NewRequest("PUT", "/offer/claim", offerReader)
 
@@ -251,9 +282,9 @@ var _ = Describe("Offer Handler", func() {
 		It("should return 404 if non existing PlayerID", func() {
 			//Given
 			offerReader := JSONFor(JSON{
-				"ID":       "56fc0477-39f1-485c-898e-4909e9155eb1",
-				"GameID":   "offers-game",
-				"PlayerID": "non-existing-player-1",
+				"id":       "56fc0477-39f1-485c-898e-4909e9155eb1",
+				"gameId":   "offers-game",
+				"playerId": "non-existing-player-1",
 			})
 			request, _ := http.NewRequest("PUT", "/offer/claim", offerReader)
 
@@ -273,8 +304,8 @@ var _ = Describe("Offer Handler", func() {
 		It("should return 422 if OfferID is not passed", func() {
 			//Given
 			offerReader := JSONFor(JSON{
-				"GameID":   "offers-game",
-				"PlayerID": "non-existing-player-1",
+				"gameId":   "offers-game",
+				"playerId": "non-existing-player-1",
 			})
 			request, _ := http.NewRequest("PUT", "/offer/claim", offerReader)
 
@@ -319,8 +350,8 @@ var _ = Describe("Offer Handler", func() {
 
 		It("should return status code 400 if invalid json is sent", func() {
 			//Given
-			invalidJSON := `"ID    "56fc047-39f1-485c-898e-4909e9155eb1",
-											"GameID:   "offers-g
+			invalidJSON := `"id    "56fc047-39f1-485c-898e-4909e9155eb1",
+											"gameId:   "offers-g
 											"Player-1"`
 			request, _ := http.NewRequest("PUT", "/offer/claim", strings.NewReader(invalidJSON))
 
@@ -341,10 +372,12 @@ var _ = Describe("Offer Handler", func() {
 	Describe("PUT /update-offer-last-seen-at", func() {
 		It("should update last seen at of valid offer", func() {
 			//Given
+			id := "56fc0477-39f1-485c-898e-4909e9155eb1"
+			gameID := "offers-game"
 			offerReader := JSONFor(JSON{
-				"ID":       "56fc0477-39f1-485c-898e-4909e9155eb1",
-				"PlayerID": "player-1",
-				"GameID":   "offers-game",
+				"id":       id,
+				"playerId": "player-1",
+				"gameId":   gameID,
 			})
 			request, _ := http.NewRequest("PUT", "/offer/last-seen-at", offerReader)
 
@@ -353,14 +386,20 @@ var _ = Describe("Offer Handler", func() {
 
 			//Then
 			Expect(recorder.Code).To(Equal(http.StatusOK))
+
+			offer, err := models.GetOfferByID(app.DB, gameID, id, nil)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(offer).NotTo(BeNil())
+			Expect(offer.LastSeenAt.Time.Unix()).To(Equal(app.Clock.GetTime().Unix()))
+			Expect(offer.SeenCounter).To(Equal(1))
 		})
 
-		It("should return status code 422 if ID is invalid", func() {
+		It("should return status code 422 if invalid parameters", func() {
 			//Given
 			offerReader := JSONFor(JSON{
-				"ID":       "invalid-uuid",
-				"PlayerID": "player-1",
-				"GameID":   "offers-game",
+				"id":       "invalid-uuid",
+				"playerId": "player-1",
+				"gameId":   "offers-game",
 			})
 			request, _ := http.NewRequest("PUT", "/offer/last-seen-at", offerReader)
 
@@ -377,34 +416,30 @@ var _ = Describe("Offer Handler", func() {
 			Expect(obj["description"]).To(Equal("ID: invalid-uuid does not validate as uuidv4;"))
 		})
 
-		It("should return status code 422 if ID is not passed", func() {
+		It("should return status code 422 if missing parameters", func() {
 			//Given
-			offerReader := JSONFor(JSON{
-				"PlayerID": "player-1",
-				"GameID":   "offers-game",
-			})
+			offerReader := JSONFor(JSON{})
 			request, _ := http.NewRequest("PUT", "/offer/last-seen-at", offerReader)
 
 			//When
 			app.Router.ServeHTTP(recorder, request)
 
 			//Then
-			Expect(recorder.Body.String()).To(Equal(`{"code":"OFF-002","description":"ID: non zero value required;","error":"ValidationFailedError"}`))
 			Expect(recorder.Code).To(Equal(http.StatusUnprocessableEntity))
 			var obj map[string]interface{}
 			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(obj["code"]).To(Equal("OFF-002"))
 			Expect(obj["error"]).To(Equal("ValidationFailedError"))
-			Expect(obj["description"]).To(Equal("ID: non zero value required;"))
+			Expect(obj["description"]).To(Equal("ID: non zero value required;GameID: non zero value required;PlayerID: non zero value required;"))
 		})
 
 		It("should return status code 404 if offer with given ID does not exist", func() {
 			//Given
 			offerReader := JSONFor(JSON{
-				"ID":       uuid.NewV4().String(),
-				"PlayerID": "player-1",
-				"GameID":   "offers-game",
+				"id":       uuid.NewV4().String(),
+				"playerId": "player-1",
+				"gameId":   "offers-game",
 			})
 			request, _ := http.NewRequest("PUT", "/offer/last-seen-at", offerReader)
 
@@ -423,9 +458,9 @@ var _ = Describe("Offer Handler", func() {
 
 		It("should return status code of 500 if some error occurred", func() {
 			offerReader := JSONFor(JSON{
-				"ID":       "56fc0477-39f1-485c-898e-4909e9155eb1",
-				"PlayerID": "player-1",
-				"GameID":   "offers-game",
+				"id":       "56fc0477-39f1-485c-898e-4909e9155eb1",
+				"playerId": "player-1",
+				"gameId":   "offers-game",
 			})
 
 			oldDB := app.DB
