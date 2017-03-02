@@ -63,11 +63,14 @@ func ListGames(db runner.Connection, mr *MixedMetricsReporter) ([]*Game, error) 
 //UpsertGame updates a game with new meta or insert with the new UUID
 //func UpsertGame(db runner.Connection, game *Game, t time.Time, mr *MixedMetricsReporter) error {
 func UpsertGame(db runner.Connection, game *Game, t time.Time, mr *MixedMetricsReporter) error {
+	if game.Metadata == nil {
+		game.Metadata = dat.JSON([]byte(`{}`))
+	}
 	game.UpdatedAt = dat.NullTimeFrom(t)
 	return mr.WithDatastoreSegment("games", SegmentUpsert, func() error {
 		return db.
 			Upsert("games").
-			Columns("id", "name", "bundle_id", "updated_at").
+			Columns("id", "name", "bundle_id", "updated_at", "metadata").
 			Record(game).
 			Where("id=$1", game.ID).
 			Returning("created_at", "updated_at").

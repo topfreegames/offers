@@ -130,6 +130,7 @@ var _ = Describe("Games Model", func() {
 				ID:       id,
 				Name:     "Game Awesome Name",
 				BundleID: "com.tfg.example",
+				Metadata: dat.JSON([]byte(`{"qwe": 123}`)),
 			}
 			var c models.RealClock
 
@@ -143,6 +144,10 @@ var _ = Describe("Games Model", func() {
 			Expect(gameFromDB.ID).To(Equal(id))
 			Expect(gameFromDB.Name).To(Equal(game.Name))
 			Expect(gameFromDB.BundleID).To(Equal(game.BundleID))
+
+			obj, err := gameFromDB.GetMetadata()
+			Expect(err).NotTo(HaveOccurred())
+			Expect(obj.(map[string]interface{})["qwe"]).To(BeEquivalentTo(123))
 		})
 
 		It("should update game with existing id", func() {
