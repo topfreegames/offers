@@ -8,6 +8,7 @@
 package models
 
 import (
+	"github.com/topfreegames/offers/errors"
 	"gopkg.in/mgutz/dat.v2/dat"
 	runner "gopkg.in/mgutz/dat.v2/sqlx-runner"
 )
@@ -69,7 +70,7 @@ func GetOfferTemplateByNameAndGame(db runner.Connection, name, gameID string, mr
 				frequency, trigger, placement, enabled
 			`).
 			From("offer_templates").
-			Where("name = $1 AND game_id = $2", name, gameID).
+			Where("name = $1 AND game_id = $2 AND enabled = true", name, gameID).
 			QueryStruct(&ot)
 	})
 
@@ -98,10 +99,22 @@ func GetEnabledOfferTemplates(db runner.Connection, gameID string, mr *MixedMetr
 
 // InsertOfferTemplate inserts a new offer template into DB
 func InsertOfferTemplate(db runner.Connection, ot *OfferTemplate, mr *MixedMetricsReporter) (*OfferTemplate, error) {
+	_, err := GetOfferTemplateByNameAndGame(db, ot.Name, ot.GameID, mr)
+
+	if err != nil {
+		notFoundErr := HandleNotFoundError("OfferTemplate", map[string]interface{}{"Name": ot.Name}, err)
+		if err != notFoundErr {
+			return nil, err
+		}
+	} else {
+		msg := "An offer template with name " + ot.Name + " already exist and is enabled"
+		return ot, errors.NewConflictedModelError("OfferTemplate", msg)
+	}
+
 	if ot.Metadata == nil {
 		ot.Metadata = dat.JSON([]byte(`{}`))
 	}
-	err := mr.WithDatastoreSegment("offer_templates", "insert", func() error {
+	err = mr.WithDatastoreSegment("offer_templates", SegmentInsert, func() error {
 		return db.
 			InsertInto("offer_templates").
 			Columns("name", "product_id", "game_id", "contents", "period", "frequency", "trigger", "placement", "metadata").
@@ -111,13 +124,7 @@ func InsertOfferTemplate(db runner.Connection, ot *OfferTemplate, mr *MixedMetri
 	})
 
 	foreignKeyErr := HandleForeignKeyViolationError("OfferTemplate", err)
-
-	if err != foreignKeyErr {
-		return ot, foreignKeyErr
-	}
-
-	conflictedKeyError := HandleUniqueKeyViolationError("OfferTemplate", err)
-	return ot, conflictedKeyError
+	return ot, foreignKeyErr
 }
 
 //SetEnabledOfferTemplate can enable or disable an offer template

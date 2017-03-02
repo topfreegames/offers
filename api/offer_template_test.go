@@ -129,6 +129,29 @@ var _ = Describe("Offer Template Handler", func() {
 			Expect(obj["description"]).To(Equal("OfferTemplate could not be saved due to: insert or update on table \"offer_templates\" violates foreign key constraint \"offer_templates_game_id_fkey\""))
 		})
 
+		It("should return status code 422 if contents is empty", func() {
+			offerTemplateReader := JSONFor(JSON{
+				"name":      "New Awesome Game",
+				"productId": "com.tfg.example",
+				"gameId":    "game-id",
+				"contents":  dat.JSON([]byte("")),
+				"period":    dat.JSON([]byte("{\"type\": \"once\"}")),
+				"frequency": dat.JSON([]byte("{\"every\": 24, \"unit\": \"hour\"}")),
+				"trigger":   dat.JSON([]byte("{\"from\": 1487280506875, \"to\": 1487366964730}")),
+				"placement": "popup",
+			})
+
+			request, _ := http.NewRequest("POST", "/offer-templates", offerTemplateReader)
+			app.Router.ServeHTTP(recorder, request)
+			Expect(recorder.Code).To(Equal(http.StatusUnprocessableEntity), recorder.Body.String())
+			var obj map[string]interface{}
+			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(obj["code"]).To(Equal("OFF-003"))
+			Expect(obj["error"]).To(Equal("InvalidOfferTemplateError"))
+			Expect(obj["description"]).To(Equal("OfferTemplate could not be saved due to: insert or update on table \"offer_templates\" violates foreign key constraint \"offer_templates_game_id_fkey\""))
+		})
+
 		It("returns status code of 500 if database is unavailable", func() {
 			offerTemplateReader := JSONFor(JSON{
 				"name":      "New Awesome Game",
@@ -160,7 +183,12 @@ var _ = Describe("Offer Template Handler", func() {
 			app.DB = oldDB // avoid errors in after each
 		})
 
-		It("should return status code 409 if pair offer template name and game already exists", func() {
+		It("should return status code 200 if pair offer template name and game already exists and is disabled", func() {
+			templateID := "dd21ec96-2890-4ba0-b8e2-40ea67196990"
+			offerTemplateReaderEnable := JSONFor(JSON{
+				"id":      templateID,
+				"enabled": false,
+			})
 			name := "template-1"
 			productID := "com.tfg.example"
 			gameID := "offers-game"
@@ -179,11 +207,14 @@ var _ = Describe("Offer Template Handler", func() {
 				"trigger":   dat.JSON([]byte(trigger)),
 				"placement": placement,
 			})
-			request, _ := http.NewRequest("POST", "/offer-templates", offerTemplateReader)
 
-			app.Router.ServeHTTP(recorder, request)
+			request1, _ := http.NewRequest("PUT", "/offer-templates/set-enabled", offerTemplateReaderEnable)
+			request2, _ := http.NewRequest("POST", "/offer-templates", offerTemplateReader)
 
-			Expect(recorder.Code).To(Equal(http.StatusConflict))
+			app.Router.ServeHTTP(recorder, request1)
+			app.Router.ServeHTTP(recorder, request2)
+
+			Expect(recorder.Code).To(Equal(http.StatusOK))
 		})
 	})
 

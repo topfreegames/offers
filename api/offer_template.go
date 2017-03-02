@@ -9,6 +9,7 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/topfreegames/offers/errors"
@@ -36,6 +37,8 @@ func (g *OfferTemplateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 func (g *OfferTemplateHandler) insertOfferTemplate(w http.ResponseWriter, r *http.Request) {
 	mr := metricsReporterFromCtx(r.Context())
 	ot := offerTemplateFromCtx(r.Context())
+
+	fmt.Printf("OFFER TEMPLATE %#v", ot)
 
 	var err error
 	err = mr.WithSegment(models.SegmentModel, func() error {

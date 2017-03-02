@@ -107,7 +107,7 @@ var _ = Describe("Offer Template Models", func() {
 			Expect(err.Error()).To(Equal("sql: no rows in result set"))
 		})
 
-		It("should return error if inserting offer template with repeated name and game", func() {
+		It("should return error if inserting offer template with repeated name and game with an enabled offer template", func() {
 			//Given
 			offerTemplate := &models.OfferTemplate{
 				Name:      "template-1",
@@ -125,7 +125,29 @@ var _ = Describe("Offer Template Models", func() {
 
 			//Then
 			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(Equal(`OfferTemplate could not be saved due to: duplicate key value violates unique constraint "offer_templates_game_id_name_key"`))
+			Expect(err.Error()).To(Equal(`OfferTemplate could not be saved due to: An offer template with name template-1 already exist and is enabled`))
+		})
+
+		It("should return status code 200 if inserting offer template with repeated name and game with a disabled offer template", func() {
+			//Given
+			offerTemplate := &models.OfferTemplate{
+				Name:      "template-1",
+				ProductID: "com.tfg.example",
+				GameID:    "offers-game",
+				Contents:  dat.JSON([]byte(`{"gems": 5, "gold": 100}`)),
+				Period:    dat.JSON([]byte(`{"every": "10m"}`)),
+				Frequency: dat.JSON([]byte(`{"every": "24h"}`)),
+				Trigger:   dat.JSON([]byte(`{"from": 1487280506875}`)),
+				Placement: "popup",
+			}
+
+			//When
+			err1 := models.SetEnabledOfferTemplate(db, "dd21ec96-2890-4ba0-b8e2-40ea67196990", false, nil)
+			_, err2 := models.InsertOfferTemplate(db, offerTemplate, nil)
+
+			//Then
+			Expect(err1).NotTo(HaveOccurred())
+			Expect(err2).NotTo(HaveOccurred())
 		})
 
 		It("should return error if inserting offer template with missing parameters", func() {

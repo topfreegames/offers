@@ -12,6 +12,5 @@ CREATE TABLE offer_templates (
   trigger JSONB NOT NULL DEFAULT '{}' ::JSONB,
   enabled bool NOT NULL DEFAULT true,
   placement varchar(255) NOT NULL,
-  created_at timestamp WITH TIME ZONE NOT NULL DEFAULT NOW(),
-  UNIQUE (game_id, name)
+  created_at timestamp WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
