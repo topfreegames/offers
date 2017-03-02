@@ -32,7 +32,6 @@ type Offer struct {
 
 //OfferToUpdate has required fields for claiming an offer
 type OfferToUpdate struct {
-	ID       string `db:"id" valid:"uuidv4,required"`
 	GameID   string `db:"game_id" valid:"matches(^[^-][a-z0-9-]*$),stringlength(1|255),required"`
 	PlayerID string `db:"player_id" valid:"ascii,stringlength(1|1000),required"`
 }

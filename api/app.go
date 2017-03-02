@@ -14,6 +14,7 @@ import (
 	"net/http"
 
 	"github.com/Sirupsen/logrus"
+	"github.com/asaskevich/govalidator"
 	"github.com/gorilla/mux"
 	newrelic "github.com/newrelic/go-agent"
 	"github.com/spf13/viper"
@@ -73,23 +74,24 @@ func (a *App) getRouter() *mux.Router {
 		&VersionMiddleware{},
 	)).Methods("GET").Name("game")
 
-	r.Handle("/games", Chain(
+	r.HandleFunc("/games/{id}", Chain(
 		&GameHandler{App: a, Method: "upsert"},
 		&MetricsReporterMiddleware{App: a},
 		&NewRelicMiddleware{App: a},
 		&LoggingMiddleware{App: a},
 		&VersionMiddleware{},
+		NewParamKeyMiddleware(a, func(id string) bool { return govalidator.Matches(id, "^[^-][a-z0-9-]*$") }),
 		NewValidationMiddleware(func() interface{} { return &models.Game{} }),
-	)).Methods("PUT").Name("game")
+	).ServeHTTP).Methods("PUT").Name("game")
 
-	r.Handle("/offer-templates", Chain(
+	r.Handle("/templates", Chain(
 		&OfferTemplateHandler{App: a, Method: "list"},
 		&NewRelicMiddleware{App: a},
 		&LoggingMiddleware{App: a},
 		&VersionMiddleware{},
 	)).Methods("GET").Name("offer_templates")
 
-	r.Handle("/offer-templates", Chain(
+	r.Handle("/templates", Chain(
 		&OfferTemplateHandler{App: a, Method: "insert"},
 		&NewRelicMiddleware{App: a},
 		&LoggingMiddleware{App: a},
@@ -97,12 +99,20 @@ func (a *App) getRouter() *mux.Router {
 		NewValidationMiddleware(func() interface{} { return &models.OfferTemplate{} }),
 	)).Methods("POST").Name("offer_templates")
 
-	r.Handle("/offer-templates/set-enabled", Chain(
-		&OfferTemplateHandler{App: a, Method: "set-enabled"},
+	r.Handle("/templates/{id}/enable", Chain(
+		&OfferTemplateHandler{App: a, Method: "enable"},
 		&NewRelicMiddleware{App: a},
 		&LoggingMiddleware{App: a},
 		&VersionMiddleware{},
-		&ValidationMiddleware{GetPayload: func() interface{} { return &models.OfferTemplateToUpdate{} }},
+		NewParamKeyMiddleware(a, govalidator.IsUUIDv4),
+	)).Methods("PUT").Name("offer_templates")
+
+	r.Handle("/templates/{id}/disable", Chain(
+		&OfferTemplateHandler{App: a, Method: "disable"},
+		&NewRelicMiddleware{App: a},
+		&LoggingMiddleware{App: a},
+		&VersionMiddleware{},
+		NewParamKeyMiddleware(a, govalidator.IsUUIDv4),
 	)).Methods("PUT").Name("offer_templates")
 
 	r.Handle("/offers", Chain(
@@ -110,23 +120,25 @@ func (a *App) getRouter() *mux.Router {
 		&NewRelicMiddleware{App: a},
 		&LoggingMiddleware{App: a},
 		&VersionMiddleware{},
-	)).Methods("GET").Name("offer")
+	)).Methods("GET").Name("offers")
 
-	r.Handle("/offer/claim", Chain(
-		&OfferRequestHandler{App: a, Method: "claim-offer"},
+	r.Handle("/offers/{id}/claim", Chain(
+		&OfferRequestHandler{App: a, Method: "claim"},
 		&NewRelicMiddleware{App: a},
 		&LoggingMiddleware{App: a},
 		&VersionMiddleware{},
+		NewParamKeyMiddleware(a, govalidator.IsUUIDv4),
 		NewValidationMiddleware(func() interface{} { return &models.OfferToUpdate{} }),
-	)).Methods("PUT").Name("offer")
+	)).Methods("PUT").Name("offers")
 
-	r.Handle("/offer/last-seen-at", Chain(
-		&OfferRequestHandler{App: a, Method: "update-offer-last-seen-at"},
+	r.HandleFunc("/offers/{id}/impressions", Chain(
+		&OfferRequestHandler{App: a, Method: "impressions"},
 		&NewRelicMiddleware{App: a},
 		&LoggingMiddleware{App: a},
 		&VersionMiddleware{},
+		NewParamKeyMiddleware(a, govalidator.IsUUIDv4),
 		NewValidationMiddleware(func() interface{} { return &models.OfferToUpdate{} }),
-	)).Methods("PUT").Name("offer")
+	).ServeHTTP).Methods("POST").Name("offers")
 
 	return r
 }

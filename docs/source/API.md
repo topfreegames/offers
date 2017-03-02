@@ -32,17 +32,16 @@ Offers API
 
 ## Game Routes
   ### Upsert Game
-  `PUT /games`
+  `PUT /games/:id`
 
-  Update an existing Game or insert a new Game into database.
+  Update an existing Game or insert a new Game into database. `:id` must match `^[^-][a-z0-9-]*$`.
 
   * Payload
     ```
     {
-      "id":       [string], // required, matches ^[^-][a-z0-9-]*$
       "name":     [string], // required, 255 characters max
       "bundleId": [string], // required, 255 characters max
-      "metadata": [json],   // optional
+      "metadata": [json]    // optional
     }
     ```
     * Field Descriptions
@@ -61,17 +60,16 @@ Offers API
       ```
 
   * Error response
-    * If missing or invalid arguments.
+    * If missing or invalid arguments
       * Code: `422`
       * Content:
+          ```
+            {
+              "error": [string],       // error
+              "code":  [string],       // error code
+              "description": [string]  // error description
+            }
         ```
-          {
-            "error": [string],       // error
-            "code":  [string],       // error code
-            "description": [string]  // error description
-          }
-      ```
-
     * It will return an error if the query on db (upsert) failed
       * Code: `500`
       * Content:
@@ -121,7 +119,7 @@ Offers API
 ## Offer Template Routes
 
   ### Insert Offer Template
-  `PUT /offer-template`
+  `POST /templates`
 
   Insert a new Offer Template into database.
 
@@ -150,7 +148,6 @@ Offers API
     ```
 
     * Field Descriptions
-       - **id**:           Unique ID that identifies the offer template.  
        - **name**:         Prettier game identifier to show on UI.  
        - **productId**:    Identifier of the item to be bought on PlayStore or AppStore.  
        - **gameId**:       ID of the game this template was made for (must exist on Games table on DB).  
@@ -216,18 +213,10 @@ Offers API
         }
       ```
 
-  ### Set enabled offer template
-  `PUT /offer-template/set-enabled`
+  ### Enable offer template
+  `PUT /templates/:id/enable`
 
-  Enable or disable an offer template
-
-  * Payload
-    ```
-      {
-        "id":      [uuidv4], // required
-        "enabled": [bool]    // required
-      }
-    ```
+  Enable an offer template. `:id` must be an `uuidv4`.
 
   * Success Response
     * Code: `200`
@@ -246,7 +235,9 @@ Offers API
     * Content:
       ```
         {
-          "reason": [string]
+          "error": [string],       // error
+          "code":  [string],       // error code
+          "description": [string]  // error description
         }
       ```
 
@@ -256,7 +247,49 @@ Offers API
     * Content:
       ```
         {
-          "reason": [string]
+          "error": [string],       // error
+          "code":  [string],       // error code
+          "description": [string]  // error description
+        }
+      ```
+
+  ### Disable offer template
+  `PUT /templates/:id/disable`
+
+  Disable an offer template. `:id` must be an `uuidv4`.
+
+  * Success Response
+    * Code: `200`
+    * Content:
+      ```
+        {
+          "id": [uuidv4]
+        }
+      ```
+
+  * Error Response
+
+    It will return status code 404 not found if the ID doesn't exist
+
+    * Code: `404`
+    * Content:
+      ```
+        {
+          "error": [string],       // error
+          "code":  [string],       // error code
+          "description": [string]  // error description
+        }
+      ```
+
+    It will return status code 500 internal error occurred
+
+    * Code: `500`
+    * Content:
+      ```
+        {
+          "error": [string],       // error
+          "code":  [string],       // error code
+          "description": [string]  // error description
         }
       ```
 
@@ -355,14 +388,13 @@ Offers API
       ```
 
   ### Claim Offer
-  `PUT /offer/claim`
+  `PUT /offers/:id/claim`
 
-  Claim a player's offer. Should only be called after payment confirmation.
+  Claim a player's offer. Should only be called after payment confirmation. `:id` must be an `uuidv4`.
 
   * Payload
     ```
       {
-        "id":       [uuidv4], // required
         "gameId":   [string], // required, matches ^[^-][a-z0-9-]*$
         "playerId": [string]  // required, 255 characters max
       }
@@ -409,15 +441,14 @@ Offers API
           }
         ```
 
-  ### Update Offer Last Seen At
-  `PUT /offer/last-seen-at`
+  ### Offer Impressions
+  `POST /offers/:id/impressions`
 
-  Updates the time when the offer was last seen by the player
+  Updates the time when the offer was last seen by the player. `:id` must be an `uuidv4`.
 
   * Payload
     ```
       {
-        "id":       [uuidv4], // required
         "gameId":   [string], // required, matches ^[^-][a-z0-9-]*$
         "playerId": [string]  // required, 255 characters max
       }

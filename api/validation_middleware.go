@@ -46,7 +46,11 @@ func gameFromCtx(ctx context.Context) *models.Game {
 	if game == nil {
 		return nil
 	}
-	return game.(*models.Game)
+
+	gameWithID := game.(*models.Game)
+	gameWithID.ID = paramKeyFromContext(ctx)
+
+	return gameWithID
 }
 
 func offerTemplateFromCtx(ctx context.Context) *models.OfferTemplate {
@@ -62,17 +66,7 @@ func offerToUpdateFromCtx(ctx context.Context) *models.OfferToUpdate {
 	if offer == nil {
 		return nil
 	}
-
 	return offer.(*models.OfferToUpdate)
-}
-
-func offerTemplateToUpdateFromCtx(ctx context.Context) *models.OfferTemplateToUpdate {
-	ot := ctx.Value(payloadString)
-	if ot == nil {
-		return nil
-	}
-
-	return ot.(*models.OfferTemplateToUpdate)
 }
 
 func (m *ValidationMiddleware) configureCustomValidators() {

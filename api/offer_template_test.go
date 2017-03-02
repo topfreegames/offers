@@ -9,6 +9,7 @@ package api_test
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 
@@ -28,8 +29,8 @@ var _ = Describe("Offer Template Handler", func() {
 		recorder = httptest.NewRecorder()
 	})
 
-	Describe("POST /offer-templates", func() {
-		It("should return status code 200 for valid parameters", func() {
+	Describe("POST /templates", func() {
+		It("should return status code 201 for valid parameters", func() {
 			name := "New Awesome Game"
 			productID := "com.tfg.example"
 			gameID := "game-id"
@@ -49,9 +50,9 @@ var _ = Describe("Offer Template Handler", func() {
 				"placement": placement,
 			})
 
-			request, _ := http.NewRequest("POST", "/offer-templates", offerTemplateReader)
+			request, _ := http.NewRequest("POST", "/templates", offerTemplateReader)
 			app.Router.ServeHTTP(recorder, request)
-			Expect(recorder.Code).To(Equal(http.StatusOK), recorder.Body.String())
+			Expect(recorder.Code).To(Equal(http.StatusCreated), recorder.Body.String())
 			var obj map[string]interface{}
 			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
 			Expect(err).NotTo(HaveOccurred())
@@ -72,7 +73,7 @@ var _ = Describe("Offer Template Handler", func() {
 		It("should return status code 422 if missing arguments", func() {
 			offerTemplateReader := JSONFor(JSON{})
 
-			request, _ := http.NewRequest("POST", "/offer-templates", offerTemplateReader)
+			request, _ := http.NewRequest("POST", "/templates", offerTemplateReader)
 			app.Router.ServeHTTP(recorder, request)
 			Expect(recorder.Code).To(Equal(http.StatusUnprocessableEntity))
 			var obj map[string]interface{}
@@ -95,7 +96,7 @@ var _ = Describe("Offer Template Handler", func() {
 				"placement": "",
 			})
 
-			request, _ := http.NewRequest("POST", "/offer-templates", offerTemplateReader)
+			request, _ := http.NewRequest("POST", "/templates", offerTemplateReader)
 			app.Router.ServeHTTP(recorder, request)
 			Expect(recorder.Code).To(Equal(http.StatusUnprocessableEntity))
 			var obj map[string]interface{}
@@ -118,7 +119,7 @@ var _ = Describe("Offer Template Handler", func() {
 				"placement": "popup",
 			})
 
-			request, _ := http.NewRequest("POST", "/offer-templates", offerTemplateReader)
+			request, _ := http.NewRequest("POST", "/templates", offerTemplateReader)
 			app.Router.ServeHTTP(recorder, request)
 			Expect(recorder.Code).To(Equal(http.StatusUnprocessableEntity), recorder.Body.String())
 			var obj map[string]interface{}
@@ -134,22 +135,22 @@ var _ = Describe("Offer Template Handler", func() {
 				"name":      "New Awesome Game",
 				"productId": "com.tfg.example",
 				"gameId":    "game-id",
-				"contents":  dat.JSON([]byte("")),
+				"contents":  "",
 				"period":    dat.JSON([]byte("{\"type\": \"once\"}")),
 				"frequency": dat.JSON([]byte("{\"every\": 24, \"unit\": \"hour\"}")),
 				"trigger":   dat.JSON([]byte("{\"from\": 1487280506875, \"to\": 1487366964730}")),
 				"placement": "popup",
 			})
 
-			request, _ := http.NewRequest("POST", "/offer-templates", offerTemplateReader)
+			request, _ := http.NewRequest("POST", "/templates", offerTemplateReader)
 			app.Router.ServeHTTP(recorder, request)
 			Expect(recorder.Code).To(Equal(http.StatusUnprocessableEntity), recorder.Body.String())
 			var obj map[string]interface{}
 			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
 			Expect(err).NotTo(HaveOccurred())
-			Expect(obj["code"]).To(Equal("OFF-003"))
-			Expect(obj["error"]).To(Equal("InvalidOfferTemplateError"))
-			Expect(obj["description"]).To(Equal("OfferTemplate could not be saved due to: insert or update on table \"offer_templates\" violates foreign key constraint \"offer_templates_game_id_fkey\""))
+			Expect(obj["code"]).To(Equal("OFF-002"))
+			Expect(obj["error"]).To(Equal("ValidationFailedError"))
+			Expect(obj["description"]).To(Equal("Contents: [34 34] does not validate as RequiredJSONObject;;"))
 		})
 
 		It("returns status code of 500 if database is unavailable", func() {
@@ -164,7 +165,7 @@ var _ = Describe("Offer Template Handler", func() {
 				"placement": "popup",
 			})
 
-			request, _ := http.NewRequest("POST", "/offer-templates", offerTemplateReader)
+			request, _ := http.NewRequest("POST", "/templates", offerTemplateReader)
 
 			oldDB := app.DB
 			db, err := GetTestDB()
@@ -183,12 +184,9 @@ var _ = Describe("Offer Template Handler", func() {
 			app.DB = oldDB // avoid errors in after each
 		})
 
-		It("should return status code 200 if pair offer template name and game already exists and is disabled", func() {
+		It("should return status code 201 if pair offer template name and game already exists and is disabled", func() {
 			templateID := "dd21ec96-2890-4ba0-b8e2-40ea67196990"
-			offerTemplateReaderEnable := JSONFor(JSON{
-				"id":      templateID,
-				"enabled": false,
-			})
+			offerTemplateReaderEnable := JSONFor(JSON{})
 			name := "template-1"
 			productID := "com.tfg.example"
 			gameID := "offers-game"
@@ -208,62 +206,38 @@ var _ = Describe("Offer Template Handler", func() {
 				"placement": placement,
 			})
 
-			request1, _ := http.NewRequest("PUT", "/offer-templates/set-enabled", offerTemplateReaderEnable)
-			request2, _ := http.NewRequest("POST", "/offer-templates", offerTemplateReader)
+			request1, _ := http.NewRequest("PUT", fmt.Sprintf("/templates/%s/disable", templateID), offerTemplateReaderEnable)
+			request2, _ := http.NewRequest("POST", "/templates", offerTemplateReader)
 
 			app.Router.ServeHTTP(recorder, request1)
-			app.Router.ServeHTTP(recorder, request2)
-
 			Expect(recorder.Code).To(Equal(http.StatusOK))
+
+			recorder = httptest.NewRecorder()
+			app.Router.ServeHTTP(recorder, request2)
+			Expect(recorder.Code).To(Equal(http.StatusCreated))
 		})
 	})
 
-	Describe("PUT /offer-templates/set-enabled", func() {
-		It("should disable an enabled offer template", func() {
-			//Given
-			templateID := "dd21ec96-2890-4ba0-b8e2-40ea67196990"
-			enabled := false
-			offerTemplateReader := JSONFor(JSON{
-				"id":      templateID,
-				"enabled": enabled,
-			})
-			request, _ := http.NewRequest("PUT", "/offer-templates/set-enabled", offerTemplateReader)
-
-			//When
-			app.Router.ServeHTTP(recorder, request)
-
-			//Then
-			Expect(recorder.Code).To(Equal(http.StatusOK))
-			Expect(recorder.Body.String()).To(Equal(templateID))
-		})
-
+	Describe("PUT /templates/{id}/enable", func() {
 		It("should enable an enabled offer template", func() {
 			//Given
 			templateID := "dd21ec96-2890-4ba0-b8e2-40ea67196990"
-			enabled := true
-			offerTemplateReader := JSONFor(JSON{
-				"id":      templateID,
-				"enabled": enabled,
-			})
-			request, _ := http.NewRequest("PUT", "/offer-templates/set-enabled", offerTemplateReader)
+			offerTemplateReader := JSONFor(JSON{})
+			request, _ := http.NewRequest("PUT", fmt.Sprintf("/templates/%s/enable", templateID), offerTemplateReader)
 
 			//When
 			app.Router.ServeHTTP(recorder, request)
 
 			//Then
-			Expect(recorder.Code).To(Equal(http.StatusOK))
 			Expect(recorder.Body.String()).To(Equal(templateID))
+			Expect(recorder.Code).To(Equal(http.StatusOK))
 		})
 
-		It("should enabled a disabled offer template", func() {
+		It("should enable a disabled offer template", func() {
 			//Given
 			templateID := "27b0370f-bd61-4346-a10d-50ec052ae125"
-			enabled := true
-			offerTemplateReader := JSONFor(JSON{
-				"id":      templateID,
-				"enabled": enabled,
-			})
-			request, _ := http.NewRequest("PUT", "/offer-templates/set-enabled", offerTemplateReader)
+			offerTemplateReader := JSONFor(JSON{})
+			request, _ := http.NewRequest("PUT", fmt.Sprintf("/templates/%s/enable", templateID), offerTemplateReader)
 
 			//When
 			app.Router.ServeHTTP(recorder, request)
@@ -275,12 +249,8 @@ var _ = Describe("Offer Template Handler", func() {
 
 		It("returns status code of 500 if database is unavailable", func() {
 			templateID := "dd21ec96-2890-4ba0-b8e2-40ea67196990"
-			enabled := false
-			offerTemplateReader := JSONFor(JSON{
-				"id":      templateID,
-				"enabled": enabled,
-			})
-			request, _ := http.NewRequest("PUT", "/offer-templates/set-enabled", offerTemplateReader)
+			offerTemplateReader := JSONFor(JSON{})
+			request, _ := http.NewRequest("PUT", fmt.Sprintf("/templates/%s/enable", templateID), offerTemplateReader)
 
 			oldDB := app.DB
 			db, err := GetTestDB()
@@ -302,12 +272,8 @@ var _ = Describe("Offer Template Handler", func() {
 		It("should return status code 404 if id doesn't exist", func() {
 			//Given
 			templateID := uuid.NewV4().String()
-			enabled := true
-			offerTemplateReader := JSONFor(JSON{
-				"id":      templateID,
-				"enabled": enabled,
-			})
-			request, _ := http.NewRequest("PUT", "/offer-templates/set-enabled", offerTemplateReader)
+			offerTemplateReader := JSONFor(JSON{})
+			request, _ := http.NewRequest("PUT", fmt.Sprintf("/templates/%s/enable", templateID), offerTemplateReader)
 
 			//When
 			app.Router.ServeHTTP(recorder, request)
@@ -322,12 +288,11 @@ var _ = Describe("Offer Template Handler", func() {
 			Expect(obj["description"]).To(Equal("OfferTemplate was not found with specified filters."))
 		})
 
-		It("should return status code 422 if missing parameters", func() {
+		It("should return status code 422 if invalid parameters", func() {
 			//Given
-			offerTemplateReader := JSONFor(JSON{
-				"enabled": true,
-			})
-			request, _ := http.NewRequest("PUT", "/offer-templates/set-enabled", offerTemplateReader)
+			templateID := "not-uuid"
+			offerTemplateReader := JSONFor(JSON{})
+			request, _ := http.NewRequest("PUT", fmt.Sprintf("/templates/%s/enable", templateID), offerTemplateReader)
 
 			//When
 			app.Router.ServeHTTP(recorder, request)
@@ -339,16 +304,117 @@ var _ = Describe("Offer Template Handler", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(obj["code"]).To(Equal("OFF-002"))
 			Expect(obj["error"]).To(Equal("ValidationFailedError"))
-			Expect(obj["description"]).To(Equal("ID: non zero value required;"))
+			Expect(obj["description"]).To(Equal("ID: not-uuid does not validate;"))
+		})
+
+		It("should return status code 301 if empty id", func() {
+			//Given
+			gameID := "offers-game"
+			offerReader := JSONFor(JSON{
+				"playerId": "player-1",
+				"gameId":   gameID,
+			})
+			request, _ := http.NewRequest("PUT", "/templates//enable", offerReader)
+
+			//When
+			app.Router.ServeHTTP(recorder, request)
+
+			//Then
+			Expect(recorder.Code).To(Equal(http.StatusMovedPermanently))
+		})
+	})
+
+	Describe("PUT /templates/{id}/disable", func() {
+		It("should disable an enabled offer template", func() {
+			//Given
+			templateID := "dd21ec96-2890-4ba0-b8e2-40ea67196990"
+			offerTemplateReader := JSONFor(JSON{})
+			request, _ := http.NewRequest("PUT", fmt.Sprintf("/templates/%s/disable", templateID), offerTemplateReader)
+
+			//When
+			app.Router.ServeHTTP(recorder, request)
+
+			//Then
+			Expect(recorder.Body.String()).To(Equal(templateID))
+			Expect(recorder.Code).To(Equal(http.StatusOK))
+		})
+
+		It("should disable a disabled offer template", func() {
+			//Given
+			templateID := "27b0370f-bd61-4346-a10d-50ec052ae125"
+			offerTemplateReader := JSONFor(JSON{})
+			request, _ := http.NewRequest("PUT", fmt.Sprintf("/templates/%s/disable", templateID), offerTemplateReader)
+
+			//When
+			app.Router.ServeHTTP(recorder, request)
+
+			//Then
+			Expect(recorder.Code).To(Equal(http.StatusOK))
+			Expect(recorder.Body.String()).To(Equal(templateID))
+		})
+
+		It("should use ID from URI even if a valid one is passed in body", func() {
+			//Given
+			templateID := "dd21ec96-2890-4ba0-b8e2-40ea67196990"
+			offerTemplateReader := JSONFor(JSON{
+				"id": "aa65a3f2-7cf8-4d76-957f-0a23a1bbbd32",
+			})
+			request, _ := http.NewRequest("PUT", fmt.Sprintf("/templates/%s/disable", templateID), offerTemplateReader)
+
+			//When
+			app.Router.ServeHTTP(recorder, request)
+
+			//Then
+			Expect(recorder.Body.String()).To(Equal(templateID))
+			Expect(recorder.Code).To(Equal(http.StatusOK))
+		})
+
+		It("returns status code of 500 if database is unavailable", func() {
+			templateID := "dd21ec96-2890-4ba0-b8e2-40ea67196990"
+			offerTemplateReader := JSONFor(JSON{})
+			request, _ := http.NewRequest("PUT", fmt.Sprintf("/templates/%s/disable", templateID), offerTemplateReader)
+
+			oldDB := app.DB
+			db, err := GetTestDB()
+			Expect(err).NotTo(HaveOccurred())
+			app.DB = db
+			app.DB.(*runner.DB).DB.Close() // make DB connection unavailable
+			app.Router.ServeHTTP(recorder, request)
+
+			Expect(recorder.Code).To(Equal(http.StatusInternalServerError))
+			var obj map[string]interface{}
+			err = json.Unmarshal([]byte(recorder.Body.String()), &obj)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(obj["code"]).To(Equal("OFF-004"))
+			Expect(obj["error"]).To(Equal("Update offer template failed"))
+			Expect(obj["description"]).To(Equal("sql: database is closed"))
+			app.DB = oldDB // avoid errors in after each
+		})
+
+		It("should return status code 404 if id doesn't exist", func() {
+			//Given
+			templateID := uuid.NewV4().String()
+			offerTemplateReader := JSONFor(JSON{})
+			request, _ := http.NewRequest("PUT", fmt.Sprintf("/templates/%s/disable", templateID), offerTemplateReader)
+
+			//When
+			app.Router.ServeHTTP(recorder, request)
+
+			//Then
+			Expect(recorder.Code).To(Equal(http.StatusNotFound))
+			var obj map[string]interface{}
+			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(obj["code"]).To(Equal("OFF-001"))
+			Expect(obj["error"]).To(Equal("OfferTemplateNotFoundError"))
+			Expect(obj["description"]).To(Equal("OfferTemplate was not found with specified filters."))
 		})
 
 		It("should return status code 422 if invalid parameters", func() {
 			//Given
-			offerTemplateReader := JSONFor(JSON{
-				"id":      "not-uuid",
-				"enabled": true,
-			})
-			request, _ := http.NewRequest("PUT", "/offer-templates/set-enabled", offerTemplateReader)
+			templateID := "not-uuid"
+			offerTemplateReader := JSONFor(JSON{})
+			request, _ := http.NewRequest("PUT", fmt.Sprintf("/templates/%s/disable", templateID), offerTemplateReader)
 
 			//When
 			app.Router.ServeHTTP(recorder, request)
@@ -360,13 +426,29 @@ var _ = Describe("Offer Template Handler", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(obj["code"]).To(Equal("OFF-002"))
 			Expect(obj["error"]).To(Equal("ValidationFailedError"))
-			Expect(obj["description"]).To(Equal("ID: not-uuid does not validate as uuidv4;"))
+			Expect(obj["description"]).To(Equal("ID: not-uuid does not validate;"))
+		})
+
+		It("should return status code 301 if empty id", func() {
+			//Given
+			gameID := "offers-game"
+			offerReader := JSONFor(JSON{
+				"playerId": "player-1",
+				"gameId":   gameID,
+			})
+			request, _ := http.NewRequest("PUT", "/templates//disable", offerReader)
+
+			//When
+			app.Router.ServeHTTP(recorder, request)
+
+			//Then
+			Expect(recorder.Code).To(Equal(http.StatusMovedPermanently))
 		})
 	})
 
-	Describe("GET /offer-templates", func() {
+	Describe("GET /templates", func() {
 		It("should return status code of 200 and a list of offer templates", func() {
-			request, _ := http.NewRequest("GET", "/offer-templates?game-id=offers-game", nil)
+			request, _ := http.NewRequest("GET", "/templates?game-id=offers-game", nil)
 
 			app.Router.ServeHTTP(recorder, request)
 
@@ -391,7 +473,7 @@ var _ = Describe("Offer Template Handler", func() {
 		})
 
 		It("should return empty list if no offer templates", func() {
-			request, _ := http.NewRequest("GET", "/offer-templates?game-id=unexistent-game", nil)
+			request, _ := http.NewRequest("GET", "/templates?game-id=unexistent-game", nil)
 
 			app.Router.ServeHTTP(recorder, request)
 			Expect(recorder.Code).To(Equal(http.StatusOK))
@@ -399,7 +481,7 @@ var _ = Describe("Offer Template Handler", func() {
 		})
 
 		It("should return status code of 400 if game-id is not provided", func() {
-			request, _ := http.NewRequest("GET", "/offer-templates", nil)
+			request, _ := http.NewRequest("GET", "/templates", nil)
 
 			app.Router.ServeHTTP(recorder, request)
 
@@ -418,7 +500,7 @@ var _ = Describe("Offer Template Handler", func() {
 			Expect(err).NotTo(HaveOccurred())
 			app.DB = db
 			app.DB.(*runner.DB).DB.Close() // make DB connection unavailable
-			request, _ := http.NewRequest("GET", "/offer-templates?game-id=offers-game", nil)
+			request, _ := http.NewRequest("GET", "/templates?game-id=offers-game", nil)
 
 			app.Router.ServeHTTP(recorder, request)
 

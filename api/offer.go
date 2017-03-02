@@ -27,9 +27,9 @@ func (h *OfferRequestHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	switch h.Method {
 	case "get-offers":
 		h.getOffers(w, r)
-	case "claim-offer":
+	case "claim":
 		h.claimOffer(w, r)
-	case "update-offer-last-seen-at":
+	case "impressions":
 		h.updateOfferLastSeenAt(w, r)
 	}
 }
@@ -69,9 +69,10 @@ func (h *OfferRequestHandler) getOffers(w http.ResponseWriter, r *http.Request) 
 func (h *OfferRequestHandler) claimOffer(w http.ResponseWriter, r *http.Request) {
 	mr := metricsReporterFromCtx(r.Context())
 	offer := offerToUpdateFromCtx(r.Context())
+	offerID := paramKeyFromContext(r.Context())
 	currentTime := h.App.Clock.GetTime()
 
-	contents, alreadyClaimed, err := models.ClaimOffer(h.App.DB, offer.ID, offer.PlayerID, offer.GameID, currentTime, mr)
+	contents, alreadyClaimed, err := models.ClaimOffer(h.App.DB, offerID, offer.PlayerID, offer.GameID, currentTime, mr)
 
 	if err != nil {
 		if modelNotFound, ok := err.(*e.ModelNotFoundError); ok {
@@ -95,9 +96,10 @@ func (h *OfferRequestHandler) claimOffer(w http.ResponseWriter, r *http.Request)
 func (h *OfferRequestHandler) updateOfferLastSeenAt(w http.ResponseWriter, r *http.Request) {
 	mr := metricsReporterFromCtx(r.Context())
 	offer := offerToUpdateFromCtx(r.Context())
+	offerID := paramKeyFromContext(r.Context())
 	currentTime := h.App.Clock.GetTime()
 
-	err := models.UpdateOfferLastSeenAt(h.App.DB, offer.ID, offer.PlayerID, offer.GameID, currentTime, mr)
+	err := models.UpdateOfferLastSeenAt(h.App.DB, offerID, offer.PlayerID, offer.GameID, currentTime, mr)
 
 	if err != nil {
 		if modelNotFound, ok := err.(*e.ModelNotFoundError); ok {

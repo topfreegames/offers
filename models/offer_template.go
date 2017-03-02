@@ -28,12 +28,6 @@ type OfferTemplate struct {
 	Placement string   `db:"placement" json:"placement" valid:"ascii,stringlength(1|255),required"`
 }
 
-//OfferTemplateToUpdate is used by api/app.go to call setEnabled
-type OfferTemplateToUpdate struct {
-	ID      string `db:"id" valid:"uuidv4,required"`
-	Enabled bool   `db:"enabled" valid:"bool,optional"`
-}
-
 const enabledOfferTemplates = `
     WHERE
 		ot.game_id = $1

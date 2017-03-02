@@ -28,8 +28,10 @@ func (g *OfferTemplateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	case "insert":
 		g.insertOfferTemplate(w, r)
 		return
-	case "set-enabled":
-		g.setEnabledOfferTemplate(w, r)
+	case "enable":
+		g.setEnabledOfferTemplate(w, r, true)
+	case "disable":
+		g.setEnabledOfferTemplate(w, r, false)
 		return
 	case "list":
 		g.list(w, r)
@@ -40,8 +42,6 @@ func (g *OfferTemplateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 func (g *OfferTemplateHandler) insertOfferTemplate(w http.ResponseWriter, r *http.Request) {
 	mr := metricsReporterFromCtx(r.Context())
 	ot := offerTemplateFromCtx(r.Context())
-
-	fmt.Printf("OFFER TEMPLATE %#v", ot)
 
 	var err error
 	err = mr.WithSegment(models.SegmentModel, func() error {
@@ -70,16 +70,16 @@ func (g *OfferTemplateHandler) insertOfferTemplate(w http.ResponseWriter, r *htt
 		return
 	}
 
-	WriteBytes(w, http.StatusOK, bytesRes)
+	WriteBytes(w, http.StatusCreated, bytesRes)
 }
 
-func (g *OfferTemplateHandler) setEnabledOfferTemplate(w http.ResponseWriter, r *http.Request) {
+func (g *OfferTemplateHandler) setEnabledOfferTemplate(w http.ResponseWriter, r *http.Request, enable bool) {
 	mr := metricsReporterFromCtx(r.Context())
-	ot := offerTemplateToUpdateFromCtx(r.Context())
+	offerTemplateID := paramKeyFromContext(r.Context())
 
 	var err error
 	err = mr.WithSegment(models.SegmentModel, func() error {
-		return models.SetEnabledOfferTemplate(g.App.DB, ot.ID, ot.Enabled, mr)
+		return models.SetEnabledOfferTemplate(g.App.DB, offerTemplateID, enable, mr)
 	})
 
 	if err != nil {
@@ -91,7 +91,7 @@ func (g *OfferTemplateHandler) setEnabledOfferTemplate(w http.ResponseWriter, r 
 		return
 	}
 
-	Write(w, http.StatusOK, ot.ID)
+	Write(w, http.StatusOK, offerTemplateID)
 }
 
 func (g *OfferTemplateHandler) list(w http.ResponseWriter, r *http.Request) {

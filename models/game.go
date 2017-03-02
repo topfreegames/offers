@@ -16,7 +16,7 @@ import (
 
 //Game represents a tenant in offers API
 type Game struct {
-	ID       string   `db:"id" json:"id" valid:"matches(^[^-][a-z0-9-]*$),stringlength(1|255),required"`
+	ID       string   `db:"id" json:"id" valid:"matches(^[^-][a-z0-9-]*$),stringlength(1|255)"`
 	Name     string   `db:"name" json:"name" valid:"ascii,stringlength(1|255),required"`
 	BundleID string   `db:"bundle_id" json:"bundleId" valid:"stringlength(1|255),required"`
 	Metadata dat.JSON `db:"metadata" json:"metadata" valid:"JSONObject"`

@@ -105,7 +105,7 @@ func migrations0002CreateoffertemplatestableSql() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "migrations/0002-CreateOfferTemplatesTable.sql", size: 616, mode: os.FileMode(420), modTime: time.Unix(1488467473, 0)}
+	info := bindataFileInfo{name: "migrations/0002-CreateOfferTemplatesTable.sql", size: 616, mode: os.FileMode(420), modTime: time.Unix(1488474371, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }

@@ -9,6 +9,7 @@ package api_test
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 
@@ -27,15 +28,14 @@ var _ = Describe("Game Handler", func() {
 		recorder = httptest.NewRecorder()
 	})
 
-	Describe("PUT /games", func() {
+	Describe("PUT /games/{id}", func() {
 		It("should return status code of 200", func() {
 			id := uuid.NewV4().String()
 			gameReader := JSONFor(JSON{
-				"ID":       id,
 				"Name":     "Game Awesome Name",
 				"BundleID": "com.topfreegames.example",
 			})
-			request, _ := http.NewRequest("PUT", "/games", gameReader)
+			request, _ := http.NewRequest("PUT", fmt.Sprintf("/games/%s", id), gameReader)
 
 			app.Router.ServeHTTP(recorder, request)
 
@@ -47,10 +47,11 @@ var _ = Describe("Game Handler", func() {
 		})
 
 		It("should return status code of 422 if missing parameter", func() {
+			id := uuid.NewV4().String()
 			gameReader := JSONFor(JSON{
 				"Name": "Game Awesome Name",
 			})
-			request, _ := http.NewRequest("PUT", "/games", gameReader)
+			request, _ := http.NewRequest("PUT", fmt.Sprintf("/games/%s", id), gameReader)
 
 			app.Router.ServeHTTP(recorder, request)
 
@@ -60,7 +61,7 @@ var _ = Describe("Game Handler", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(obj["code"]).To(Equal("OFF-002"))
 			Expect(obj["error"]).To(Equal("ValidationFailedError"))
-			Expect(obj["description"]).To(Equal("ID: non zero value required;BundleID: non zero value required;"))
+			Expect(obj["description"]).To(Equal("BundleID: non zero value required;"))
 		})
 
 		It("should return status code of 422 if invalid name", func() {
@@ -69,12 +70,12 @@ var _ = Describe("Game Handler", func() {
 				reallyBigName += reallyBigName
 			}
 
+			id := "game-id"
 			gameReader := JSONFor(JSON{
-				"ID":       "game-id",
 				"Name":     reallyBigName,
 				"BundleID": "com.topfreegames.example",
 			})
-			request, _ := http.NewRequest("PUT", "/games", gameReader)
+			request, _ := http.NewRequest("PUT", fmt.Sprintf("/games/%s", id), gameReader)
 
 			app.Router.ServeHTTP(recorder, request)
 
@@ -93,12 +94,12 @@ var _ = Describe("Game Handler", func() {
 				reallyBigName += reallyBigName
 			}
 
+			id := "game-id"
 			gameReader := JSONFor(JSON{
-				"ID":       "game-id",
 				"Name":     uuid.NewV4().String(),
 				"BundleID": reallyBigName,
 			})
-			request, _ := http.NewRequest("PUT", "/games", gameReader)
+			request, _ := http.NewRequest("PUT", fmt.Sprintf("/games/%s", id), gameReader)
 
 			app.Router.ServeHTTP(recorder, request)
 
@@ -113,15 +114,14 @@ var _ = Describe("Game Handler", func() {
 		})
 
 		It("should return status code of 422 if invalid id", func() {
-			id := "abc123!@#xyz456"
+			id := "abc123!@$xyz456"
 			name := "Game Awesome Name"
 			bundleID := "com.tfg.example"
 			gameReader := JSONFor(JSON{
-				"ID":       id,
 				"Name":     name,
 				"BundleID": bundleID,
 			})
-			request, _ := http.NewRequest("PUT", "/games", gameReader)
+			request, _ := http.NewRequest("PUT", fmt.Sprintf("/games/%s", id), gameReader)
 
 			app.Router.ServeHTTP(recorder, request)
 
@@ -131,11 +131,11 @@ var _ = Describe("Game Handler", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(obj["code"]).To(BeEquivalentTo("OFF-002"))
 			Expect(obj["error"]).To(Equal("ValidationFailedError"))
-			Expect(obj["description"]).To(ContainSubstring("ID: abc123!@#xyz456 does not validate as matches(^[^-][a-z0-9-]*$);"))
+			Expect(obj["description"]).To(ContainSubstring("ID: abc123!@$xyz456 does not validate;"))
 		})
 
-		It("should return status code of 422 if empty id", func() {
-			id := ""
+		It("should return status code of 422 if invalid id, even if is passed in body", func() {
+			id := "abc123!@$xyz456"
 			name := "Game Awesome Name"
 			bundleID := "com.tfg.example"
 			gameReader := JSONFor(JSON{
@@ -143,23 +143,35 @@ var _ = Describe("Game Handler", func() {
 				"Name":     name,
 				"BundleID": bundleID,
 			})
-			request, _ := http.NewRequest("PUT", "/games", gameReader)
+			request, _ := http.NewRequest("PUT", fmt.Sprintf("/games/%s", id), gameReader)
 
 			app.Router.ServeHTTP(recorder, request)
 
 			Expect(recorder.Code).To(Equal(http.StatusUnprocessableEntity))
-
 			var obj map[string]interface{}
 			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(obj["code"]).To(BeEquivalentTo("OFF-002"))
 			Expect(obj["error"]).To(Equal("ValidationFailedError"))
-			Expect(obj["description"]).To(ContainSubstring("ID: non zero value required;"))
+			Expect(obj["description"]).To(ContainSubstring("ID: abc123!@$xyz456 does not validate;"))
+		})
+
+		It("should return status code of 404 if id is not passed", func() {
+			gameReader := JSONFor(JSON{
+				"Name":     "Game Awesome Name",
+				"BundleID": "com.topfreegames.example",
+			})
+			request, _ := http.NewRequest("PUT", "/games/", gameReader)
+
+			app.Router.ServeHTTP(recorder, request)
+
+			Expect(recorder.Code).To(Equal(http.StatusNotFound))
+			Expect(recorder.Body.String()).To(Equal("404 page not found\n"))
 		})
 
 		It("should return status code of 500 if some error occurred", func() {
+			id := uuid.NewV4().String()
 			gameReader := JSONFor(JSON{
-				"ID":       uuid.NewV4().String(),
 				"Name":     "Game Awesome Break",
 				"BundleID": "com.topfreegames.example",
 			})
@@ -169,7 +181,7 @@ var _ = Describe("Game Handler", func() {
 			Expect(err).NotTo(HaveOccurred())
 			app.DB = db
 			app.DB.(*runner.DB).DB.Close() // make DB connection unavailable
-			request, _ := http.NewRequest("PUT", "/games", gameReader)
+			request, _ := http.NewRequest("PUT", fmt.Sprintf("/games/%s", id), gameReader)
 
 			app.Router.ServeHTTP(recorder, request)
 
