@@ -19,10 +19,9 @@ Feature: Create an offer template
     Given an offer template exists with name "oc2" in game "offer-template-game"
     When an offer template is created in the "offer-template-game" game with:
       | name | product_id     | contents   | metadata   | period       | frequency          | trigger                                 | placement |
-      | oc2  | com.tfg.sample | { "x": 1 } | { "y": 2 } | { "max": 1 } | { "every": "50s" } | { "from": 1486678078, "to": 1486678079} | popup   |
+      | oc2  | com.tfg.sample | { "x": 1 } | { "y": 2 } | { "max": 1 } | { "every": "50s" } | { "from": 1486678078, "to": 1486678079} | popup     |
     Then the last request returned status code 409
-    And the last error is "OFF-03" with message "There's already an offer template with the same name"
-    And an offer template with name "oc2" does not exist in game "offer-template-game"
+    And the last error is "OFF-003" with message "There's already an offer template with the same name"
 
   Scenario Outline: can't create offer template with invalid payload
     Given the server is up

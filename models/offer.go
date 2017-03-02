@@ -74,7 +74,8 @@ func GetOfferByID(db runner.Connection, gameID, id string, mr *MixedMetricsRepor
 
 //InsertOffer inserts an offer with the new UUID
 func InsertOffer(db runner.Connection, offer *Offer, t time.Time, mr *MixedMetricsReporter) error {
-	err := mr.WithDatastoreSegment("offers", "insect", func() error {
+
+	err := mr.WithDatastoreSegment("offers", SegmentInsert, func() error {
 		return db.
 			InsertInto("offers").
 			Columns("game_id", "offer_template_id", "player_id").
@@ -185,6 +186,7 @@ func GetAvailableOffers(db runner.Connection, playerID, gameID string, t time.Ti
 	for idx, ot := range filteredOts {
 		offerTemplateIDs[idx] = ot.ID
 	}
+
 	playerOffers, err := getPlayerOffersByOfferTemplateIDs(db, gameID, playerID, offerTemplateIDs, mr)
 	if err != nil {
 		return nil, err
@@ -201,8 +203,10 @@ func GetAvailableOffers(db runner.Connection, playerID, gameID string, t time.Ti
 	for _, o := range playerOffers {
 		playerOffersByOfferTemplateID[o.OfferTemplateID] = o
 	}
+
 	offerTemplatesByPlacement := make(map[string][]*OfferToReturn)
 	for _, ot := range filteredOts {
+
 		offerToReturn := &OfferToReturn{
 			ProductID: ot.ProductID,
 			Contents:  ot.Contents,

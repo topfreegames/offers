@@ -63,6 +63,7 @@ Feature: Request offers for a player
       | org  | otosee2 | com.tfg.sample | { "x": 2 } | popup     | { "max": 1 } | { "every": "60s" } | { "from": 6, "to": 10 } |
     When the current time is "<current_time>"
     And the game "offer-request-game" requests offers for player "<player_id>" in "popup"
+    And the player "<player_id>" of game "offer-request-game" sees offer with name "<seen_offer>"
     Then player "<player_id>" of game "offer-request-game" has seen offer "<seen_offer>"
     And player "<player_id>" of game "offer-request-game" has not seen offer "<unseen_offer>"
 
@@ -78,7 +79,9 @@ Feature: Request offers for a player
       | org  | oseen2 | com.tfg.sample | { "x": 2 } | popup     | { "max": 1 } | { "every": "60s" } | { "from": 6, "to": 10 } |
     When the current time is 3
     And the game "offer-request-game" requests offers for player "Henry" in "popup"
+    And the player "Henry" of game "offer-request-game" sees offer in "popup"
     And the current time is 8
     And the game "offer-request-game" requests offers for player "Henry" in "popup"
-    Then player "Henry" has seen offer "oseen1"
-    And player "Henry" has seen offer "oseen2"
+    And the player "Henry" of game "offer-request-game" sees offer in "popup"
+    Then player "Henry" of game "offer-request-game" has seen offer "oseen1"
+    And player "Henry" of game "offer-request-game" has seen offer "oseen2"
