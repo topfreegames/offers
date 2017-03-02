@@ -19,7 +19,7 @@ type Game struct {
 	ID       string   `db:"id" json:"id" valid:"matches(^[^-][a-z0-9-]*$),stringlength(1|255),required"`
 	Name     string   `db:"name" json:"name" valid:"ascii,stringlength(1|255),required"`
 	BundleID string   `db:"bundle_id" json:"bundleId" valid:"stringlength(1|255),required"`
-	Metadata dat.JSON `db:"metadata" json:"metadata" valid:"json"`
+	Metadata dat.JSON `db:"metadata" json:"metadata" valid:"JSONObject"`
 
 	//TODO: Validate dates
 	CreatedAt dat.NullTime `db:"created_at" json:"createdAt" valid:""`
