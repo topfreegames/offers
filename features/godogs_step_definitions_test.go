@@ -26,6 +26,7 @@ import (
 	"encoding/json"
 	e "errors"
 	"fmt"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -200,6 +201,15 @@ func theGameDoesNotExist(id string) error {
 	return fmt.Errorf("The game %s should not exist but it does", game.ID)
 }
 
+func theFollowingPlayersExistInTheGame(gameID string, players *gherkin.DataTable) error {
+	for i := 1; i < len(players.Rows); i++ {
+		if _, err := models.GetAvailableOffers(app.DB, players.Rows[i].Cells[0].Value, gameID, app.Clock.GetTime(), nil); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func aGameWithNameExists(name string) error {
 	_, err := newGame(app.DB, name, name)
 	return err
@@ -230,12 +240,27 @@ func theFollowingOfferTemplatesExistInTheGame(gameID string, otArgs *gherkin.Dat
 
 func theCurrentTimeIs(arg1 string) error {
 	var intCurrentTime int64
+	var factor int
 	var err error
+
+	ok, regexErr := regexp.MatchString(`^\d+d$`, arg1)
+
+	if regexErr != nil {
+		return regexErr
+	} else if ok {
+		arg1 = arg1[:len(arg1)-1]
+		factor = 24 * 60 * 60
+	} else {
+		factor = 1
+	}
+
 	intCurrentTime, err = strconv.ParseInt(arg1, 10, 64)
 
 	if err != nil {
 		return err
 	}
+
+	intCurrentTime *= int64(factor)
 
 	mockClock := testing.MockClock{
 		CurrentTime: intCurrentTime,
@@ -442,4 +467,5 @@ func FeatureContext(s *godog.Suite) {
 	s.Step(`^the current time is (\d+)$`, theCurrentTimeIs)
 	s.Step(`^the player "([^"]*)" of game "([^"]*)" sees offer in "([^"]*)"$`, thePlayerOfGameSeesOfferIn)
 	s.Step(`^the player "([^"]*)" of game "([^"]*)" sees offer with name "([^"]*)"$`, thePlayerOfGameSeesOfferWithName)
+	s.Step(`^the following players exist in the "([^"]*)" game:$`, theFollowingPlayersExistInTheGame)
 }
