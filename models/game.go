@@ -22,8 +22,8 @@ type Game struct {
 	Metadata dat.JSON `db:"metadata" json:"metadata" valid:"json"`
 
 	//TODO: Validate dates
-	CreatedAt dat.NullTime `db:"created_at" valid:""`
-	UpdatedAt dat.NullTime `db:"updated_at" valid:""`
+	CreatedAt dat.NullTime `db:"created_at" json:"createdAt" valid:""`
+	UpdatedAt dat.NullTime `db:"updated_at" json:"updatedAt" valid:""`
 }
 
 //GetMetadata for game
