@@ -97,6 +97,23 @@ func GetEnabledOfferTemplates(db runner.Connection, gameID string, mr *MixedMetr
 	return ots, err
 }
 
+//ListOfferTemplates returns all the offer templates for a given game
+func ListOfferTemplates(db runner.Connection, gameID string, mr *MixedMetricsReporter) ([]*OfferTemplate, error) {
+	var ots []*OfferTemplate
+	err := mr.WithDatastoreSegment("offer_templates", "select", func() error {
+		return db.
+			Select(`
+				id, name, product_id, game_id,
+				contents, metadata, period,
+				frequency, trigger, placement, enabled
+			`).
+			From("offer_templates").
+			Where("game_id = $1", gameID).
+			QueryStructs(&ots)
+	})
+	return ots, err
+}
+
 // InsertOfferTemplate inserts a new offer template into DB
 func InsertOfferTemplate(db runner.Connection, ot *OfferTemplate, mr *MixedMetricsReporter) (*OfferTemplate, error) {
 	_, err := GetOfferTemplateByNameAndGame(db, ot.Name, ot.GameID, mr)

@@ -232,7 +232,7 @@ var _ = Describe("Game Handler", func() {
 			err = json.Unmarshal([]byte(recorder.Body.String()), &obj)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(obj["code"]).To(Equal("OFF-004"))
-			Expect(obj["error"]).To(Equal("Upserting game failed"))
+			Expect(obj["error"]).To(Equal("List games failed."))
 			Expect(obj["description"]).To(Equal("sql: database is closed"))
 			app.DB = oldDB // avoid errors in after each
 		})

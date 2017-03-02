@@ -363,4 +363,73 @@ var _ = Describe("Offer Template Handler", func() {
 			Expect(obj["description"]).To(Equal("ID: not-uuid does not validate as uuidv4;"))
 		})
 	})
+
+	Describe("GET /offer-templates", func() {
+		It("should return status code of 200 and a list of offer templates", func() {
+			request, _ := http.NewRequest("GET", "/offer-templates?game-id=offers-game", nil)
+
+			app.Router.ServeHTTP(recorder, request)
+
+			Expect(recorder.Code).To(Equal(http.StatusOK))
+			var obj []map[string]interface{}
+			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(obj).To(HaveLen(4))
+			for i := 0; i < len(obj); i++ {
+				Expect(obj[i]).To(HaveKey("id"))
+				Expect(obj[i]).To(HaveKey("name"))
+				Expect(obj[i]).To(HaveKey("productId"))
+				Expect(obj[i]).To(HaveKey("gameId"))
+				Expect(obj[i]).To(HaveKey("contents"))
+				Expect(obj[i]).To(HaveKey("metadata"))
+				Expect(obj[i]).To(HaveKey("enabled"))
+				Expect(obj[i]).To(HaveKey("placement"))
+				Expect(obj[i]).To(HaveKey("period"))
+				Expect(obj[i]).To(HaveKey("frequency"))
+				Expect(obj[i]).To(HaveKey("trigger"))
+			}
+		})
+
+		It("should return empty list if no offer templates", func() {
+			request, _ := http.NewRequest("GET", "/offer-templates?game-id=unexistent-game", nil)
+
+			app.Router.ServeHTTP(recorder, request)
+			Expect(recorder.Code).To(Equal(http.StatusOK))
+			Expect(recorder.Body.String()).To(Equal("[]"))
+		})
+
+		It("should return status code of 400 if game-id is not provided", func() {
+			request, _ := http.NewRequest("GET", "/offer-templates", nil)
+
+			app.Router.ServeHTTP(recorder, request)
+
+			Expect(recorder.Code).To(Equal(http.StatusBadRequest))
+			var obj map[string]interface{}
+			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(obj["code"]).To(Equal("OFF-004"))
+			Expect(obj["error"]).To(Equal("The game-id parameter cannot be empty."))
+			Expect(obj["description"]).To(Equal("The game-id parameter cannot be empty"))
+		})
+
+		It("should return status code of 500 if some error occurred", func() {
+			oldDB := app.DB
+			db, err := GetTestDB()
+			Expect(err).NotTo(HaveOccurred())
+			app.DB = db
+			app.DB.(*runner.DB).DB.Close() // make DB connection unavailable
+			request, _ := http.NewRequest("GET", "/offer-templates?game-id=offers-game", nil)
+
+			app.Router.ServeHTTP(recorder, request)
+
+			Expect(recorder.Code).To(Equal(http.StatusInternalServerError))
+			var obj map[string]interface{}
+			err = json.Unmarshal([]byte(recorder.Body.String()), &obj)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(obj["code"]).To(Equal("OFF-004"))
+			Expect(obj["error"]).To(Equal("List game offer templates failed."))
+			Expect(obj["description"]).To(Equal("sql: database is closed"))
+			app.DB = oldDB // avoid errors in after each
+		})
+	})
 })

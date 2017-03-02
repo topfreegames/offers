@@ -43,7 +43,7 @@ func (g *GameHandler) list(w http.ResponseWriter, r *http.Request) {
 	})
 
 	if err != nil {
-		g.App.HandleError(w, http.StatusInternalServerError, "Upserting game failed", err)
+		g.App.HandleError(w, http.StatusInternalServerError, "List games failed.", err)
 		return
 	}
 

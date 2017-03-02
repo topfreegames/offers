@@ -166,6 +166,14 @@ var _ = Describe("Offer Template Models", func() {
 		})
 	})
 
+	Describe("List offer templates", func() {
+		It("Should return the full list of offer templates for the given game", func() {
+			games, err := models.ListOfferTemplates(db, "offers-game", nil)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(games).To(HaveLen(4))
+		})
+	})
+
 	Describe("Get enabled offer templates", func() {
 		It("Should get all enabled offer templates", func() {
 			ots, err := models.GetEnabledOfferTemplates(db, "offers-game", nil)

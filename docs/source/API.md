@@ -173,7 +173,6 @@ Offers API
           "gameId":    [string],
           "contents":  [json],  
           "metadata":  [json],  
-          "enabled":   [bool],  
           "placement": [string],
           "period":    {        
             "every": [string],  
@@ -258,6 +257,57 @@ Offers API
       ```
         {
           "reason": [string]
+        }
+      ```
+
+  ### List Offer Templates
+  `GET /offers-templates?game-id=<required-game-id>`
+
+  List all game's offer templates.
+
+  * Success Response
+    * Code: `200`
+    * Content:
+
+    ```
+    [    
+      {
+        "id":        [uuid],   // offer template unique identifier
+        "name":      [string],
+        "productId": [string],
+        "gameId":    [string],
+        "contents":  [json],  
+        "metadata":  [json],  
+        "placement": [string],
+        "period":    {        
+          "every": [string],  
+          "max":   [int]      
+        },   
+        "frequency": {        
+          "every": [string],  
+          "max":   [int]      
+        },   
+        "trigger":   {        
+          "from":  [int],     
+          "to":    [int]      
+        },
+        "enabled": [bool]
+      },
+      ...
+    ]
+    ```
+
+  * Error response
+
+    It will return an error if the query on db failed
+
+    * Code: `500`
+    * Content:
+      ```
+        {
+          "error": [string],       // error
+          "code":  [string],       // error code
+          "description": [string]  // error description
         }
       ```
 

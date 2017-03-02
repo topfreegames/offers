@@ -31,6 +31,9 @@ func (g *OfferTemplateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	case "set-enabled":
 		g.setEnabledOfferTemplate(w, r)
 		return
+	case "list":
+		g.list(w, r)
+		return
 	}
 }
 
@@ -89,4 +92,33 @@ func (g *OfferTemplateHandler) setEnabledOfferTemplate(w http.ResponseWriter, r 
 	}
 
 	Write(w, http.StatusOK, ot.ID)
+}
+
+func (g *OfferTemplateHandler) list(w http.ResponseWriter, r *http.Request) {
+	mr := metricsReporterFromCtx(r.Context())
+	gameID := r.URL.Query().Get("game-id")
+	if gameID == "" {
+		err := fmt.Errorf("The game-id parameter cannot be empty")
+		g.App.HandleError(w, http.StatusBadRequest, "The game-id parameter cannot be empty.", err)
+		return
+	}
+
+	var err error
+	var offerTemplates []*models.OfferTemplate
+	err = mr.WithSegment(models.SegmentModel, func() error {
+		offerTemplates, err = models.ListOfferTemplates(g.App.DB, gameID, mr)
+		return err
+	})
+
+	if err != nil {
+		g.App.HandleError(w, http.StatusInternalServerError, "List game offer templates failed.", err)
+		return
+	}
+
+	if len(offerTemplates) == 0 {
+		Write(w, http.StatusOK, "[]")
+		return
+	}
+	bytes, _ := json.Marshal(offerTemplates)
+	WriteBytes(w, http.StatusOK, bytes)
 }

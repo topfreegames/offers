@@ -83,6 +83,13 @@ func (a *App) getRouter() *mux.Router {
 	)).Methods("PUT").Name("game")
 
 	r.Handle("/offer-templates", Chain(
+		&OfferTemplateHandler{App: a, Method: "list"},
+		&NewRelicMiddleware{App: a},
+		&LoggingMiddleware{App: a},
+		&VersionMiddleware{},
+	)).Methods("GET").Name("offer_templates")
+
+	r.Handle("/offer-templates", Chain(
 		&OfferTemplateHandler{App: a, Method: "insert"},
 		&NewRelicMiddleware{App: a},
 		&LoggingMiddleware{App: a},
