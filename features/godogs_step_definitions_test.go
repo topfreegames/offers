@@ -29,6 +29,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/DATA-DOG/godog"
 	"github.com/DATA-DOG/godog/gherkin"
@@ -45,7 +46,7 @@ import (
 var app *api.App
 var logger logrus.Logger
 var lastStatus int
-var lastBody string
+var lastBody, lastPlayerID, lastGameID, lastPlacement string
 var lastOffers map[string][]*models.OfferToReturn
 var clock *testing.MockClock
 var cleanDB runner.Connection
@@ -82,6 +83,21 @@ func theServerIsUp() error {
 	cleanDB = app.DB
 
 	return nil
+}
+
+func SelectOfferByOfferTemplateNameAndPlayerAndGame(offerTemplateName, playerID, gameID string) (*models.Offer, error) {
+	query := `SELECT 
+							offers.id, offers.game_id, offers.player_id, offers.seen_counter
+						FROM 
+							offers
+						INNER JOIN offer_templates ON offer_templates.id = offers.offer_template_id
+						WHERE offers.player_id = $1
+							AND offers.game_id = $2
+							AND offer_templates.name = $3`
+	var offer models.Offer
+	err := app.DB.SQL(query, playerID, gameID, offerTemplateName).QueryStruct(&offer)
+
+	return &offer, err
 }
 
 func requestGameWithIDAndBundleID(id, bundleID string) error {
@@ -158,6 +174,9 @@ func theLastErrorIsWithMessage(code, description string) error {
 	var data map[string]string
 	err := json.Unmarshal([]byte(lastBody), &data)
 	if err != nil {
+		if strings.TrimSpace(description) == strings.TrimSpace(lastBody) {
+			return nil
+		}
 		return err
 	}
 
@@ -202,8 +221,41 @@ func theGameDoesNotExist(id string) error {
 
 func theFollowingPlayersExistInTheGame(gameID string, players *gherkin.DataTable) error {
 	for i := 1; i < len(players.Rows); i++ {
-		if _, err := models.GetAvailableOffers(app.DB, players.Rows[i].Cells[0].Value, gameID, app.Clock.GetTime(), nil); err != nil {
+		playerID := players.Rows[i].Cells[0].Value
+
+		_, err := models.GetAvailableOffers(app.DB, playerID, gameID, app.Clock.GetTime(), nil)
+		if err != nil {
 			return err
+		}
+
+		claimedOffers := strings.Split(players.Rows[i].Cells[1].Value, ", ")
+		timestamps := strings.Split(players.Rows[i].Cells[2].Value, ", ")
+
+		for j, offerTemplateName := range claimedOffers {
+			if offerTemplateName != "-" {
+				unixTime, err := strconv.Atoi(timestamps[j])
+				if err != nil {
+					return err
+				}
+
+				currentTime := time.Unix(int64(unixTime), 0)
+
+				if _, err := models.GetAvailableOffers(app.DB, playerID, gameID, currentTime, nil); err != nil {
+					return err
+				}
+				offer, err := SelectOfferByOfferTemplateNameAndPlayerAndGame(offerTemplateName, playerID, gameID)
+
+				if err != nil {
+					return err
+				}
+
+				//alreadyClaimed is useless because before each test the offers are claimed, doesn't matter if it already was
+				_, _, err = models.ClaimOffer(app.DB, offer.ID, playerID, gameID, app.Clock.GetTime(), nil)
+
+				if err != nil {
+					return err
+				}
+			}
 		}
 	}
 	return nil
@@ -216,14 +268,19 @@ func aGameWithNameExists(name string) error {
 
 func theFollowingOfferTemplatesExistInTheGame(gameID string, otArgs *gherkin.DataTable) error {
 	for i := 1; i < len(otArgs.Rows); i++ {
+		contents := strings.Replace(otArgs.Rows[i].Cells[3].Value, "'", "\"", -1)
+		period := strings.Replace(otArgs.Rows[i].Cells[5].Value, "'", "\"", -1)
+		freq := strings.Replace(otArgs.Rows[i].Cells[6].Value, "'", "\"", -1)
+		trigger := strings.Replace(otArgs.Rows[i].Cells[7].Value, "'", "\"", -1)
+
 		ot := &models.OfferTemplate{
 			Name:      otArgs.Rows[i].Cells[1].Value,
 			ProductID: otArgs.Rows[i].Cells[2].Value,
-			Contents:  dat.JSON([]byte(otArgs.Rows[i].Cells[3].Value)),
+			Contents:  dat.JSON([]byte(contents)),
 			Placement: otArgs.Rows[i].Cells[4].Value,
-			Period:    dat.JSON([]byte(otArgs.Rows[i].Cells[5].Value)),
-			Frequency: dat.JSON([]byte(otArgs.Rows[i].Cells[6].Value)),
-			Trigger:   dat.JSON([]byte(otArgs.Rows[i].Cells[7].Value)),
+			Period:    dat.JSON([]byte(period)),
+			Frequency: dat.JSON([]byte(freq)),
+			Trigger:   dat.JSON([]byte(trigger)),
 			GameID:    gameID,
 		}
 
@@ -270,9 +327,14 @@ func theCurrentTimeIs(arg1 string) error {
 	return nil
 }
 
-func playerClaimsOfferInGame(playerID, offerID, gameID string) error {
-	var err error
-	lastStatus, lastBody, err = performRequest(app, "PUT", fmt.Sprintf("/offer/%s/claim", offerID), map[string]interface{}{
+func playerClaimsOfferInGame(playerID, offerTemplateName, gameID string) error {
+	offer, err := SelectOfferByOfferTemplateNameAndPlayerAndGame(offerTemplateName, playerID, gameID)
+
+	if err != nil {
+		return err
+	}
+
+	lastStatus, lastBody, err = performRequest(app, "PUT", fmt.Sprintf("/offers/%s/claim", offer.ID), map[string]interface{}{
 		"gameID":   gameID,
 		"playerID": playerID,
 	})
@@ -289,7 +351,11 @@ func theLastRequestReturnedStatusCodeStatusAndBody(code int, body string) error 
 		return codeErr
 	}
 
-	if lastBody != body {
+	body = strings.Replace(body, "'", "\"", -1)
+	body = strings.Replace(body, " ", "", -1)
+	lastTrimmedBody := strings.Replace(lastBody, " ", "", -1)
+
+	if lastTrimmedBody != body {
 		return fmt.Errorf("Expected last request to have body %s but it had %s", body, lastBody)
 	}
 
@@ -360,6 +426,10 @@ func theGameRequestsOffersForPlayerIn(gameID, playerID, placement string) error 
 	if _, ok := lastOffers[placement]; !ok {
 		return fmt.Errorf("Expected to have an offer for placement %s to player %s but the is not", placement, playerID)
 	}
+
+	lastPlayerID = playerID
+	lastGameID = gameID
+	lastPlacement = placement
 
 	return nil
 }
@@ -449,8 +519,20 @@ func thePlayerOfGameSeesOfferWithName(playerID, gameID, offerTemplateName string
 	return nil
 }
 
-func anOfferWithNameIsReturned(arg1 string) error {
-	return godog.ErrPending
+func anOfferWithNameIsReturned(offerTemplateName string) error {
+	offer, err := SelectOfferByOfferTemplateNameAndPlayerAndGame(offerTemplateName, lastPlayerID, lastGameID)
+
+	if err != nil {
+		return err
+	}
+
+	for _, returnedOffer := range lastOffers[lastPlacement] {
+		if returnedOffer.ID == offer.ID {
+			return nil
+		}
+	}
+
+	return fmt.Errorf("Expected offer %s to be returned", offerTemplateName)
 }
 
 func FeatureContext(s *godog.Suite) {

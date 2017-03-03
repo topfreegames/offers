@@ -8,6 +8,7 @@
 package models_test
 
 import (
+	"bytes"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	uuid "github.com/satori/go.uuid"
@@ -172,6 +173,31 @@ var _ = Describe("Games Model", func() {
 			Expect(gameFromDB.ID).To(Equal(id))
 			Expect(gameFromDB.Name).To(Equal(name))
 			Expect(gameFromDB.BundleID).To(Equal(bundleID))
+		})
+
+		It("should return error when inserting game with very big name", func() {
+			//Given
+			id := uuid.NewV4().String()
+
+			var buffer bytes.Buffer
+			for i := 0; i < 100; i++ {
+				buffer.WriteString("abc")
+			}
+
+			game := models.Game{
+				ID:       id,
+				Name:     buffer.String(),
+				BundleID: "com.tfg.example",
+				Metadata: dat.JSON([]byte(`{"qwe": 123}`)),
+			}
+			var c models.RealClock
+
+			//When
+			err := models.UpsertGame(db, &game, c.GetTime(), nil)
+
+			//Then
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(Equal("pq: value too long for type character varying(255)"))
 		})
 	})
 })
