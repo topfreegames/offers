@@ -125,6 +125,7 @@ func InsertOfferTemplate(db runner.Connection, ot *OfferTemplate, mr *MixedMetri
 	if ot.Metadata == nil {
 		ot.Metadata = dat.JSON([]byte(`{}`))
 	}
+
 	err = mr.WithDatastoreSegment("offer_templates", SegmentInsert, func() error {
 		return db.
 			InsertInto("offer_templates").
