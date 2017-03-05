@@ -116,3 +116,5 @@ rtfd:
 	@rm -rf docs/_build
 	@sphinx-build -b html -d ./docs/_build/doctrees ./docs/source/ docs/_build/html
 	@open docs/_build/html/index.html
+
+clean: drop-test migrate-test clear-coverage-profiles

@@ -24,7 +24,6 @@ package features
 
 import (
 	"encoding/json"
-	e "errors"
 	"fmt"
 	"regexp"
 	"strconv"
@@ -40,7 +39,6 @@ import (
 	"github.com/topfreegames/offers/models"
 	"github.com/topfreegames/offers/testing"
 	"gopkg.in/mgutz/dat.v2/dat"
-	runner "gopkg.in/mgutz/dat.v2/sqlx-runner"
 )
 
 var app *api.App
@@ -49,7 +47,6 @@ var lastStatus int
 var lastBody, lastPlayerID, lastGameID, lastPlacement string
 var lastOffers map[string][]*models.OfferToReturn
 var clock *testing.MockClock
-var cleanDB runner.Connection
 
 func theServerIsUp() error {
 	configFile := "../config/acc.yaml"
@@ -80,8 +77,6 @@ func theServerIsUp() error {
 		return err
 	}
 
-	cleanDB = app.DB
-
 	return nil
 }
 
@@ -108,34 +103,6 @@ func requestGameWithIDAndBundleID(id, bundleID string) error {
 	})
 
 	return err
-}
-
-func requestInsertOfferTemplate(name, productID, gameID, contents, period, frequency, trigger, placement string) error {
-	code, body, err := performRequest(app, "POST", "/templates", map[string]interface{}{
-		"name":      name,
-		"productId": productID,
-		"gameId":    gameID,
-		"contents":  contents,
-		"period":    period,
-		"frequency": frequency,
-		"trigger":   trigger,
-		"placement": placement,
-	})
-
-	if err != nil {
-		return err
-	}
-
-	if code != 200 {
-		return e.New(body)
-	}
-
-	var ot models.OfferTemplate
-	json.Unmarshal([]byte(body), &ot)
-	if ot.GameID != gameID {
-		return e.New("GameID doesn't match")
-	}
-	return nil
 }
 
 //ALIAS to update
@@ -223,11 +190,6 @@ func theFollowingPlayersExistInTheGame(gameID string, players *gherkin.DataTable
 	for i := 1; i < len(players.Rows); i++ {
 		playerID := players.Rows[i].Cells[0].Value
 
-		_, err := models.GetAvailableOffers(app.DB, playerID, gameID, app.Clock.GetTime(), nil)
-		if err != nil {
-			return err
-		}
-
 		claimedOffers := strings.Split(players.Rows[i].Cells[1].Value, ", ")
 		timestamps := strings.Split(players.Rows[i].Cells[2].Value, ", ")
 
@@ -239,19 +201,16 @@ func theFollowingPlayersExistInTheGame(gameID string, players *gherkin.DataTable
 				}
 
 				currentTime := time.Unix(int64(unixTime), 0)
-
 				if _, err := models.GetAvailableOffers(app.DB, playerID, gameID, currentTime, nil); err != nil {
 					return err
 				}
-				offer, err := SelectOfferByOfferTemplateNameAndPlayerAndGame(offerTemplateName, playerID, gameID)
 
+				offer, err := SelectOfferByOfferTemplateNameAndPlayerAndGame(offerTemplateName, playerID, gameID)
 				if err != nil {
 					return err
 				}
 
-				//alreadyClaimed is useless because before each test the offers are claimed, doesn't matter if it already was
-				_, _, err = models.ClaimOffer(app.DB, offer.ID, playerID, gameID, app.Clock.GetTime(), nil)
-
+				err = models.UpdateOfferLastSeenAt(app.DB, offer.ID, playerID, gameID, currentTime, nil)
 				if err != nil {
 					return err
 				}
@@ -268,19 +227,14 @@ func aGameWithNameExists(name string) error {
 
 func theFollowingOfferTemplatesExistInTheGame(gameID string, otArgs *gherkin.DataTable) error {
 	for i := 1; i < len(otArgs.Rows); i++ {
-		contents := strings.Replace(otArgs.Rows[i].Cells[3].Value, "'", "\"", -1)
-		period := strings.Replace(otArgs.Rows[i].Cells[5].Value, "'", "\"", -1)
-		freq := strings.Replace(otArgs.Rows[i].Cells[6].Value, "'", "\"", -1)
-		trigger := strings.Replace(otArgs.Rows[i].Cells[7].Value, "'", "\"", -1)
-
 		ot := &models.OfferTemplate{
 			Name:      otArgs.Rows[i].Cells[1].Value,
 			ProductID: otArgs.Rows[i].Cells[2].Value,
-			Contents:  dat.JSON([]byte(contents)),
+			Contents:  toJSON(otArgs.Rows[i].Cells[3].Value),
 			Placement: otArgs.Rows[i].Cells[4].Value,
-			Period:    dat.JSON([]byte(period)),
-			Frequency: dat.JSON([]byte(freq)),
-			Trigger:   dat.JSON([]byte(trigger)),
+			Period:    toJSON(otArgs.Rows[i].Cells[5].Value),
+			Frequency: toJSON(otArgs.Rows[i].Cells[6].Value),
+			Trigger:   toJSON(otArgs.Rows[i].Cells[7].Value),
 			GameID:    gameID,
 		}
 
@@ -328,16 +282,14 @@ func theCurrentTimeIs(arg1 string) error {
 }
 
 func playerClaimsOfferInGame(playerID, offerTemplateName, gameID string) error {
-	offer, err := SelectOfferByOfferTemplateNameAndPlayerAndGame(offerTemplateName, playerID, gameID)
-
-	if err != nil {
-		return err
-	}
+	var err error
+	offer, _ := SelectOfferByOfferTemplateNameAndPlayerAndGame(offerTemplateName, playerID, gameID)
 
 	lastStatus, lastBody, err = performRequest(app, "PUT", fmt.Sprintf("/offers/%s/claim", offer.ID), map[string]interface{}{
 		"gameID":   gameID,
 		"playerID": playerID,
 	})
+
 	if err != nil {
 		return err
 	}
@@ -372,16 +324,24 @@ func theLastRequestReturnedStatusCodeAndBody(code, body string) error {
 	return theLastRequestReturnedStatusCodeStatusAndBody(intCode, body)
 }
 
+func toJSON(str string) dat.JSON {
+	if len(str) == 0 {
+		return nil
+	}
+
+	return dat.JSON([]byte(strings.Replace(str, "'", "\"", -1)))
+}
+
 func anOfferTemplateIsCreatedInTheGameWithNamePidContentsMetadataPeriodFreqTriggerPlace(gameID, name, pid, contents, metadata, period, freq, trigger, place string) error {
 	payload := map[string]interface{}{
 		"gameId":    gameID,
 		"name":      name,
 		"productId": pid,
-		"contents":  contents,
-		"metadata":  metadata,
-		"period":    period,
-		"frequency": freq,
-		"trigger":   trigger,
+		"contents":  toJSON(contents),
+		"metadata":  toJSON(metadata),
+		"period":    toJSON(period),
+		"frequency": toJSON(freq),
+		"trigger":   toJSON(trigger),
 		"placement": place,
 	}
 	var err error
@@ -391,14 +351,21 @@ func anOfferTemplateIsCreatedInTheGameWithNamePidContentsMetadataPeriodFreqTrigg
 }
 
 func anOfferTemplateWithNameExistsInGame(offerTemplateName, gameID string) error {
-	if _, err := models.GetOfferTemplateByNameAndGame(app.DB, offerTemplateName, gameID, nil); err != nil {
-		return insertOfferTemplate(app.DB, offerTemplateName, gameID)
+	_, err := models.GetOfferTemplateByNameAndGame(app.DB, offerTemplateName, gameID, nil)
+
+	if err != nil {
+		return err
 	}
+
 	return nil
 }
 
-func anOfferTemplateExistsWithNameInGame(offerID, gameID string) error {
-	return anOfferTemplateWithNameExistsInGame(offerID, gameID)
+func anOfferTemplateExistsWithNameInGame(offerTemplateName, gameID string) error {
+	if _, err := models.GetOfferTemplateByNameAndGame(app.DB, offerTemplateName, gameID, nil); err != nil {
+		return insertOfferTemplate(app.DB, offerTemplateName, gameID)
+	}
+
+	return nil
 }
 
 func anOfferTemplateWithNameDoesNotExistInGame(offerTemplateName, gameID string) error {
@@ -413,20 +380,17 @@ func theGameRequestsOffersForPlayerIn(gameID, playerID, placement string) error 
 
 	url := "/offers?player-id=" + playerID + "&game-id=" + gameID
 	lastStatus, lastBody, err = performRequest(app, "GET", url, nil)
-	if err != nil {
-		return err
-	}
-
-	err = json.Unmarshal([]byte(lastBody), &lastOffers)
 
 	if err != nil {
 		return err
 	}
 
-	if _, ok := lastOffers[placement]; !ok {
-		return fmt.Errorf("Expected to have an offer for placement %s to player %s but the is not", placement, playerID)
+	var newLastOffers map[string][]*models.OfferToReturn
+	if err = json.Unmarshal([]byte(lastBody), &newLastOffers); err != nil {
+		return err
 	}
 
+	lastOffers = newLastOffers
 	lastPlayerID = playerID
 	lastGameID = gameID
 	lastPlacement = placement
@@ -435,21 +399,13 @@ func theGameRequestsOffersForPlayerIn(gameID, playerID, placement string) error 
 }
 
 func playerOfGameHasSeenOffer(playerID, gameID, offerTemplateName string) error {
-	offerTemplate, err := models.GetOfferTemplateByNameAndGame(app.DB, offerTemplateName, gameID, nil)
+	offer, err := SelectOfferByOfferTemplateNameAndPlayerAndGame(offerTemplateName, playerID, gameID)
 
 	if err != nil {
 		return err
 	}
 
-	query := `SELECT id, seen_counter FROM offers 
-						WHERE player_id = $1 
-							AND game_id = $2 
-							AND offer_template_id = $3;`
-	var offers []models.Offer
-
-	app.DB.SQL(query, playerID, gameID, offerTemplate.ID).QueryStructs(&offers)
-
-	if len(offers) == 0 || offers[0].SeenCounter == 0 {
+	if offer.SeenCounter == 0 {
 		return fmt.Errorf("Expected player %s of game %s to has seen offer %s", playerID, gameID, offerTemplateName)
 	}
 
@@ -484,42 +440,34 @@ func thePlayerOfGameSeesOfferIn(playerID, gameID, placement string) error {
 }
 
 func thePlayerOfGameSeesOfferWithName(playerID, gameID, offerTemplateName string) error {
-	offerTemplate, err := models.GetOfferTemplateByNameAndGame(app.DB, offerTemplateName, gameID, nil)
+	offer, err := SelectOfferByOfferTemplateNameAndPlayerAndGame(offerTemplateName, playerID, gameID)
 
 	if err != nil {
 		return err
 	}
 
-	query := `SELECT seen_counter, id FROM offers 
-						WHERE player_id = $1 
-							AND game_id = $2 
-							AND offer_template_id = $3;`
-	var offers []models.Offer
-
-	err = app.DB.SQL(query, playerID, gameID, offerTemplate.ID).QueryStructs(&offers)
+	lastStatus, lastBody, err = performRequest(app, "POST", fmt.Sprintf("/offers/%s/impressions", offer.ID), map[string]interface{}{
+		"ID":       offer.ID,
+		"PlayerID": playerID,
+		"GameID":   gameID,
+	})
 
 	if err != nil {
 		return err
-	}
-
-	for _, offer := range offers {
-		if offer.OfferTemplateID == offerTemplate.ID {
-			lastStatus, lastBody, err = performRequest(app, "POST", fmt.Sprintf("/offers/%s/impressions", offer.ID), map[string]interface{}{
-				"ID":       offer.ID,
-				"PlayerID": playerID,
-				"GameID":   gameID,
-			})
-
-			if err != nil {
-				return err
-			}
-		}
 	}
 
 	return nil
 }
 
 func anOfferWithNameIsReturned(offerTemplateName string) error {
+	if offerTemplateName == "-" {
+		if _, ok := lastOffers[lastPlacement]; ok {
+			return fmt.Errorf("Expected no offers in placement %s", lastPlacement)
+		}
+
+		return nil
+	}
+
 	offer, err := SelectOfferByOfferTemplateNameAndPlayerAndGame(offerTemplateName, lastPlayerID, lastGameID)
 
 	if err != nil {
@@ -535,13 +483,42 @@ func anOfferWithNameIsReturned(offerTemplateName string) error {
 	return fmt.Errorf("Expected offer %s to be returned", offerTemplateName)
 }
 
-func FeatureContext(s *godog.Suite) {
-	s.BeforeScenario(func(interface{}) {
-		if cleanDB != nil {
-			app.DB = cleanDB
-		}
-	})
+func theFollowingPlayersClaimedInTheGame(gameID string, players *gherkin.DataTable) error {
+	for i := 1; i < len(players.Rows); i++ {
+		playerID := players.Rows[i].Cells[0].Value
 
+		claimedOffers := strings.Split(players.Rows[i].Cells[1].Value, ", ")
+		timestamps := strings.Split(players.Rows[i].Cells[2].Value, ", ")
+
+		for j, offerTemplateName := range claimedOffers {
+			if offerTemplateName != "-" {
+				unixTime, err := strconv.Atoi(timestamps[j])
+				if err != nil {
+					return err
+				}
+
+				currentTime := time.Unix(int64(unixTime), 0)
+				if _, err := models.GetAvailableOffers(app.DB, playerID, gameID, currentTime, nil); err != nil {
+					return err
+				}
+
+				offer, err := SelectOfferByOfferTemplateNameAndPlayerAndGame(offerTemplateName, playerID, gameID)
+				if err != nil {
+					return err
+				}
+
+				_, _, err = models.ClaimOffer(app.DB, offer.ID, playerID, gameID, currentTime, nil)
+				if err != nil {
+					return err
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
+func FeatureContext(s *godog.Suite) {
 	s.Step(`^the server is up$`, theServerIsUp)
 	s.Step(`^a game named "([^"]*)" is created with bundle id of "([^"]*)"$`, aGameNamedIsCreatedWithBundleIDOf)
 	s.Step(`^the game "([^"]*)" exists$`, theGameExists)
@@ -567,4 +544,5 @@ func FeatureContext(s *godog.Suite) {
 	s.Step(`^an offer template is created in the "([^"]*)" game with name "([^"]*)" pid "([^"]*)" contents "([^"]*)" metadata "([^"]*)" period "([^"]*)" freq "([^"]*)" trigger "([^"]*)" place "([^"]*)"$`, anOfferTemplateIsCreatedInTheGameWithNamePidContentsMetadataPeriodFreqTriggerPlace)
 	s.Step(`^the last request returned status code "([^"]*)" and body "([^"]*)"$`, theLastRequestReturnedStatusCodeAndBody)
 	s.Step(`^an offer with name "([^"]*)" is returned$`, anOfferWithNameIsReturned)
+	s.Step(`^the following players claimed in the "([^"]*)" game:$`, theFollowingPlayersClaimedInTheGame)
 }

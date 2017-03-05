@@ -1,5 +1,4 @@
-Feature: Request offers for a player
-
+Feature: Request offers for a player 
   Background:
     Given the server is up
     And a game with name "offer-request-game" exists
@@ -10,15 +9,15 @@ Feature: Request offers for a player
       | org  | oronce1 | com.tfg.sample | { 'x': 1 } | popup     | { 'max': 1 } | { 'every': '60s' } | { 'from': 0, 'to': 5 }    |
       | org  | oronce2 | com.tfg.sample | { 'x': 2 } | popup     | { 'max': 1 } | { 'every': '60s' } | { 'from': 6, 'to': 10 }   |
       | org  | oronce3 | com.tfg.sample | { 'x': 3 } | popup     | { 'max': 1 } | { 'every': '60s' } | { 'from': 20, 'to': 800 } |
-      | org  | oronce4 | com.tfg.sample | { 'x': 4 } | storoncee | { 'max': 1 } | { 'every': '60s' } | { 'from': 20, 'to': 800 } |
+      | org  | oronce4 | com.tfg.sample | { 'x': 4 } | store     | { 'max': 1 } | { 'every': '60s' } | { 'from': 20, 'to': 800 } |
     And the following players exist in the "offer-request-game" game:
-      | id        | claimed-offers                     | last-seen-offer-at |
-      | joseph    | -                                  | -, -, -, -         |
-      | john      | oronce1                            | 3, -, -, -         |
-      | michael   | oronce1, oronce2                   | 3, 8, -, -         |
-      | jane      | -, -, oronce3                      | -, -, 23, -        |
-      | mary      | -, oronce2, oronce3                | -, 8, 23, -        |
-      | christine | oronce1, oronce2, oronce3, oronce3 | 3, 8, 23, 23       |
+      | id        | seen-offers                     | last-seen-offer-at |
+      | joseph    | -, -, -, -                         | -, -, -, -         |
+      | john      | oronce1, -, -, -                   | 3, -, -, -         |
+      | michael   | oronce1, oronce2, -, -             | 3, 8, -, -         |
+      | jane      | -, -, oronce3, -                   | -, -, 23, -        |
+      | mary      | -, oronce2, oronce3, -             | -, 8, 23, -        |
+      | christine | oronce1, oronce2, oronce3, oronce4 | 3, 8, 23, 23       |
     When the current time is "<current_time>"
     And the game "offer-request-game" requests offers for player "<player_id>" in "<placement>"
     Then an offer with name "<offer>" is returned

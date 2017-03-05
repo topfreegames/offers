@@ -27,7 +27,7 @@ Feature: Create an offer template
     Given the server is up
     When an offer template is created in the "offer-template-game" game with name "<name>" pid "<pid>" contents "<contents>" metadata "<metadata>" period "<period>" freq "<frequency>" trigger "<trigger>" place "<placement>" 
     Then the last request returned status code 422
-    And the last error is "OFF-04" with message "<error>"
+    And the last error is "OFF-002" with message "<error>"
     And an offer template with name "oc3" does not exist in game "offer-template-game"
 
     Examples:

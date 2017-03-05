@@ -78,7 +78,7 @@ func (m *ValidationMiddleware) configureCustomValidators() {
 				case dat.JSON:
 					var val map[string]interface{}
 					err := v.Unmarshal(&val)
-					return err == nil
+					return err == nil && len(val) > 0
 				}
 				return false
 			},
