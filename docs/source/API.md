@@ -294,7 +294,7 @@ Offers API
       ```
 
   ### List Offer Templates
-  `GET /offers-templates?game-id=<required-game-id>`
+  `GET /templates?game-id=<required-game-id>`
 
   List all game's offer templates.
 
