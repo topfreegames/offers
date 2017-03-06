@@ -118,3 +118,5 @@ rtfd:
 	@open docs/_build/html/index.html
 
 clean: drop-test migrate-test clear-coverage-profiles
+
+run-full: drop migrate deps run
