@@ -127,6 +127,7 @@ Offers API
     ```
       {
         "name":      [string], // required, 255 characters max
+        "key":       [uuidv4], // required
         "productId": [string], // required, 255 characters max
         "gameId":    [string], // required, matches ^[^-][a-z0-9-]*$
         "contents":  [json],   // required
@@ -149,6 +150,7 @@ Offers API
 
     * Field Descriptions
        - **name**:         Prettier game identifier to show on UI.  
+       - **key**:          Identifies an offer template. It is common between the templates versions, meaning it keeps the same when an offer is updated. 
        - **productId**:    Identifier of the item to be bought on PlayStore or AppStore.  
        - **gameId**:       ID of the game this template was made for (must exist on Games table on DB).  
        - **contents**:     What the offer provides (ex.: { "gem": 5, "gold": 100 }).  
@@ -164,7 +166,8 @@ Offers API
     * Content:
       ```
         {
-          "id":        [uuid],   // offer template unique identifier
+          "id":        [uuidv4],   // offer template unique identifier
+          "key":       [uuidv4],
           "name":      [string],
           "productId": [string],
           "gameId":    [string],
@@ -305,7 +308,8 @@ Offers API
     ```
     [    
       {
-        "id":        [uuid],   // offer template unique identifier
+        "id":        [uuidv4],   // offer template unique identifier
+        "key":       [uuidv4],
         "name":      [string],
         "productId": [string],
         "gameId":    [string],

@@ -7,6 +7,7 @@
 
 -
     id: dd21ec96-2890-4ba0-b8e2-40ea67196990
+    key: da700673-0415-43c3-a8e0-18331b794482
     name: template-1
     product_id: com.tfg.sample
     game_id: offers-game
@@ -19,6 +20,7 @@
     enabled: true
 -
     id: aa65a3f2-7cf8-4d76-957f-0a23a1bbbd32
+    key: 51cd5234-bcbd-42ae-872a-1dc842ea2f51
     name: limited-template
     product_id: com.tfg.sample
     game_id: limited-offers-game
@@ -31,6 +33,7 @@
     enabled: true
 -
     id: d5114990-77d7-45c4-ba5f-462fc86b213f
+    key: bd36b563-8fd4-4f08-82bb-d9344717b50c
     name: template-2
     product_id: com.tfg.sample.2
     game_id: offers-game
@@ -43,6 +46,7 @@
     enabled: true
 -
     id: a411fbcf-dddc-4153-b42b-3f9b2684c965
+    key: a158bcf0-c527-4bff-975e-5327fbdb5696
     name: template-3
     product_id: com.tfg.sample.3
     game_id: offers-game
@@ -55,42 +59,46 @@
     enabled: true
 -
     id: 14da46bc-9ad1-4d30-88da-d0ba7a1cbf62
+    key: 44ce66c2-cd39-46f4-a09f-0964266067f1
     name: template-4
     product_id: com.tfg.sample
     game_id: offers-game-empty-trigger
     contents: '{"gems": 5, "gold": 100}'
     metadata: '{}'
-    period: '{"type": "once"}'
+    period: '{"max": 1}'
     frequency: '{"every": 12, "unit": "hour"}'
     trigger: '{}'
     placement: store
     enabled: true
 -
     id: 9456f6c4-f9f1-4dd9-8841-9e5770c8e62c
+    key: b82f520e-5031-45c7-a88a-ec8258801be3
     name: template-5
     product_id: com.tfg.sample
     game_id: offers-game-max-freq
     contents: '{"gems": 5, "gold": 100}'
     metadata: '{}'
-    period: '{"type": "once"}'
+    period: '{"max": 1}'
     frequency: '{"every": "12h", "max": 1}'
     trigger: '{"from": 1486678000, "to": 1486679000}'
     placement: store
     enabled: true
 -
     id: 5a2d15bc-8e4d-481e-a717-fcd2b67ea7e5
+    key: 104608e2-f264-401e-b0a3-2339e8eb0402
     name: template-6
     product_id: com.tfg.sample
     game_id: offers-game-invalid-every-freq
     contents: '{"gems": 5, "gold": 100}'
     metadata: '{}'
-    period: '{"type": "once"}'
+    period: '{"max": 1}'
     frequency: '{"every": "invalid"}'
     trigger: '{"from": 1486678000, "to": 1486679000}'
     placement: store
     enabled: true
 -
     id: ed6147c1-1714-4da1-a072-bea600c8a6a2
+    key: 6c32540b-8fa1-4ed0-9b89-f6d7d0a0e184
     name: template-7
     product_id: com.tfg.sample
     game_id: offers-game-max-period
@@ -103,6 +111,7 @@
     enabled: true
 -
     id: cb06428b-71e1-47c5-a0e2-05e7c322f6fd
+    key: 28193d2b-314a-4d28-abd1-54178cee5d0d
     name: template-8
     product_id: com.tfg.sample
     game_id: offers-game-invalid-every-period
@@ -115,6 +124,7 @@
     enabled: true
 -
     id: 27b0370f-bd61-4346-a10d-50ec052ae125
+    key: b0cd17d9-fda0-46c7-822c-bc3a17c38091
     name: template-9
     product_id: com.tfg.sample
     game_id: offers-game
@@ -125,3 +135,16 @@
     trigger: '{"from": 1486678000, "to": 1486679000}'
     placement: store
     enabled: false
+-
+    id: 5fed76ab-1fd7-4a91-972d-bca228ce80c4
+    key: 471c730b-b8ed-4caa-a245-f46822914c8c
+    name: template-10
+    product_id: com.tfg.sample
+    game_id: offers-game
+    contents: '{"gems": 5, "gold": 100}'
+    metadata: '{}'
+    period: '{"every": "12h"}'
+    frequency: '{"max": 2}'
+    trigger: '{"from": 1486678000, "to": 1486679000}'
+    placement: unique-place
+    enabled: true

@@ -2,6 +2,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 CREATE TABLE offer_templates (
   id char(36) PRIMARY KEY DEFAULT uuid_generate_v4(),
+  key char(36) NOT NULL,
   name varchar(255) NOT NULL,
   product_id varchar(255) NOT NULL,
   game_id varchar(255) NOT NULL REFERENCES games(id),

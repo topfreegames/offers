@@ -17,12 +17,13 @@ import (
 
 //Offer represents a tenant in offers API
 type Offer struct {
-	ID              string `db:"id" json:"id" valid:"uuidv4,required"`
-	GameID          string `db:"game_id" json:"gameId" valid:"matches(^[^-][a-z0-9-]*$),stringlength(1|255),required"`
-	OfferTemplateID string `db:"offer_template_id" json:"offerTemplateId" valid:"uuidv4,required"`
-	PlayerID        string `db:"player_id" json:"playerId" valid:"ascii,stringlength(1|1000),required"`
-	SeenCounter     int    `db:"seen_counter" json:"seenCounter" valid:""`
-	BoughtCounter   int    `db:"bought_counter" json:"boughtCounter" valid:""`
+	ID               string `db:"id" json:"id" valid:"uuidv4,required"`
+	GameID           string `db:"game_id" json:"gameId" valid:"matches(^[^-][a-z0-9-]*$),stringlength(1|255),required"`
+	OfferTemplateID  string `db:"offer_template_id" json:"offerTemplateId" valid:"uuidv4,required"`
+	OfferTemplateKey string `db:"offer_template_key" json:"offerTemplateKey" valid:"uuidv4,required"`
+	PlayerID         string `db:"player_id" json:"playerId" valid:"ascii,stringlength(1|1000),required"`
+	SeenCounter      int    `db:"seen_counter" json:"seenCounter" valid:""`
+	BoughtCounter    int    `db:"bought_counter" json:"boughtCounter" valid:""`
 
 	CreatedAt  dat.NullTime `db:"created_at" json:"createdAt" valid:""`
 	UpdatedAt  dat.NullTime `db:"updated_at" json:"updatedAt" valid:""`
@@ -57,7 +58,7 @@ func GetOfferByID(db runner.Connection, gameID, id string, mr *MixedMetricsRepor
 	var offer Offer
 	err := mr.WithDatastoreSegment("offers", "select by id", func() error {
 		return db.
-			Select("id, game_id, offer_template_id, player_id, created_at, updated_at, claimed_at, last_seen_at, seen_counter, bought_counter").
+			Select("id, game_id, offer_template_id, offer_template_key, player_id, created_at, updated_at, claimed_at, last_seen_at, seen_counter, bought_counter").
 			From("offers").
 			Where("id=$1 AND game_id=$2", id, gameID).
 			QueryStruct(&offer)
@@ -75,18 +76,21 @@ func GetOfferByID(db runner.Connection, gameID, id string, mr *MixedMetricsRepor
 func InsertOffer(db runner.Connection, offer *Offer, t time.Time, mr *MixedMetricsReporter) error {
 
 	err := mr.WithDatastoreSegment("offers", SegmentInsert, func() error {
-		return db.
-			InsertInto("offers").
-			Columns("game_id", "offer_template_id", "player_id").
-			Record(offer).
-			Returning("id").
-			QueryStruct(offer)
+		query := `INSERT INTO offers (game_id, offer_template_id, offer_template_key, player_id)
+							SELECT $1, $2, $3, $4
+							WHERE EXISTS (SELECT 1
+														FROM offer_templates AS ot
+														WHERE ot.game_id = $1 AND ot.id = $2 AND ot.key = $3
+														LIMIT 1)
+							RETURNING id, game_id, offer_template_id, offer_template_key, player_id`
+		return db.SQL(query, offer.GameID, offer.OfferTemplateID, offer.OfferTemplateKey, offer.PlayerID).QueryStruct(offer)
 	})
 
 	if err != nil {
-		if pqErr, ok := IsForeignKeyViolationError(err); ok {
-			return errors.NewInvalidModelError("Offer", pqErr.Message)
+		if IsNoRowsInResultSetError(err) {
+			return errors.NewInvalidModelError("Offer", "insert on table \"offers\" violates constraint \"offer_templates_key\" \"offer_templates_id\" \"offer_templated_game_id\"")
 		}
+
 		return err
 	}
 
@@ -96,7 +100,7 @@ func InsertOffer(db runner.Connection, offer *Offer, t time.Time, mr *MixedMetri
 //ClaimOffer sets claimed_at to time
 func ClaimOffer(db runner.Connection, offerID, playerID, gameID string, t time.Time, mr *MixedMetricsReporter) (dat.JSON, bool, error) {
 	var offer Offer
-	err := mr.WithDatastoreSegment("offers", "select by id", func() error {
+	err := mr.WithDatastoreSegment("offers", SegmentSelect, func() error {
 		return db.
 			Select("id, claimed_at, offer_template_id, bought_counter").
 			From("offers").
@@ -119,11 +123,12 @@ func ClaimOffer(db runner.Connection, offerID, playerID, gameID string, t time.T
 		return nil, false, err
 	}
 
+	//TODO: change this to consider more than one claim per offer
 	if offer.ClaimedAt.Valid {
 		return ot.Contents, true, nil
 	}
 
-	err = mr.WithDatastoreSegment("offers", "update", func() error {
+	err = mr.WithDatastoreSegment("offers", SegmentUpdate, func() error {
 		return db.
 			Update("offers").
 			Set("claimed_at", t).
@@ -149,7 +154,7 @@ func UpdateOfferLastSeenAt(db runner.Connection, offerID, playerID, gameID strin
               player_id = $3 AND
               game_id = $4
             RETURNING id, last_seen_at`
-	err := mr.WithDatastoreSegment("offers", "update", func() error {
+	err := mr.WithDatastoreSegment("offers", SegmentUpdate, func() error {
 		return db.SQL(query, t, offerID, playerID, gameID).QueryStruct(&offer)
 	})
 
@@ -181,12 +186,12 @@ func GetAvailableOffers(db runner.Connection, playerID, gameID string, t time.Ti
 		return map[string][]*OfferToReturn{}, nil
 	}
 
-	offerTemplateIDs := make([]string, len(filteredOts))
+	offerTemplateKeys := make([]string, len(filteredOts))
 	for idx, ot := range filteredOts {
-		offerTemplateIDs[idx] = ot.ID
+		offerTemplateKeys[idx] = ot.Key
 	}
 
-	playerOffers, err := getPlayerOffersByOfferTemplateIDs(db, gameID, playerID, offerTemplateIDs, mr)
+	playerOffers, err := getPlayerOffersByOfferTemplateKeys(db, gameID, playerID, offerTemplateKeys, mr)
 	if err != nil {
 		return nil, err
 	}
@@ -199,8 +204,18 @@ func GetAvailableOffers(db runner.Connection, playerID, gameID string, t time.Ti
 	}
 
 	playerOffersByOfferTemplateID := map[string]*Offer{}
-	for _, o := range playerOffers {
-		playerOffersByOfferTemplateID[o.OfferTemplateID] = o
+	for _, offers := range playerOffers {
+		for _, o := range offers {
+			playerOffersByOfferTemplateID[o.OfferTemplateID] = o
+		}
+	}
+
+	filteredOts, err = filterTemplatesByClaimedOffers(playerOffersByOfferTemplateID, filteredOts)
+	if err != nil {
+		return nil, err
+	}
+	if len(filteredOts) == 0 {
+		return map[string][]*OfferToReturn{}, nil
 	}
 
 	offerTemplatesByPlacement := make(map[string][]*OfferToReturn)
@@ -222,9 +237,10 @@ func GetAvailableOffers(db runner.Connection, playerID, gameID string, t time.Ti
 			offerToReturn.RemainingPurchases = p.Max
 		}
 		o := &Offer{
-			GameID:          ot.GameID,
-			OfferTemplateID: ot.ID,
-			PlayerID:        playerID,
+			GameID:           ot.GameID,
+			OfferTemplateID:  ot.ID,
+			OfferTemplateKey: ot.Key,
+			PlayerID:         playerID,
 		}
 		playerOffer, playerHasOffer := playerOffersByOfferTemplateID[ot.ID]
 		if playerHasOffer {
@@ -268,33 +284,38 @@ func filterTemplatesByTrigger(trigger Trigger, ots []*OfferTemplate, t time.Time
 	return filteredOts, nil
 }
 
-func getPlayerOffersByOfferTemplateIDs(
+func getPlayerOffersByOfferTemplateKeys(
 	db runner.Connection,
 	gameID string,
 	playerID string,
-	offerTemplateIDs []string,
+	offerTemplateKeys []string,
 	mr *MixedMetricsReporter,
-) ([]*Offer, error) {
+) (map[string][]*Offer, error) {
+	offersByKey := make(map[string][]*Offer)
 	var offers []*Offer
-	err := mr.WithDatastoreSegment("offers", "select by id", func() error {
+	err := mr.WithDatastoreSegment("offers", SegmentSelect, func() error {
 		return db.
-			Select("id, offer_template_id, game_id, last_seen_at, claimed_at, seen_counter, bought_counter").
+			Select("id, offer_template_id, offer_template_key, game_id, last_seen_at, claimed_at, seen_counter, bought_counter").
 			From("offers").
-			Where("player_id=$1 AND game_id=$2 AND offer_template_id IN $3", playerID, gameID, offerTemplateIDs).
+			Where("player_id=$1 AND game_id=$2 AND offer_template_key IN $3", playerID, gameID, offerTemplateKeys).
 			QueryStructs(&offers)
 	})
-	return offers, err
-}
 
-func filterTemplatesByFrequencyAndPeriod(offers []*Offer, ots []*OfferTemplate, t time.Time) ([]*OfferTemplate, error) {
-	var filteredOts []*OfferTemplate
-	offerByOfferTemplateID := make(map[string]*Offer)
-	for _, offer := range offers {
-		offerByOfferTemplateID[offer.OfferTemplateID] = offer
+	for _, o := range offers {
+		if ar, ok := offersByKey[o.OfferTemplateKey]; ok {
+			offersByKey[o.OfferTemplateKey] = append(ar, o)
+		} else {
+			offersByKey[o.OfferTemplateKey] = []*Offer{o}
+		}
 	}
 
+	return offersByKey, err
+}
+
+func filterTemplatesByFrequencyAndPeriod(offersByOfferTemplateKey map[string][]*Offer, ots []*OfferTemplate, t time.Time) ([]*OfferTemplate, error) {
+	var filteredOts []*OfferTemplate
 	for _, offerTemplate := range ots {
-		if offer, ok := offerByOfferTemplateID[offerTemplate.ID]; ok {
+		if offers, ok := offersByOfferTemplateKey[offerTemplate.Key]; ok {
 			var (
 				f FrequencyOrPeriod
 				p FrequencyOrPeriod
@@ -305,7 +326,21 @@ func filterTemplatesByFrequencyAndPeriod(offers []*Offer, ots []*OfferTemplate, 
 			if err := json.Unmarshal(offerTemplate.Period, &p); err != nil {
 				return nil, err
 			}
-			if f.Max != 0 && offer.SeenCounter >= f.Max {
+
+			var totalSeenCounter, totalBoughtCounter int
+			var lastSeenAt, lastClaimedAt time.Time
+			for _, offer := range offers {
+				totalSeenCounter += offer.SeenCounter
+				totalBoughtCounter += offer.BoughtCounter
+				if offer.LastSeenAt.Time.After(lastSeenAt) {
+					lastSeenAt = offer.LastSeenAt.Time
+				}
+				if offer.ClaimedAt.Time.After(lastClaimedAt) {
+					lastClaimedAt = offer.ClaimedAt.Time
+				}
+			}
+
+			if f.Max != 0 && totalSeenCounter >= f.Max {
 				continue
 			}
 			if f.Every != "" {
@@ -313,11 +348,11 @@ func filterTemplatesByFrequencyAndPeriod(offers []*Offer, ots []*OfferTemplate, 
 				if err != nil {
 					return nil, err
 				}
-				if offer.LastSeenAt.Time.Add(duration).After(t) {
+				if lastSeenAt.Add(duration).After(t) {
 					continue
 				}
 			}
-			if p.Max != 0 && offer.BoughtCounter >= p.Max {
+			if p.Max != 0 && totalBoughtCounter >= p.Max {
 				continue
 			}
 			if p.Every != "" {
@@ -325,7 +360,7 @@ func filterTemplatesByFrequencyAndPeriod(offers []*Offer, ots []*OfferTemplate, 
 				if err != nil {
 					return nil, err
 				}
-				if offer.ClaimedAt.Time.Add(duration).After(t) {
+				if lastClaimedAt.Add(duration).After(t) {
 					continue
 				}
 			}
@@ -333,6 +368,22 @@ func filterTemplatesByFrequencyAndPeriod(offers []*Offer, ots []*OfferTemplate, 
 		} else {
 			filteredOts = append(filteredOts, offerTemplate)
 		}
+	}
+
+	return filteredOts, nil
+}
+
+func filterTemplatesByClaimedOffers(offersByOtID map[string]*Offer, ots []*OfferTemplate) ([]*OfferTemplate, error) {
+	var filteredOts []*OfferTemplate
+
+	for _, ot := range ots {
+		if offer, ok := offersByOtID[ot.ID]; ok {
+			if offer.ClaimedAt.Valid {
+				continue
+			}
+		}
+
+		filteredOts = append(filteredOts, ot)
 	}
 
 	return filteredOts, nil

@@ -4,6 +4,7 @@ CREATE TABLE offers (
     id char(36) PRIMARY KEY DEFAULT uuid_generate_v4(),
     game_id varchar(255) NOT NULL REFERENCES games(id),
     offer_template_id char(36) NOT NULL REFERENCES offer_templates(id),
+    offer_template_key char(36) NOT NULL,
     player_id varchar(1000) NOT NULL,
     seen_counter integer NOT NULL DEFAULT 0,
     bought_counter integer NOT NULL DEFAULT 0,

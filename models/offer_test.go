@@ -23,6 +23,7 @@ import (
 
 var _ = Describe("Offers Model", func() {
 	defaultOfferTemplateID := "dd21ec96-2890-4ba0-b8e2-40ea67196990"
+	defaultOfferTemplateKey := "da700673-0415-43c3-a8e0-18331b794482"
 	defaultOfferID := "56fc0477-39f1-485c-898e-4909e9155eb1"
 
 	Describe("Offer Instance", func() {
@@ -43,21 +44,23 @@ var _ = Describe("Offers Model", func() {
 			Expect(offer.GameID).To(Equal("offers-game"))
 			Expect(offer.PlayerID).To(Equal("player-1"))
 			Expect(offer.OfferTemplateID).To(Equal(defaultOfferTemplateID))
+			Expect(offer.OfferTemplateKey).To(Equal(defaultOfferTemplateKey))
 			Expect(offer.CreatedAt.Valid).To(BeTrue())
 		})
 
 		It("Should create offer", func() {
 			//Given
 			offer := &models.Offer{
-				GameID:          "offers-game",
-				OfferTemplateID: defaultOfferTemplateID,
-				PlayerID:        "player-3",
+				GameID:           "offers-game",
+				OfferTemplateID:  defaultOfferTemplateID,
+				OfferTemplateKey: defaultOfferTemplateKey,
+				PlayerID:         "player-3",
 			}
 
 			//When
 			err := db.
 				InsertInto("offers").
-				Columns("game_id", "offer_template_id", "player_id").
+				Columns("game_id", "offer_template_id", "offer_template_key", "player_id").
 				Record(offer).
 				Returning("id", "claimed_at", "created_at", "updated_at").
 				QueryStruct(offer)
@@ -90,6 +93,7 @@ var _ = Describe("Offers Model", func() {
 			Expect(offer.GameID).To(Equal("offers-game"))
 			Expect(offer.PlayerID).To(Equal("player-1"))
 			Expect(offer.OfferTemplateID).To(Equal(defaultOfferTemplateID))
+			Expect(offer.OfferTemplateKey).To(Equal(defaultOfferTemplateKey))
 			Expect(offer.CreatedAt.Valid).To(BeTrue())
 		})
 
@@ -116,9 +120,10 @@ var _ = Describe("Offers Model", func() {
 			//Given
 			gameID := "offers-game"
 			offer := &models.Offer{
-				GameID:          gameID,
-				OfferTemplateID: defaultOfferTemplateID,
-				PlayerID:        "player-3",
+				GameID:           gameID,
+				OfferTemplateID:  defaultOfferTemplateID,
+				OfferTemplateKey: defaultOfferTemplateKey,
+				PlayerID:         "player-3",
 			}
 
 			//When
@@ -126,18 +131,20 @@ var _ = Describe("Offers Model", func() {
 
 			//Then
 			Expect(err).NotTo(HaveOccurred())
+			Expect(offer.ID).NotTo(BeEmpty())
 		})
 
 		It("should fail if game does not exist", func() {
 			//Given
 			offer := &models.Offer{
-				GameID:          "non-existing-game",
-				OfferTemplateID: uuid.NewV4().String(),
-				PlayerID:        "player-3",
+				GameID:           "non-existing-game",
+				OfferTemplateID:  defaultOfferTemplateID,
+				OfferTemplateKey: defaultOfferTemplateKey,
+				PlayerID:         "player-3",
 			}
 			expectedError := errors.NewInvalidModelError(
 				"Offer",
-				"insert or update on table \"offers\" violates foreign key constraint \"offers_game_id_fkey\"",
+				"insert on table \"offers\" violates constraint \"offer_templates_key\" \"offer_templates_id\" \"offer_templated_game_id\"",
 			)
 
 			//When
@@ -172,16 +179,38 @@ var _ = Describe("Offers Model", func() {
 			db = oldDB // avoid errors in after each
 		})
 
-		It("should fail if offer template does not exist", func() {
+		It("should fail if no offer template has specified id", func() {
 			//Given
 			offer := &models.Offer{
-				GameID:          "offers-game-2",
-				OfferTemplateID: uuid.NewV4().String(),
-				PlayerID:        "player-3",
+				GameID:           "offers-game",
+				OfferTemplateID:  uuid.NewV4().String(),
+				OfferTemplateKey: defaultOfferTemplateKey,
+				PlayerID:         "player-3",
 			}
 			expectedError := errors.NewInvalidModelError(
 				"Offer",
-				"insert or update on table \"offers\" violates foreign key constraint \"offers_offer_template_id_fkey\"",
+				"insert on table \"offers\" violates constraint \"offer_templates_key\" \"offer_templates_id\" \"offer_templated_game_id\"",
+			)
+
+			//When
+			err := models.InsertOffer(db, offer, time.Now(), nil)
+
+			//Then
+			Expect(err).To(HaveOccurred())
+			Expect(err).To(MatchError(expectedError))
+		})
+
+		It("should fail if no offer template has specified key", func() {
+			//Given
+			offer := &models.Offer{
+				GameID:           "offers-game-2",
+				OfferTemplateID:  defaultOfferTemplateID,
+				OfferTemplateKey: uuid.NewV4().String(),
+				PlayerID:         "player-3",
+			}
+			expectedError := errors.NewInvalidModelError(
+				"Offer",
+				"insert on table \"offers\" violates constraint \"offer_templates_key\" \"offer_templates_id\" \"offer_templated_game_id\"",
 			)
 
 			//When
@@ -350,7 +379,7 @@ var _ = Describe("Offers Model", func() {
 
 			//Then
 			Expect(err).NotTo(HaveOccurred())
-			Expect(templates).To(HaveLen(2))
+			Expect(templates).To(HaveLen(3))
 			Expect(templates).To(HaveKey("popup"))
 			Expect(templates["popup"]).To(HaveLen(1))
 			Expect(templates["popup"][0].ID).To(Equal("56fc0477-39f1-485c-898e-4909e9155eb1"))
@@ -391,8 +420,8 @@ var _ = Describe("Offers Model", func() {
 			//Then
 			Expect(err1).NotTo(HaveOccurred())
 			Expect(err2).NotTo(HaveOccurred())
-			Expect(templates1).To(HaveLen(2))
-			Expect(templates2).To(HaveLen(2))
+			Expect(templates1).To(HaveLen(3))
+			Expect(templates2).To(HaveLen(3))
 		})
 
 		It("should return empty offer template list if gameID doesn't exist", func() {
@@ -421,7 +450,7 @@ var _ = Describe("Offers Model", func() {
 			//Then
 			Expect(err1).NotTo(HaveOccurred())
 			Expect(err2).NotTo(HaveOccurred())
-			Expect(templates).To(HaveLen(1))
+			Expect(templates).To(HaveLen(2))
 			Expect(templates).To(HaveKey("store"))
 		})
 
@@ -483,8 +512,8 @@ var _ = Describe("Offers Model", func() {
 			Expect(err2).NotTo(HaveOccurred())
 			Expect(err3).NotTo(HaveOccurred())
 			Expect(alreadyClaimed).To(BeFalse())
-			Expect(templatesBefore).To(HaveLen(2))
-			Expect(templatesAfter).To(HaveLen(1))
+			Expect(templatesBefore).To(HaveLen(3))
+			Expect(templatesAfter).To(HaveLen(2))
 		})
 
 		It("should not return template if it has empty trigger", func() {
@@ -571,6 +600,84 @@ var _ = Describe("Offers Model", func() {
 			//Then
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(Equal("time: invalid duration invalid"))
+		})
+	})
+
+	Describe("Claim and GetAvailableOffers integrated", func() {
+		It("should not return consumed offer after it has been updated", func() {
+			offerTemplateID := "dd21ec96-2890-4ba0-b8e2-40ea67196990"
+			playerID := "player-1"
+			gameID := "offers-game"
+			currentTime := time.Unix(1486678000, 0)
+
+			// Get fot the first time
+			offers, err := models.GetAvailableOffers(db, playerID, gameID, currentTime, nil)
+			Expect(err).NotTo(HaveOccurred())
+
+			// Disable offer template
+			err = models.SetEnabledOfferTemplate(db, offerTemplateID, false, nil)
+			Expect(err).NotTo(HaveOccurred())
+
+			// Claim the offer
+			_, alreadyClaimed, err := models.ClaimOffer(db, offers["popup"][0].ID, playerID, gameID, currentTime, nil)
+			Expect(alreadyClaimed).To(BeFalse())
+			Expect(err).NotTo(HaveOccurred())
+
+			// Get offer template to update it
+			offerTemplate, err := models.GetOfferTemplateByID(db, offerTemplateID, nil)
+			Expect(err).NotTo(HaveOccurred())
+
+			// Update its contents and insert with same key
+			offerTemplate.Contents = dat.JSON([]byte(`{ "somethingNew": 100 }`))
+			offerTemplate, err = models.InsertOfferTemplate(db, offerTemplate, nil)
+			Expect(err).NotTo(HaveOccurred())
+
+			// Should not return the popup offer, since it was claimed for the first time
+			offers, err = models.GetAvailableOffers(db, playerID, gameID, currentTime, nil)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(offers).NotTo(HaveKey("popup"))
+		})
+
+		It("should return updated offer with one remaining view", func() {
+			playerID := "player-1"
+			gameID := "offers-game"
+			place := "unique-place"
+			offerTemplateID := "5fed76ab-1fd7-4a91-972d-bca228ce80c4"
+			currentTime := time.Unix(1486678000, 0)
+
+			// Get offer
+			offers, err := models.GetAvailableOffers(db, playerID, gameID, currentTime, nil)
+			Expect(err).NotTo(HaveOccurred())
+			offerID := offers[place][0].ID
+
+			// Sees once
+			err = models.UpdateOfferLastSeenAt(db, offerID, playerID, gameID, currentTime, nil)
+			Expect(err).NotTo(HaveOccurred())
+
+			// Disable offer template
+			err = models.SetEnabledOfferTemplate(db, offerTemplateID, false, nil)
+			Expect(err).NotTo(HaveOccurred())
+
+			// Update Offer template
+			ot, err := models.GetOfferTemplateByID(db, offerTemplateID, nil)
+			Expect(err).NotTo(HaveOccurred())
+			ot.Contents = dat.JSON([]byte(`{ "somethingNew": 100 }`))
+			ot, err = models.InsertOfferTemplate(db, ot, nil)
+			Expect(err).NotTo(HaveOccurred())
+
+			// Get offer
+			offers, err = models.GetAvailableOffers(db, playerID, gameID, currentTime, nil)
+			Expect(err).NotTo(HaveOccurred())
+			offerID = offers[place][0].ID
+
+			// Sees twice
+			err = models.UpdateOfferLastSeenAt(db, offerID, playerID, gameID, currentTime, nil)
+			Expect(err).NotTo(HaveOccurred())
+
+			// Get offer, expect unique-place to not be returned
+			offers, err = models.GetAvailableOffers(db, playerID, gameID, currentTime, nil)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(offers).NotTo(HaveKey(place))
 		})
 	})
 })

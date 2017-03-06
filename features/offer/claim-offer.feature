@@ -6,9 +6,9 @@ Feature: Claiming an offer for a given player
 
   Scenario Outline: A player claims an offer
     Given the following offer templates exist in the "offer-claim-game" game:
-      | game | name    | product_id     | contents  | placement | period       | frequency          | trigger                  |
-      | org  | oclaim1 | com.tfg.sample | { 'x': 1 }| popup     | { 'max': 1 } | { 'every': '50s' } | { 'from': 0, 'to': 5 }   |
-      | org  | oclaim2 | com.tfg.sample | { 'x': 2 }| popup     | { 'max': 1 } | { 'every': '50s' } | { 'from': 20, 'to': 25 } |
+      | game | name    | product_id     | contents   | placement | period       | frequency          | trigger                  | key                                  |
+      | org  | oclaim1 | com.tfg.sample | { 'x': 1 } | popup     | { 'max': 1 } | { 'every': '50s' } | { 'from': 0, 'to': 5 }   | 6597e909-ee8e-4a0c-82dd-533568f86aa6 |
+      | org  | oclaim2 | com.tfg.sample | { 'x': 2 } | popup     | { 'max': 1 } | { 'every': '50s' } | { 'from': 20, 'to': 25 } | dbe912cd-d248-44ae-af4b-8c6e4ef9ad8f |
     And the following players claimed in the "offer-claim-game" game:
       | id     | claimed-offers | last-seen-offer-at |
       | joseph | -              | -                  |

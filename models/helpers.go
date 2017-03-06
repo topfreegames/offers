@@ -78,18 +78,6 @@ func IsForeignKeyViolationError(err error) (*pq.Error, bool) {
 	return pqErr, pqErr.Code == "23503" && strings.Contains(pqErr.Message, "violates foreign key constraint")
 }
 
-//IsUniqueKeyViolationError returns true if the error is a pq error stating a unique key has been violated
-func IsUniqueKeyViolationError(err error) (*pq.Error, bool) {
-	var pqErr *pq.Error
-	var ok bool
-
-	if pqErr, ok = err.(*pq.Error); !ok {
-		return nil, false
-	}
-
-	return pqErr, pqErr.Code == "23505" && strings.Contains(pqErr.Message, `duplicate key value violates unique constraint "offer_templates_game_id_name_key"`)
-}
-
 //ShouldPing the database
 func ShouldPing(db *sql.DB, timeout time.Duration) error {
 	var err error
@@ -128,17 +116,6 @@ func HandleForeignKeyViolationError(model string, err error) error {
 	if err != nil {
 		if pqErr, ok := IsForeignKeyViolationError(err); ok {
 			return errors.NewInvalidModelError(model, pqErr.Message)
-		}
-		return err
-	}
-	return nil
-}
-
-//HandleUniqueKeyViolationError returns the proper error if nothing happens
-func HandleUniqueKeyViolationError(model string, err error) error {
-	if err != nil {
-		if pqErr, ok := IsUniqueKeyViolationError(err); ok {
-			return errors.NewConflictedModelError(model, pqErr.Message)
 		}
 		return err
 	}

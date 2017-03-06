@@ -24,3 +24,6 @@ const SegmentUpdate = "Database/Update"
 
 //SegmentUpsert represents a segment
 const SegmentUpsert = "Database/Upsert"
+
+//SegmentSelect represents a segment
+const SegmentSelect = "Database/Select"

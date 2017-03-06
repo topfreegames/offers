@@ -45,7 +45,7 @@ var _ = Describe("Offer Handler", func() {
 		It("should return available offers", func() {
 			playerID := "player-1"
 			gameID := "offers-game"
-			url := "/offers?player-id=" + playerID + "&game-id=" + gameID
+			url := fmt.Sprintf("/offers?player-id=%s&game-id=%s", playerID, gameID)
 			request, _ := http.NewRequest("GET", url, nil)
 			var jsonBody map[string][]map[string]interface{}
 
@@ -79,7 +79,7 @@ var _ = Describe("Offer Handler", func() {
 		It("should return empty list of available offers", func() {
 			playerID := "player-1"
 			gameID := "non-existing-offers-game"
-			url := "/offers?player-id=" + playerID + "&game-id=" + gameID
+			url := fmt.Sprintf("/offers?player-id=%s&game-id=%s", playerID, gameID)
 			request, _ := http.NewRequest("GET", url, nil)
 			var jsonBody map[string]map[string]interface{}
 
@@ -93,7 +93,7 @@ var _ = Describe("Offer Handler", func() {
 
 		It("should return status code 400 if player-id is not informed available offers", func() {
 			gameID := "offers-game"
-			url := "/offers?game-id=" + gameID
+			url := fmt.Sprintf("/offers?game-id=%s", gameID)
 			request, _ := http.NewRequest("GET", url, nil)
 
 			app.Router.ServeHTTP(recorder, request)
@@ -110,7 +110,7 @@ var _ = Describe("Offer Handler", func() {
 
 		It("should return status code 400 if game-id is not informed available offers", func() {
 			playerID := "player-1"
-			url := "/offers?player-id=" + playerID
+			url := fmt.Sprintf("/offers?player-id=%s", playerID)
 			request, _ := http.NewRequest("GET", url, nil)
 
 			app.Router.ServeHTTP(recorder, request)
@@ -127,7 +127,7 @@ var _ = Describe("Offer Handler", func() {
 		It("should return status code of 500 if some error occurred", func() {
 			playerID := "player-1"
 			gameID := "offers-game"
-			url := "/offers?player-id=" + playerID + "&game-id=" + gameID
+			url := fmt.Sprintf("/offers?player-id=%s&game-id=%s", playerID, gameID)
 			request, _ := http.NewRequest("GET", url, nil)
 
 			oldDB := app.DB
@@ -146,6 +146,43 @@ var _ = Describe("Offer Handler", func() {
 			Expect(obj["error"]).To(Equal("Failed to retrieve offer for player"))
 			Expect(obj["description"]).To(Equal("sql: database is closed"))
 			app.DB = oldDB // avoid errors in after each
+		})
+
+		It("should not return offer after claim if offer template period has max 1", func() {
+			// Create Offer by requesting it
+			gameID := "limited-offers-game"
+			playerID := "player-1"
+			place := "store"
+			url := fmt.Sprintf("/offers?player-id=%s&game-id=%s", playerID, gameID)
+			request, _ := http.NewRequest("GET", url, nil)
+			var body map[string][]*models.OfferToReturn
+
+			app.Router.ServeHTTP(recorder, request)
+			Expect(recorder.Code).To(Equal(http.StatusOK))
+			err := json.Unmarshal(recorder.Body.Bytes(), &body)
+			Expect(err).ToNot(HaveOccurred())
+
+			// Claim the Offer
+			id := body[place][0].ID
+			offerReader := JSONFor(JSON{
+				"playerId": playerID,
+				"gameId":   gameID,
+			})
+			request, _ = http.NewRequest("PUT", fmt.Sprintf("/offers/%s/claim", id), offerReader)
+			recorder = httptest.NewRecorder()
+
+			app.Router.ServeHTTP(recorder, request)
+			Expect(recorder.Code).To(Equal(http.StatusOK))
+
+			// Offer must not be returned again in next Get
+			request, _ = http.NewRequest("GET", url, nil)
+			recorder = httptest.NewRecorder()
+			app.Router.ServeHTTP(recorder, request)
+			Expect(recorder.Code).To(Equal(http.StatusOK))
+			var newBody map[string][]*models.OfferToReturn
+			err = json.Unmarshal(recorder.Body.Bytes(), &newBody)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(newBody).NotTo(HaveKey(place))
 		})
 	})
 
@@ -214,7 +251,7 @@ var _ = Describe("Offer Handler", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(obj["code"]).To(Equal("OFF-002"))
 			Expect(obj["error"]).To(Equal("ValidationFailedError"))
-			Expect(obj["description"]).To(Equal("ID: " + id + " does not validate;"))
+			Expect(obj["description"]).To(Equal(fmt.Sprintf("ID: %s does not validate;", id)))
 		})
 
 		It("should return 422 if missing parameters", func() {

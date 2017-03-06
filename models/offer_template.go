@@ -16,6 +16,7 @@ import (
 //OfferTemplate contains the parameters of a template
 type OfferTemplate struct {
 	ID        string   `db:"id" json:"id" valid:"uuidv4"`
+	Key       string   `db:"key" json:"key" valid:"uuidv4,required"`
 	Name      string   `db:"name" json:"name" valid:"ascii,stringlength(1|255),required"`
 	ProductID string   `db:"product_id" json:"productId" valid:"ascii,stringlength(1|255),required"`
 	GameID    string   `db:"game_id" json:"gameId" valid:"matches(^[^-][a-z0-9-]*$),stringlength(1|255),required"`
@@ -40,7 +41,7 @@ func GetOfferTemplateByID(db runner.Connection, id string, mr *MixedMetricsRepor
 	err := mr.WithDatastoreSegment("offer_templates", "select by id", func() error {
 		return db.
 			Select(`
-				id, name, product_id, game_id,
+				id, key, name, product_id, game_id,
 				contents, metadata, period,
 				frequency, trigger, placement, enabled
 			`).
@@ -53,32 +54,31 @@ func GetOfferTemplateByID(db runner.Connection, id string, mr *MixedMetricsRepor
 	return &ot, err
 }
 
-//GetOfferTemplateByNameAndGame returns OfferTemplate by Name
-func GetOfferTemplateByNameAndGame(db runner.Connection, name, gameID string, mr *MixedMetricsReporter) (*OfferTemplate, error) {
+//GetEnabledOfferTemplateByKeyAndGame returns OfferTemplate by Name
+func GetEnabledOfferTemplateByKeyAndGame(db runner.Connection, key, gameID string, mr *MixedMetricsReporter) (*OfferTemplate, error) {
 	var ot OfferTemplate
-	err := mr.WithDatastoreSegment("offer_templates", "select by name", func() error {
+	err := mr.WithDatastoreSegment("offer_templates", SegmentSelect, func() error {
 		return db.
 			Select(`
-				id, name, product_id, game_id,
+				id, key, name, product_id, game_id,
 				contents, metadata, period,
 				frequency, trigger, placement, enabled
 			`).
 			From("offer_templates").
-			Where("name = $1 AND game_id = $2 AND enabled = true", name, gameID).
+			Where("key = $1 AND game_id = $2 AND enabled = true", key, gameID).
 			QueryStruct(&ot)
 	})
 
-	err = HandleNotFoundError("OfferTemplate", map[string]interface{}{"Name": name}, err)
 	return &ot, err
 }
 
 //GetEnabledOfferTemplates returns all the enabled offers
 func GetEnabledOfferTemplates(db runner.Connection, gameID string, mr *MixedMetricsReporter) ([]*OfferTemplate, error) {
 	var ots []*OfferTemplate
-	err := mr.WithDatastoreSegment("offer_templates", "select", func() error {
+	err := mr.WithDatastoreSegment("offer_templates", SegmentSelect, func() error {
 		return db.
 			Select(`
-				id, name, game_id, product_id,
+				id, key, name, game_id, product_id,
 				contents, metadata, period,
 				frequency, trigger, placement
 			`).
@@ -97,7 +97,7 @@ func ListOfferTemplates(db runner.Connection, gameID string, mr *MixedMetricsRep
 	err := mr.WithDatastoreSegment("offer_templates", "select", func() error {
 		return db.
 			Select(`
-				id, name, product_id, game_id,
+				id, key, name, product_id, game_id,
 				contents, metadata, period,
 				frequency, trigger, placement, enabled
 			`).
@@ -110,15 +110,15 @@ func ListOfferTemplates(db runner.Connection, gameID string, mr *MixedMetricsRep
 
 // InsertOfferTemplate inserts a new offer template into DB
 func InsertOfferTemplate(db runner.Connection, ot *OfferTemplate, mr *MixedMetricsReporter) (*OfferTemplate, error) {
-	_, err := GetOfferTemplateByNameAndGame(db, ot.Name, ot.GameID, mr)
+	_, err := GetEnabledOfferTemplateByKeyAndGame(db, ot.Key, ot.GameID, mr)
 
 	if err != nil {
-		notFoundErr := HandleNotFoundError("OfferTemplate", map[string]interface{}{"Name": ot.Name}, err)
-		if err != notFoundErr {
+		notFoundErr := HandleNotFoundError("OfferTemplate", map[string]interface{}{"Key": ot.Key}, err)
+		if err == notFoundErr {
 			return nil, err
 		}
 	} else {
-		msg := "An offer template with name " + ot.Name + " already exist and is enabled"
+		msg := "An offer template with key " + ot.Key + " already exist and is enabled"
 		return ot, errors.NewConflictedModelError("OfferTemplate", msg)
 	}
 
@@ -129,7 +129,7 @@ func InsertOfferTemplate(db runner.Connection, ot *OfferTemplate, mr *MixedMetri
 	err = mr.WithDatastoreSegment("offer_templates", SegmentInsert, func() error {
 		return db.
 			InsertInto("offer_templates").
-			Columns("name", "product_id", "game_id", "contents", "period", "frequency", "trigger", "placement", "metadata").
+			Columns("name", "key", "product_id", "game_id", "contents", "period", "frequency", "trigger", "placement", "metadata").
 			Record(ot).
 			Returning("id, enabled").
 			QueryStruct(ot)

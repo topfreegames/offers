@@ -235,10 +235,11 @@ func theFollowingOfferTemplatesExistInTheGame(gameID string, otArgs *gherkin.Dat
 			Period:    toJSON(otArgs.Rows[i].Cells[5].Value),
 			Frequency: toJSON(otArgs.Rows[i].Cells[6].Value),
 			Trigger:   toJSON(otArgs.Rows[i].Cells[7].Value),
+			Key:       otArgs.Rows[i].Cells[8].Value,
 			GameID:    gameID,
 		}
 
-		if _, err := models.GetOfferTemplateByNameAndGame(app.DB, ot.Name, ot.GameID, nil); err != nil {
+		if _, err := models.GetEnabledOfferTemplateByKeyAndGame(app.DB, ot.Key, ot.GameID, nil); err != nil {
 			if _, err = models.InsertOfferTemplate(app.DB, ot, nil); err != nil {
 				return err
 			}
@@ -332,9 +333,10 @@ func toJSON(str string) dat.JSON {
 	return dat.JSON([]byte(strings.Replace(str, "'", "\"", -1)))
 }
 
-func anOfferTemplateIsCreatedInTheGameWithNamePidContentsMetadataPeriodFreqTriggerPlace(gameID, name, pid, contents, metadata, period, freq, trigger, place string) error {
+func anOfferTemplateIsCreatedInTheGameWithNameKeyPidContentsMetadataPeriodFreqTriggerPlace(gameID, name, key, pid, contents, metadata, period, freq, trigger, place string) error {
 	payload := map[string]interface{}{
 		"gameId":    gameID,
+		"key":       key,
 		"name":      name,
 		"productId": pid,
 		"contents":  toJSON(contents),
@@ -351,7 +353,9 @@ func anOfferTemplateIsCreatedInTheGameWithNamePidContentsMetadataPeriodFreqTrigg
 }
 
 func anOfferTemplateWithNameExistsInGame(offerTemplateName, gameID string) error {
-	_, err := models.GetOfferTemplateByNameAndGame(app.DB, offerTemplateName, gameID, nil)
+	var ot models.OfferTemplate
+	query := "SELECT id FROM offer_templates WHERE name = $1 AND enabled = true"
+	err := app.DB.SQL(query, offerTemplateName).QueryStruct(&ot)
 
 	if err != nil {
 		return err
@@ -361,7 +365,7 @@ func anOfferTemplateWithNameExistsInGame(offerTemplateName, gameID string) error
 }
 
 func anOfferTemplateExistsWithNameInGame(offerTemplateName, gameID string) error {
-	if _, err := models.GetOfferTemplateByNameAndGame(app.DB, offerTemplateName, gameID, nil); err != nil {
+	if err := anOfferTemplateWithNameExistsInGame(offerTemplateName, gameID); err != nil {
 		return insertOfferTemplate(app.DB, offerTemplateName, gameID)
 	}
 
@@ -369,7 +373,7 @@ func anOfferTemplateExistsWithNameInGame(offerTemplateName, gameID string) error
 }
 
 func anOfferTemplateWithNameDoesNotExistInGame(offerTemplateName, gameID string) error {
-	if _, err := models.GetOfferTemplateByNameAndGame(app.DB, offerTemplateName, gameID, nil); err == nil {
+	if err := anOfferTemplateWithNameExistsInGame(offerTemplateName, gameID); err == nil {
 		return fmt.Errorf("Expected offer %s to not exist in game %s", offerTemplateName, gameID)
 	}
 	return nil
@@ -541,7 +545,7 @@ func FeatureContext(s *godog.Suite) {
 	s.Step(`^the following players exist in the "([^"]*)" game:$`, theFollowingPlayersExistInTheGame)
 	s.Step(`^player "([^"]*)" claims offer "([^"]*)" in game "([^"]*)"$`, playerClaimsOfferInGame)
 	s.Step(`^an offer template with name "([^"]*)" exists in game "([^"]*)"$`, anOfferTemplateWithNameExistsInGame)
-	s.Step(`^an offer template is created in the "([^"]*)" game with name "([^"]*)" pid "([^"]*)" contents "([^"]*)" metadata "([^"]*)" period "([^"]*)" freq "([^"]*)" trigger "([^"]*)" place "([^"]*)"$`, anOfferTemplateIsCreatedInTheGameWithNamePidContentsMetadataPeriodFreqTriggerPlace)
+	s.Step(`^an offer template is created in the "([^"]*)" game with name "([^"]*)" key "([^"]*)" pid "([^"]*)" contents "([^"]*)" metadata "([^"]*)" period "([^"]*)" freq "([^"]*)" trigger "([^"]*)" place "([^"]*)"$`, anOfferTemplateIsCreatedInTheGameWithNameKeyPidContentsMetadataPeriodFreqTriggerPlace)
 	s.Step(`^the last request returned status code "([^"]*)" and body "([^"]*)"$`, theLastRequestReturnedStatusCodeAndBody)
 	s.Step(`^an offer with name "([^"]*)" is returned$`, anOfferWithNameIsReturned)
 	s.Step(`^the following players claimed in the "([^"]*)" game:$`, theFollowingPlayersClaimedInTheGame)
