@@ -229,8 +229,11 @@ var _ = Describe("Offer Template Handler", func() {
 			app.Router.ServeHTTP(recorder, request)
 
 			//Then
-			Expect(recorder.Body.String()).To(Equal(templateID))
 			Expect(recorder.Code).To(Equal(http.StatusOK))
+			var obj map[string]interface{}
+			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(obj["id"]).To(Equal(templateID))
 		})
 
 		It("should enable a disabled offer template", func() {
@@ -244,7 +247,10 @@ var _ = Describe("Offer Template Handler", func() {
 
 			//Then
 			Expect(recorder.Code).To(Equal(http.StatusOK))
-			Expect(recorder.Body.String()).To(Equal(templateID))
+			var obj map[string]interface{}
+			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(obj["id"]).To(Equal(templateID))
 		})
 
 		It("returns status code of 500 if database is unavailable", func() {
@@ -335,8 +341,11 @@ var _ = Describe("Offer Template Handler", func() {
 			app.Router.ServeHTTP(recorder, request)
 
 			//Then
-			Expect(recorder.Body.String()).To(Equal(templateID))
 			Expect(recorder.Code).To(Equal(http.StatusOK))
+			var obj map[string]interface{}
+			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(obj["id"]).To(Equal(templateID))
 		})
 
 		It("should disable a disabled offer template", func() {
@@ -350,7 +359,10 @@ var _ = Describe("Offer Template Handler", func() {
 
 			//Then
 			Expect(recorder.Code).To(Equal(http.StatusOK))
-			Expect(recorder.Body.String()).To(Equal(templateID))
+			var obj map[string]interface{}
+			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(obj["id"]).To(Equal(templateID))
 		})
 
 		It("should use ID from URI even if a valid one is passed in body", func() {
@@ -365,8 +377,11 @@ var _ = Describe("Offer Template Handler", func() {
 			app.Router.ServeHTTP(recorder, request)
 
 			//Then
-			Expect(recorder.Body.String()).To(Equal(templateID))
 			Expect(recorder.Code).To(Equal(http.StatusOK))
+			var obj map[string]interface{}
+			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(obj["id"]).To(Equal(templateID))
 		})
 
 		It("returns status code of 500 if database is unavailable", func() {

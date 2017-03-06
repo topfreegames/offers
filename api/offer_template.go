@@ -91,7 +91,8 @@ func (g *OfferTemplateHandler) setEnabledOfferTemplate(w http.ResponseWriter, r 
 		return
 	}
 
-	Write(w, http.StatusOK, offerTemplateID)
+	bytesRes, _ := json.Marshal(map[string]interface{}{"id": offerTemplateID})
+	WriteBytes(w, http.StatusOK, bytesRes)
 }
 
 func (g *OfferTemplateHandler) list(w http.ResponseWriter, r *http.Request) {
