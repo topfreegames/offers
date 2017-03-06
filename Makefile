@@ -56,14 +56,21 @@ stop-deps:
 
 test: deps unit integration acceptance test-coverage-func
 
+test-ci: deps unit-ci integration-ci acceptance test-coverage-func
+
 clear-coverage-profiles:
 	@find . -name '*.coverprofile' -delete
 
 unit: drop-test migrate-test clear-coverage-profiles unit-run gather-unit-profiles
 
+unit-ci: drop-test migrate-test clear-coverage-profiles unit-run-ci gather-unit-profiles
+
 unit-run:
 	#@LOGXI="*=ERR,dat:sqlx=OFF,dat=OFF" ginkgo -cover -r -randomizeAllSpecs -randomizeSuites -skipMeasurements ${TEST_PACKAGES}
 	@ginkgo -cover -r -randomizeAllSpecs -randomizeSuites -skipMeasurements ${TEST_PACKAGES}
+
+unit-run-ci:
+	@ginkgo -cover -r -randomizeAllSpecs -randomizeSuites -skipMeasurements ${TEST_PACKAGES} --noColor
 
 gather-unit-profiles:
 	@mkdir -p _build
@@ -72,9 +79,13 @@ gather-unit-profiles:
 
 integration int: drop-test migrate-test clear-coverage-profiles integration-run gather-integration-profiles
 
+integration-ci: drop-test migrate-test clear-coverage-profiles integration-run-ci gather-integration-profiles
+
 integration-run:
-	#@LOGXI="*=ERR,dat:sqlx=OFF,dat=OFF" ginkgo -tags integration -cover -r -randomizeAllSpecs -randomizeSuites -skipMeasurements ${TEST_PACKAGES}
 	@ginkgo -tags integration -cover -r -randomizeAllSpecs -randomizeSuites -skipMeasurements ${TEST_PACKAGES}
+
+integration-run-ci:
+	@ginkgo -tags integration -cover -r -randomizeAllSpecs -randomizeSuites -skipMeasurements ${TEST_PACKAGES} --noColor
 
 gather-integration-profiles:
 	@mkdir -p _build
