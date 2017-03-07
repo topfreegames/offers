@@ -99,7 +99,7 @@ func InsertOffer(db runner.Connection, offer *Offer, t time.Time, mr *MixedMetri
 }
 
 //ClaimOffer sets claimed_at to time
-func ClaimOffer(db runner.Connection, offerID, playerID, gameID string, t time.Time, mr *MixedMetricsReporter) (dat.JSON, bool, error) {
+func ClaimOffer(db runner.Connection, offerID, playerID, gameID string, t time.Time, mr *MixedMetricsReporter) (dat.JSON, bool, int64, error) {
 	var offer Offer
 	err := mr.WithDatastoreSegment("offers", SegmentSelect, func() error {
 		return db.
@@ -116,17 +116,18 @@ func ClaimOffer(db runner.Connection, offerID, playerID, gameID string, t time.T
 	}, err)
 
 	if err != nil {
-		return nil, false, err
+		return nil, false, 0, err
 	}
 
 	ot, err := GetOfferTemplateByID(db, offer.OfferTemplateID, mr)
 	if err != nil {
-		return nil, false, err
+		return nil, false, 0, err
 	}
 
 	//TODO: change this to consider more than one claim per offer
+	// When this has changed also check the nextAt return
 	if offer.ClaimedAt.Valid {
-		return ot.Contents, true, nil
+		return ot.Contents, true, 0, nil
 	}
 
 	err = mr.WithDatastoreSegment("offers", SegmentUpdate, func() error {
@@ -135,11 +136,52 @@ func ClaimOffer(db runner.Connection, offerID, playerID, gameID string, t time.T
 			Set("claimed_at", t).
 			Set("bought_counter", offer.BoughtCounter+1).
 			Where("id=$1", offer.ID).
-			Returning("claimed_at").
+			Returning("claimed_at, bought_counter").
 			QueryStruct(&offer)
 	})
 
-	return ot.Contents, false, err
+	if err != nil {
+		return ot.Contents, false, 0, err
+	}
+
+	var offerTemplate OfferTemplate
+	err = mr.WithDatastoreSegment("offer_templates", SegmentSelect, func() error {
+		return db.
+			Select("frequency, period").
+			From("offer_templates").
+			Where("id = $1", offer.OfferTemplateID).
+			QueryStruct(&offerTemplate)
+	})
+	if err != nil {
+		return ot.Contents, false, 0, err
+	}
+
+	var p FrequencyOrPeriod
+	var f FrequencyOrPeriod
+	json.Unmarshal(offerTemplate.Period, &p)
+	json.Unmarshal(offerTemplate.Frequency, &f)
+	if p.Max != 0 && offer.BoughtCounter >= p.Max {
+		return ot.Contents, false, 0, nil
+	}
+
+	if p.Every == "" && f.Every == "" {
+		return ot.Contents, false, t.Unix(), nil
+	}
+
+	var duration time.Duration
+	var nextAt int64
+	if p.Every != "" {
+		duration, _ = time.ParseDuration(p.Every)
+		nextAt = t.Add(duration).Unix()
+	}
+
+	if f.Every != "" {
+		duration, _ = time.ParseDuration(f.Every)
+		if t.Add(duration).Unix() > nextAt {
+			nextAt = t.Add(duration).Unix()
+		}
+	}
+	return ot.Contents, false, nextAt, err
 }
 
 //UpdateOfferLastSeenAt updates last seen timestamp of an offer

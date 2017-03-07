@@ -232,7 +232,7 @@ var _ = Describe("Offers Model", func() {
 			currentTime := time.Unix(from+500, 0)
 
 			//When
-			contents, alreadyClaimed, err := models.ClaimOffer(db, id, playerID, gameID, currentTime, nil)
+			contents, alreadyClaimed, nextAt, err := models.ClaimOffer(db, id, playerID, gameID, currentTime, nil)
 
 			//Then
 			Expect(contents).NotTo(BeNil())
@@ -243,6 +243,7 @@ var _ = Describe("Offers Model", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(claimedOffer.ClaimedAt.Valid).To(BeTrue())
 			Expect(claimedOffer.ClaimedAt.Time.Unix()).To(Equal(currentTime.Unix()))
+			Expect(nextAt).To(Equal(currentTime.Unix() + 1))
 		})
 
 		It("should claim valid offer before trigger begins", func() {
@@ -253,12 +254,13 @@ var _ = Describe("Offers Model", func() {
 			gameID := "offers-game"
 
 			//When
-			contents, alreadyClaimed, err := models.ClaimOffer(db, id, playerID, gameID, currentTime, nil)
+			contents, alreadyClaimed, nextAt, err := models.ClaimOffer(db, id, playerID, gameID, currentTime, nil)
 
 			//Then
 			Expect(contents).NotTo(BeNil())
 			Expect(alreadyClaimed).To(BeFalse())
 			Expect(err).NotTo(HaveOccurred())
+			Expect(nextAt).To(Equal(currentTime.Unix() + 1))
 		})
 
 		It("should claim valid offer after trigger begins", func() {
@@ -269,12 +271,79 @@ var _ = Describe("Offers Model", func() {
 			gameID := "offers-game"
 
 			//When
-			contents, alreadyClaimed, err := models.ClaimOffer(db, id, playerID, gameID, currentTime, nil)
+			contents, alreadyClaimed, nextAt, err := models.ClaimOffer(db, id, playerID, gameID, currentTime, nil)
 
 			//Then
 			Expect(contents).NotTo(BeNil())
 			Expect(alreadyClaimed).To(BeFalse())
 			Expect(err).NotTo(HaveOccurred())
+			Expect(nextAt).To(Equal(currentTime.Unix() + 1))
+		})
+
+		It("should claim and receive 0 nextAt if reached max purchases", func() {
+			//Given
+			id := "5ba8848f-1df0-45b3-b8b1-27a7d5eedd6a"
+			playerID := "player-1"
+			gameID := "limited-offers-game"
+			currentTime := time.Unix(from+500, 0)
+
+			//When
+			contents, alreadyClaimed, nextAt, err := models.ClaimOffer(db, id, playerID, gameID, currentTime, nil)
+
+			//Then
+			Expect(contents).NotTo(BeNil())
+			Expect(alreadyClaimed).To(BeFalse())
+			Expect(err).NotTo(HaveOccurred())
+
+			claimedOffer, err := models.GetOfferByID(db, gameID, id, nil)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(claimedOffer.ClaimedAt.Valid).To(BeTrue())
+			Expect(claimedOffer.ClaimedAt.Time.Unix()).To(Equal(currentTime.Unix()))
+			Expect(nextAt).To(Equal(int64(0)))
+		})
+
+		It("should claim and receive nextAt equal to currentTime if no every frequency or period", func() {
+			//Given
+			id := "0a90073e-a798-46a8-a4f2-6b32182672ff"
+			playerID := "player-11"
+			gameID := "another-game"
+			currentTime := time.Unix(from+500, 0)
+
+			//When
+			contents, alreadyClaimed, nextAt, err := models.ClaimOffer(db, id, playerID, gameID, currentTime, nil)
+
+			//Then
+			Expect(contents).NotTo(BeNil())
+			Expect(alreadyClaimed).To(BeFalse())
+			Expect(err).NotTo(HaveOccurred())
+
+			claimedOffer, err := models.GetOfferByID(db, gameID, id, nil)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(claimedOffer.ClaimedAt.Valid).To(BeTrue())
+			Expect(claimedOffer.ClaimedAt.Time.Unix()).To(Equal(currentTime.Unix()))
+			Expect(nextAt).To(Equal(currentTime.Unix()))
+		})
+
+		It("should claim and receive biggest nextAt considering period and freq", func() {
+			//Given
+			id := "29593e1d-792a-4849-8236-9d7b80fc6f6c"
+			playerID := "player-11"
+			gameID := "another-game"
+			currentTime := time.Unix(from+500, 0)
+
+			//When
+			contents, alreadyClaimed, nextAt, err := models.ClaimOffer(db, id, playerID, gameID, currentTime, nil)
+
+			//Then
+			Expect(contents).NotTo(BeNil())
+			Expect(alreadyClaimed).To(BeFalse())
+			Expect(err).NotTo(HaveOccurred())
+
+			claimedOffer, err := models.GetOfferByID(db, gameID, id, nil)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(claimedOffer.ClaimedAt.Valid).To(BeTrue())
+			Expect(claimedOffer.ClaimedAt.Time.Unix()).To(Equal(currentTime.Unix()))
+			Expect(nextAt).To(Equal(currentTime.Unix() + 30))
 		})
 
 		It("should not claim twice the same offer", func() {
@@ -286,17 +355,19 @@ var _ = Describe("Offers Model", func() {
 			secondTime := time.Unix(to+1000, 0)
 
 			//When
-			contents1, alreadyClaimed1, err1 := models.ClaimOffer(db, id, playerID, gameID, firstTime, nil)
-			contents2, alreadyClaimed2, err2 := models.ClaimOffer(db, id, playerID, gameID, secondTime, nil)
+			contents1, alreadyClaimed1, nextAt1, err1 := models.ClaimOffer(db, id, playerID, gameID, firstTime, nil)
+			contents2, alreadyClaimed2, nextAt2, err2 := models.ClaimOffer(db, id, playerID, gameID, secondTime, nil)
 
 			//Then
 			Expect(contents1).NotTo(BeNil())
 			Expect(alreadyClaimed1).To(BeFalse())
 			Expect(err1).NotTo(HaveOccurred())
+			Expect(nextAt1).To(Equal(firstTime.Unix() + 1))
 
 			Expect(contents2).NotTo(BeNil())
 			Expect(alreadyClaimed2).To(BeTrue())
 			Expect(err2).NotTo(HaveOccurred())
+			Expect(nextAt2).To(Equal(int64(0)))
 		})
 
 		It("should not claim an offer that doesn't exist", func() {
@@ -307,7 +378,7 @@ var _ = Describe("Offers Model", func() {
 			currentTime := time.Unix(to+500, 0)
 
 			//When
-			_, _, err := models.ClaimOffer(db, id, playerID, gameID, currentTime, nil)
+			_, _, _, err := models.ClaimOffer(db, id, playerID, gameID, currentTime, nil)
 
 			//Then
 			Expect(err).To(HaveOccurred())
@@ -324,7 +395,7 @@ var _ = Describe("Offers Model", func() {
 			Expect(err).NotTo(HaveOccurred())
 			db.(*runner.DB).DB.Close() // make DB connection unavailable
 
-			_, _, err = models.ClaimOffer(db, id, playerID, gameID, currentTime, nil)
+			_, _, _, err = models.ClaimOffer(db, id, playerID, gameID, currentTime, nil)
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(Equal("sql: database is closed"))
 			db = oldDB // avoid errors in after each
@@ -526,7 +597,7 @@ var _ = Describe("Offers Model", func() {
 
 			//When
 			templatesBefore, err1 := models.GetAvailableOffers(db, playerID, gameID, currentTime, nil)
-			_, alreadyClaimed, err2 := models.ClaimOffer(db, offerID, playerID, gameID, currentTime, nil)
+			_, alreadyClaimed, _, err2 := models.ClaimOffer(db, offerID, playerID, gameID, currentTime, nil)
 			templatesAfter, err3 := models.GetAvailableOffers(db, playerID, gameID, currentTime, nil)
 
 			//Then
@@ -547,7 +618,7 @@ var _ = Describe("Offers Model", func() {
 
 			//When
 			templatesBefore, err1 := models.GetAvailableOffers(db, playerID, gameID, currentTime, nil)
-			_, alreadyClaimed, err2 := models.ClaimOffer(db, offerID, playerID, gameID, currentTime, nil)
+			_, alreadyClaimed, _, err2 := models.ClaimOffer(db, offerID, playerID, gameID, currentTime, nil)
 			templatesAfter, err3 := models.GetAvailableOffers(db, playerID, gameID, currentTime, nil)
 
 			//Then
@@ -662,7 +733,7 @@ var _ = Describe("Offers Model", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			// Claim the offer
-			_, alreadyClaimed, err := models.ClaimOffer(db, offers["popup"][0].ID, playerID, gameID, currentTime, nil)
+			_, alreadyClaimed, _, err := models.ClaimOffer(db, offers["popup"][0].ID, playerID, gameID, currentTime, nil)
 			Expect(alreadyClaimed).To(BeFalse())
 			Expect(err).NotTo(HaveOccurred())
 

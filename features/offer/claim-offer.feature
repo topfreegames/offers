@@ -23,11 +23,11 @@ Feature: Claiming an offer for a given player
     Then the last request returned status code "<code>" and body "<body>"
 
     Examples:
-      | request_time | claim_time | player | offer    | placement | code | body       |
-      | 0            | 3          | joseph | oclaim1  | popup     | 200  | { 'x': 1 } |
-      | 1            | 6          | jane   | oclaim1  | popup     | 200  | { 'x': 1 } |
-      | 2            | 7d         | mary   | oclaim1  | popup     | 200  | { 'x': 1 } |
-      | 21           | 0          | joseph | oclaim2  | popup     | 200  | { 'x': 2 } |
-      | 4            | 3          | john   | oclaim1  | popup     | 409  | { 'x': 1 } |
-      | 5            | 3          | jack   | oclaim1  | popup     | 200  | { 'x': 1 } |
-      | 0            | 3          | jack   | oclaim15 | popup     | 301  |            |
+      | request_time | claim_time | player | offer    | placement | code | body                 |
+      | 0            | 3          | joseph | oclaim1  | popup     | 200  | {'contents':{'x':1}} |
+      | 1            | 6          | jane   | oclaim1  | popup     | 200  | {'contents':{'x':1}} |
+      | 2            | 7d         | mary   | oclaim1  | popup     | 200  | {'contents':{'x':1}} |
+      | 21           | 0          | joseph | oclaim2  | popup     | 200  | {'contents':{'x':2}} |
+      | 4            | 3          | john   | oclaim1  | popup     | 409  | {'contents':{'x':1}} |
+      | 5            | 3          | jack   | oclaim1  | popup     | 200  | {'contents':{'x':1}} |
+      | 0            | 3          | jack   | oclaim15 | popup     | 301  |                      |

@@ -511,7 +511,7 @@ func theFollowingPlayersClaimedInTheGame(gameID string, players *gherkin.DataTab
 					return err
 				}
 
-				_, _, err = models.ClaimOffer(app.DB, offer.ID, playerID, gameID, currentTime, nil)
+				_, _, _, err = models.ClaimOffer(app.DB, offer.ID, playerID, gameID, currentTime, nil)
 				if err != nil {
 					return err
 				}

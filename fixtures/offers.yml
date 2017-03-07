@@ -73,3 +73,17 @@
     offer_template_id: 5fed76ab-1fd7-4a91-972d-bca228ce80c4
     offer_template_key: 471c730b-b8ed-4caa-a245-f46822914c8c
     created_at: 2016-01-01 12:30:12
+-
+    id: 29593e1d-792a-4849-8236-9d7b80fc6f6c
+    game_id: another-game
+    player_id: player-11
+    offer_template_id: a2539a8c-55f2-4539-a8c0-929b240d8c80
+    offer_template_key: df539b5f-f7fb-480b-86b2-c598eb392b5d
+    created_at: 2016-01-01 12:30:12
+-
+    id: 0a90073e-a798-46a8-a4f2-6b32182672ff
+    game_id: another-game
+    player_id: player-11
+    offer_template_id: 17e42a40-da28-44dc-abd1-0cef8c2dff42
+    offer_template_key: a493fe6a-861e-4788-b544-91b0ae51c425
+    created_at: 2016-01-01 12:30:12

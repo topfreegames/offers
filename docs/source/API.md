@@ -402,7 +402,17 @@ Offers API
       }
     ```
 
-  * Success Response
+  * Success Response (if the player can still see the offer)
+    * Code: `200`
+    * Content:
+      ```
+        {
+          "contents": [json],
+          "nextAt": [int64]  // unix timestamp of the next time the offer can be shown
+        }
+      ```
+
+  * Success Response (if the player can no longer see the offer)
     * Code: `200`
     * Content:
       ```
@@ -417,6 +427,7 @@ Offers API
       ```
         {
           "contents": [json]
+          "nextAt": [int64]  // unix timestamp of the next time the offer can be shown
         }
       ```
 

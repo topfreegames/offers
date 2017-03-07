@@ -91,7 +91,7 @@ func (h *OfferRequestHandler) claimOffer(w http.ResponseWriter, r *http.Request)
 		"offerID":   offerID,
 	})
 
-	contents, alreadyClaimed, err := models.ClaimOffer(h.App.DB, offerID, offer.PlayerID, offer.GameID, currentTime, mr)
+	contents, alreadyClaimed, nextAt, err := models.ClaimOffer(h.App.DB, offerID, offer.PlayerID, offer.GameID, currentTime, mr)
 	if err != nil {
 		logger.WithError(err).Error("Failed to claim offer.")
 		if modelNotFound, ok := err.(*e.ModelNotFoundError); ok {
@@ -104,12 +104,19 @@ func (h *OfferRequestHandler) claimOffer(w http.ResponseWriter, r *http.Request)
 	}
 
 	logger.WithField("alreadyClaimed", alreadyClaimed).Info("Claimed offer successfully")
+	res := map[string]interface{}{
+		"contents": contents,
+	}
+	if nextAt != 0 {
+		res["nextAt"] = nextAt
+	}
+	bytesRes, _ := json.Marshal(res)
 	if alreadyClaimed {
-		WriteBytes(w, http.StatusConflict, contents)
+		WriteBytes(w, http.StatusConflict, bytesRes)
 		return
 	}
 
-	WriteBytes(w, http.StatusOK, contents)
+	WriteBytes(w, http.StatusOK, bytesRes)
 }
 
 //UpdateOfferLastSeenAt updates the offer last seen at

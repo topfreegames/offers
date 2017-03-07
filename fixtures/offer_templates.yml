@@ -148,3 +148,29 @@
     trigger: '{"from": 1486678000, "to": 1486679000}'
     placement: unique-place
     enabled: true
+-
+    id: a2539a8c-55f2-4539-a8c0-929b240d8c80
+    key: df539b5f-f7fb-480b-86b2-c598eb392b5d
+    name: template-10
+    product_id: com.tfg.sample
+    game_id: another-game
+    contents: '{"gems": 5, "gold": 100}'
+    metadata: '{}'
+    period: '{"every": "1s"}'
+    frequency: '{"every": "30s"}'
+    trigger: '{"from": 1486678000, "to": 1486679000}'
+    placement: unique-place
+    enabled: true
+-
+    id: 17e42a40-da28-44dc-abd1-0cef8c2dff42
+    key: a493fe6a-861e-4788-b544-91b0ae51c425
+    name: template-11
+    product_id: com.tfg.sample
+    game_id: another-game
+    contents: '{"gems": 5, "gold": 100}'
+    metadata: '{}'
+    period: '{"max": 20}'
+    frequency: '{"max": 20}'
+    trigger: '{"from": 1486678000, "to": 1486679000}'
+    placement: unique-place
+    enabled: false

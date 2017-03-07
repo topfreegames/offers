@@ -200,7 +200,7 @@ var _ = Describe("Offer Handler", func() {
 
 			app.Router.ServeHTTP(recorder, request)
 			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
-			Expect(recorder.Body.String()).To(Equal(`{"gems": 5, "gold": 100}`))
+			Expect(recorder.Body.String()).To(Equal(fmt.Sprintf(`{"contents":{"gems":5,"gold":100},"nextAt":%v}`, app.Clock.GetTime().Unix()+1)))
 			Expect(recorder.Code).To(Equal(http.StatusOK))
 
 			offer, err := models.GetOfferByID(app.DB, gameID, id, nil)
@@ -227,7 +227,7 @@ var _ = Describe("Offer Handler", func() {
 			recorder = httptest.NewRecorder()
 			app.Router.ServeHTTP(recorder, request2)
 			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
-			Expect(recorder.Body.String()).To(Equal(`{"gems": 5, "gold": 100}`))
+			Expect(recorder.Body.String()).To(Equal(`{"contents":{"gems":5,"gold":100}}`))
 			Expect(recorder.Code).To(Equal(http.StatusConflict))
 
 			offer, err := models.GetOfferByID(app.DB, gameID, id, nil)
