@@ -2,7 +2,7 @@ Feature: Claiming an offer for a given player
 
   Background:
     Given the server is up
-    And a game with name "offer-claim-game" exists
+    And a game with id "offer-claim-game" exists
 
   Scenario Outline: A player claims an offer
     Given the following offer templates exist in the "offer-claim-game" game:

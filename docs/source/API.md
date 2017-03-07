@@ -40,14 +40,12 @@ Offers API
     ```
     {
       "name":     [string], // required, 255 characters max
-      "bundleId": [string], // required, 255 characters max
       "metadata": [json]    // optional
     }
     ```
     * Field Descriptions
       - **id**:       Unique ID that identifies the game              
       - **name**:     Prettier game identifier to show on UI          
-      - **bundleId**: App identifier on PlayStore or AppStore         
       - **metadata**: Any additional information one would like to access later
 
   * Success Response
@@ -95,7 +93,6 @@ Offers API
       {
         "id":       [string],
         "name":     [string],
-        "bundleId": [string],
         "metadata": [json]
       },
       ...

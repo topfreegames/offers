@@ -32,8 +32,7 @@ var _ = Describe("Game Handler", func() {
 		It("should return status code of 200", func() {
 			id := uuid.NewV4().String()
 			gameReader := JSONFor(JSON{
-				"Name":     "Game Awesome Name",
-				"BundleID": "com.topfreegames.example",
+				"Name": "Game Awesome Name",
 			})
 			request, _ := http.NewRequest("PUT", fmt.Sprintf("/games/%s", id), gameReader)
 
@@ -49,7 +48,7 @@ var _ = Describe("Game Handler", func() {
 		It("should return status code of 422 if missing parameter", func() {
 			id := uuid.NewV4().String()
 			gameReader := JSONFor(JSON{
-				"Name": "Game Awesome Name",
+				"Name": "",
 			})
 			request, _ := http.NewRequest("PUT", fmt.Sprintf("/games/%s", id), gameReader)
 
@@ -61,7 +60,7 @@ var _ = Describe("Game Handler", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(obj["code"]).To(Equal("OFF-002"))
 			Expect(obj["error"]).To(Equal("ValidationFailedError"))
-			Expect(obj["description"]).To(Equal("BundleID: non zero value required;"))
+			Expect(obj["description"]).To(Equal("Name: non zero value required;"))
 		})
 
 		It("should return status code of 422 if invalid name", func() {
@@ -72,39 +71,13 @@ var _ = Describe("Game Handler", func() {
 
 			id := "game-id"
 			gameReader := JSONFor(JSON{
-				"Name":     reallyBigName,
-				"BundleID": "com.topfreegames.example",
+				"Name": reallyBigName,
 			})
 			request, _ := http.NewRequest("PUT", fmt.Sprintf("/games/%s", id), gameReader)
 
 			app.Router.ServeHTTP(recorder, request)
 			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
 			Expect(recorder.Code).To(Equal(http.StatusUnprocessableEntity))
-			var obj map[string]interface{}
-			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
-			Expect(err).NotTo(HaveOccurred())
-			Expect(obj["code"]).To(BeEquivalentTo("OFF-002"))
-			Expect(obj["error"]).To(Equal("ValidationFailedError"))
-			Expect(obj["description"]).To(ContainSubstring("does not validate as stringlength(1|255);"))
-		})
-
-		It("should return status code of 422 if invalid bundle id", func() {
-			reallyBigName := "1234567890"
-			for i := 0; i < 5; i++ {
-				reallyBigName += reallyBigName
-			}
-
-			id := "game-id"
-			gameReader := JSONFor(JSON{
-				"Name":     uuid.NewV4().String(),
-				"BundleID": reallyBigName,
-			})
-			request, _ := http.NewRequest("PUT", fmt.Sprintf("/games/%s", id), gameReader)
-
-			app.Router.ServeHTTP(recorder, request)
-
-			Expect(recorder.Code).To(Equal(http.StatusUnprocessableEntity))
-			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
 			var obj map[string]interface{}
 			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
 			Expect(err).NotTo(HaveOccurred())
@@ -116,10 +89,8 @@ var _ = Describe("Game Handler", func() {
 		It("should return status code of 422 if invalid id", func() {
 			id := "abc123!@$xyz456"
 			name := "Game Awesome Name"
-			bundleID := "com.tfg.example"
 			gameReader := JSONFor(JSON{
-				"Name":     name,
-				"BundleID": bundleID,
+				"Name": name,
 			})
 			request, _ := http.NewRequest("PUT", fmt.Sprintf("/games/%s", id), gameReader)
 
@@ -137,11 +108,9 @@ var _ = Describe("Game Handler", func() {
 		It("should return status code of 422 if invalid id, even if is passed in body", func() {
 			id := "abc123!@$xyz456"
 			name := "Game Awesome Name"
-			bundleID := "com.tfg.example"
 			gameReader := JSONFor(JSON{
-				"ID":       id,
-				"Name":     name,
-				"BundleID": bundleID,
+				"ID":   id,
+				"Name": name,
 			})
 			request, _ := http.NewRequest("PUT", fmt.Sprintf("/games/%s", id), gameReader)
 
@@ -158,8 +127,7 @@ var _ = Describe("Game Handler", func() {
 
 		It("should return status code of 404 if id is not passed", func() {
 			gameReader := JSONFor(JSON{
-				"Name":     "Game Awesome Name",
-				"BundleID": "com.topfreegames.example",
+				"Name": "Game Awesome Name",
 			})
 			request, _ := http.NewRequest("PUT", "/games/", gameReader)
 
@@ -171,8 +139,7 @@ var _ = Describe("Game Handler", func() {
 		It("should return status code of 500 if some error occurred", func() {
 			id := uuid.NewV4().String()
 			gameReader := JSONFor(JSON{
-				"Name":     "Game Awesome Break",
-				"BundleID": "com.topfreegames.example",
+				"Name": "Game Awesome Break",
 			})
 
 			oldDB := app.DB
@@ -209,7 +176,6 @@ var _ = Describe("Game Handler", func() {
 			for i := 0; i < len(obj); i++ {
 				Expect(obj[i]).To(HaveKey("id"))
 				Expect(obj[i]).To(HaveKey("name"))
-				Expect(obj[i]).To(HaveKey("bundleId"))
 				Expect(obj[i]).To(HaveKey("metadata"))
 			}
 		})

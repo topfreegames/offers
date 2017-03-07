@@ -18,7 +18,6 @@ import (
 type Game struct {
 	ID       string   `db:"id" json:"id" valid:"matches(^[^-][a-z0-9-]*$),stringlength(1|255)"`
 	Name     string   `db:"name" json:"name" valid:"ascii,stringlength(1|255),required"`
-	BundleID string   `db:"bundle_id" json:"bundleId" valid:"stringlength(1|255),required"`
 	Metadata dat.JSON `db:"metadata" json:"metadata" valid:"JSONObject"`
 
 	//TODO: Validate dates
@@ -70,7 +69,7 @@ func UpsertGame(db runner.Connection, game *Game, t time.Time, mr *MixedMetricsR
 	return mr.WithDatastoreSegment("games", SegmentUpsert, func() error {
 		return db.
 			Upsert("games").
-			Columns("id", "name", "bundle_id", "updated_at", "metadata").
+			Columns("id", "name", "updated_at", "metadata").
 			Record(game).
 			Where("id=$1", game.ID).
 			Returning("created_at", "updated_at").

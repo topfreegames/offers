@@ -9,6 +9,7 @@ package models_test
 
 import (
 	"bytes"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	uuid "github.com/satori/go.uuid"
@@ -35,7 +36,6 @@ var _ = Describe("Games Model", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(game.ID).To(Equal(gameID))
 			Expect(game.Name).To(Equal("game-1"))
-			Expect(game.BundleID).To(Equal("com.topfreegames.example"))
 
 			obj, err := game.GetMetadata()
 			Expect(err).NotTo(HaveOccurred())
@@ -48,7 +48,6 @@ var _ = Describe("Games Model", func() {
 			game := &models.Game{
 				Name:     "Game Awesome Name",
 				ID:       "game-id-2",
-				BundleID: "com.topfreegames.example",
 				Metadata: meta,
 			}
 			var game2 models.Game
@@ -56,7 +55,7 @@ var _ = Describe("Games Model", func() {
 			//When
 			err1 := db.
 				InsertInto("games").
-				Columns("name", "id", "bundle_id", "metadata").
+				Columns("name", "id", "metadata").
 				Record(game).
 				Returning("created_at", "updated_at").
 				QueryStruct(game)
@@ -75,7 +74,6 @@ var _ = Describe("Games Model", func() {
 			Expect(game2.CreatedAt).NotTo(Equal(""))
 			Expect(game2.ID).To(Equal(game.ID))
 			Expect(game2.Name).To(Equal(game.Name))
-			Expect(game2.BundleID).To(Equal(game.BundleID))
 			Expect(obj.(map[string]interface{})["qwe"]).To(BeEquivalentTo(123))
 		})
 	})
@@ -101,7 +99,6 @@ var _ = Describe("Games Model", func() {
 			Expect(err1).NotTo(HaveOccurred())
 			Expect(game.ID).To(Equal(gameID))
 			Expect(game.Name).To(Equal("game-1"))
-			Expect(game.BundleID).To(Equal("com.topfreegames.example"))
 			Expect(err2).NotTo(HaveOccurred())
 			Expect(obj).To(BeEquivalentTo(map[string]interface{}{}))
 		})
@@ -130,7 +127,6 @@ var _ = Describe("Games Model", func() {
 			game := models.Game{
 				ID:       id,
 				Name:     "Game Awesome Name",
-				BundleID: "com.tfg.example",
 				Metadata: dat.JSON([]byte(`{"qwe": 123}`)),
 			}
 			var c models.RealClock
@@ -144,7 +140,6 @@ var _ = Describe("Games Model", func() {
 			Expect(err2).NotTo(HaveOccurred())
 			Expect(gameFromDB.ID).To(Equal(id))
 			Expect(gameFromDB.Name).To(Equal(game.Name))
-			Expect(gameFromDB.BundleID).To(Equal(game.BundleID))
 
 			obj, err := gameFromDB.GetMetadata()
 			Expect(err).NotTo(HaveOccurred())
@@ -155,11 +150,9 @@ var _ = Describe("Games Model", func() {
 			//Given
 			id := "upsert-game-id"
 			name := "Game Awesome Name"
-			bundleID := "com.tfg.example"
 			game := models.Game{
-				ID:       id,
-				Name:     name,
-				BundleID: bundleID,
+				ID:   id,
+				Name: name,
 			}
 			var c models.RealClock
 
@@ -172,7 +165,6 @@ var _ = Describe("Games Model", func() {
 			Expect(err2).NotTo(HaveOccurred())
 			Expect(gameFromDB.ID).To(Equal(id))
 			Expect(gameFromDB.Name).To(Equal(name))
-			Expect(gameFromDB.BundleID).To(Equal(bundleID))
 		})
 
 		It("should return error when inserting game with very big name", func() {
@@ -187,7 +179,6 @@ var _ = Describe("Games Model", func() {
 			game := models.Game{
 				ID:       id,
 				Name:     buffer.String(),
-				BundleID: "com.tfg.example",
 				Metadata: dat.JSON([]byte(`{"qwe": 123}`)),
 			}
 			var c models.RealClock

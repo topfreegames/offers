@@ -2,11 +2,11 @@ Feature: Create an offer template
 
   Background:
     Given the server is up
-    And a game with name "offer-template-game" exists
+    And a game with id "offer-template-game" exists
 
   Scenario Outline: offer template is created
     Given the server is up
-    When an offer template is created in the "offer-template-game" game with name "<name>" key "<key>" pid "<pid>" contents "<contents>" metadata "<metadata>" period "<period>" freq "<frequency>" trigger "<trigger>" place "<placement>" 
+    When an offer template is created in the "offer-template-game" game with name "<name>" key "<key>" pid "<pid>" contents "<contents>" metadata "<metadata>" period "<period>" freq "<frequency>" trigger "<trigger>" place "<placement>"
     Then an offer template with name "<name>" exists in game "offer-template-game"
 
     Examples:
@@ -15,7 +15,7 @@ Feature: Create an offer template
 
   Scenario Outline: can't create offer template with same name
     Given an offer template exists with name "oc2" in game "offer-template-game"
-    When an offer template is created in the "offer-template-game" game with name "<name>" key "<key>" pid "<pid>" contents "<contents>" metadata "<metadata>" period "<period>" freq "<frequency>" trigger "<trigger>" place "<placement>" 
+    When an offer template is created in the "offer-template-game" game with name "<name>" key "<key>" pid "<pid>" contents "<contents>" metadata "<metadata>" period "<period>" freq "<frequency>" trigger "<trigger>" place "<placement>"
     Then the last request returned status code 409
     And the last error is "OFF-003" with message "There's already an offer template with the same name"
 
@@ -25,7 +25,7 @@ Feature: Create an offer template
 
   Scenario Outline: can't create offer template with invalid payload
     Given the server is up
-    When an offer template is created in the "offer-template-game" game with name "<name>" key "<key>" pid "<pid>" contents "<contents>" metadata "<metadata>" period "<period>" freq "<frequency>" trigger "<trigger>" place "<placement>" 
+    When an offer template is created in the "offer-template-game" game with name "<name>" key "<key>" pid "<pid>" contents "<contents>" metadata "<metadata>" period "<period>" freq "<frequency>" trigger "<trigger>" place "<placement>"
     Then the last request returned status code 422
     And the last error is "OFF-002" with message "<error>"
     And an offer template with name "oc3" does not exist in game "offer-template-game"

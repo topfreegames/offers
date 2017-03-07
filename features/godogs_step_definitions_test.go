@@ -81,9 +81,9 @@ func theServerIsUp() error {
 }
 
 func SelectOfferByOfferTemplateNameAndPlayerAndGame(offerTemplateName, playerID, gameID string) (*models.Offer, error) {
-	query := `SELECT 
+	query := `SELECT
 							offers.id, offers.game_id, offers.player_id, offers.seen_counter
-						FROM 
+						FROM
 							offers
 						INNER JOIN offer_templates ON offer_templates.id = offers.offer_template_id
 						WHERE offers.player_id = $1
@@ -95,23 +95,23 @@ func SelectOfferByOfferTemplateNameAndPlayerAndGame(offerTemplateName, playerID,
 	return &offer, err
 }
 
-func requestGameWithIDAndBundleID(id, bundleID string) error {
+func requestGameWithIDAndName(id, name string) error {
 	var err error
 	lastStatus, lastBody, err = performRequest(app, "PUT", fmt.Sprintf("/games/%s", replaceString(id)), map[string]interface{}{
-		"Name":     "Game Awesome Name",
-		"BundleID": replaceString(bundleID),
+		"id":   id,
+		"name": replaceString(name),
 	})
 
 	return err
 }
 
 //ALIAS to update
-func aGameNamedIsCreatedWithBundleIDOf(id, bundleID string) error {
-	return requestGameWithIDAndBundleID(id, bundleID)
+func aGameWithIDIsCreatedWithAName(id, name string) error {
+	return requestGameWithIDAndName(id, name)
 }
 
-func aGameNamedIsUpdatedWithBundleIDOf(id, bundleID string) error {
-	return requestGameWithIDAndBundleID(id, bundleID)
+func aGameWithIDIsUpdatedWithAName(id, name string) error {
+	return requestGameWithIDAndName(id, name)
 }
 
 func theGameExists(id string) error {
@@ -119,13 +119,13 @@ func theGameExists(id string) error {
 	return err
 }
 
-func theGameHasBundleIDOf(id, bundleID string) error {
+func theGameHasNameOf(id, name string) error {
 	game, err := models.GetGameByID(app.DB, id, nil)
 	if err != nil {
 		return err
 	}
-	if game.BundleID != bundleID {
-		return fmt.Errorf("Expected game to have bundle ID of %s, but it has %s", bundleID, game.BundleID)
+	if game.Name != name {
+		return fmt.Errorf("Expected game to have name of %s, but it has %s", name, game.Name)
 	}
 	return nil
 }
@@ -201,7 +201,7 @@ func theFollowingPlayersExistInTheGame(gameID string, players *gherkin.DataTable
 				}
 
 				currentTime := time.Unix(int64(unixTime), 0)
-				if _, err := models.GetAvailableOffers(app.DB, playerID, gameID, currentTime, nil); err != nil {
+				if _, err = models.GetAvailableOffers(app.DB, playerID, gameID, currentTime, nil); err != nil {
 					return err
 				}
 
@@ -220,8 +220,8 @@ func theFollowingPlayersExistInTheGame(gameID string, players *gherkin.DataTable
 	return nil
 }
 
-func aGameWithNameExists(name string) error {
-	_, err := newGame(app.DB, name, name)
+func aGameWithIDExists(id string) error {
+	_, err := newGame(app.DB, id)
 	return err
 }
 
@@ -502,7 +502,7 @@ func theFollowingPlayersClaimedInTheGame(gameID string, players *gherkin.DataTab
 				}
 
 				currentTime := time.Unix(int64(unixTime), 0)
-				if _, err := models.GetAvailableOffers(app.DB, playerID, gameID, currentTime, nil); err != nil {
+				if _, err = models.GetAvailableOffers(app.DB, playerID, gameID, currentTime, nil); err != nil {
 					return err
 				}
 
@@ -524,14 +524,14 @@ func theFollowingPlayersClaimedInTheGame(gameID string, players *gherkin.DataTab
 
 func FeatureContext(s *godog.Suite) {
 	s.Step(`^the server is up$`, theServerIsUp)
-	s.Step(`^a game named "([^"]*)" is created with bundle id of "([^"]*)"$`, aGameNamedIsCreatedWithBundleIDOf)
+	s.Step(`^a game with id "([^"]*)" is created with a name "([^"]*)"$`, aGameWithIDIsCreatedWithAName)
 	s.Step(`^the game "([^"]*)" exists$`, theGameExists)
-	s.Step(`^the game "([^"]*)" has bundle id of "([^"]*)"$`, theGameHasBundleIDOf)
-	s.Step(`^a game named "([^"]*)" is updated with bundle id of "([^"]*)"$`, aGameNamedIsUpdatedWithBundleIDOf)
+	s.Step(`^the game "([^"]*)" has name of "([^"]*)"$`, theGameHasNameOf)
+	s.Step(`^a game with id "([^"]*)" is updated with a name "([^"]*)"$`, aGameWithIDIsUpdatedWithAName)
 	s.Step(`^the last request returned status code (\d+)$`, theLastRequestReturnedStatusCode)
 	s.Step(`^the last error is "([^"]*)" with message "([^"]*)"$`, theLastErrorIsWithMessage)
 	s.Step(`^the game "([^"]*)" does not exist$`, theGameDoesNotExist)
-	s.Step(`^a game with name "([^"]*)" exists$`, aGameWithNameExists)
+	s.Step(`^a game with id "([^"]*)" exists$`, aGameWithIDExists)
 	s.Step(`^an offer template exists with name "([^"]*)" in game "([^"]*)"$`, anOfferTemplateExistsWithNameInGame)
 	s.Step(`^an offer template with name "([^"]*)" does not exist in game "([^"]*)"$`, anOfferTemplateWithNameDoesNotExistInGame)
 	s.Step(`^the following offer templates exist in the "([^"]*)" game:$`, theFollowingOfferTemplatesExistInTheGame)

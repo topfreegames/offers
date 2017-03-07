@@ -1,7 +1,7 @@
-Feature: Request offers for a player 
+Feature: Request offers for a player
   Background:
     Given the server is up
-    And a game with name "offer-request-game" exists
+    And a game with id "offer-request-game" exists
 
   Scenario Outline: A player requests offers that can be bought only once to be shown every minute
     Given the following offer templates exist in the "offer-request-game" game:

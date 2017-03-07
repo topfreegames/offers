@@ -35,11 +35,10 @@ import (
 	runner "gopkg.in/mgutz/dat.v2/sqlx-runner"
 )
 
-func newGame(db runner.Connection, id, bundleID string) (*models.Game, error) {
+func newGame(db runner.Connection, id string) (*models.Game, error) {
 	game := &models.Game{
-		ID:       id,
-		Name:     id,
-		BundleID: bundleID,
+		ID:   id,
+		Name: id,
 	}
 	var c models.RealClock
 	err := models.UpsertGame(app.DB, game, c.GetTime(), nil)
