@@ -52,6 +52,8 @@ var _ = Describe("Offer Template Handler", func() {
 
 			request, _ := http.NewRequest("POST", "/templates", offerTemplateReader)
 			app.Router.ServeHTTP(recorder, request)
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
 			Expect(recorder.Code).To(Equal(http.StatusCreated), recorder.Body.String())
 			var obj map[string]interface{}
 			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
@@ -75,6 +77,7 @@ var _ = Describe("Offer Template Handler", func() {
 
 			request, _ := http.NewRequest("POST", "/templates", offerTemplateReader)
 			app.Router.ServeHTTP(recorder, request)
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
 			Expect(recorder.Code).To(Equal(http.StatusUnprocessableEntity))
 			var obj map[string]interface{}
 			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
@@ -98,6 +101,7 @@ var _ = Describe("Offer Template Handler", func() {
 
 			request, _ := http.NewRequest("POST", "/templates", offerTemplateReader)
 			app.Router.ServeHTTP(recorder, request)
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
 			Expect(recorder.Code).To(Equal(http.StatusUnprocessableEntity))
 			var obj map[string]interface{}
 			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
@@ -121,6 +125,7 @@ var _ = Describe("Offer Template Handler", func() {
 
 			request, _ := http.NewRequest("POST", "/templates", offerTemplateReader)
 			app.Router.ServeHTTP(recorder, request)
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
 			Expect(recorder.Code).To(Equal(http.StatusUnprocessableEntity), recorder.Body.String())
 			var obj map[string]interface{}
 			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
@@ -144,6 +149,7 @@ var _ = Describe("Offer Template Handler", func() {
 
 			request, _ := http.NewRequest("POST", "/templates", offerTemplateReader)
 			app.Router.ServeHTTP(recorder, request)
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
 			Expect(recorder.Code).To(Equal(http.StatusUnprocessableEntity), recorder.Body.String())
 			var obj map[string]interface{}
 			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
@@ -173,6 +179,7 @@ var _ = Describe("Offer Template Handler", func() {
 			app.DB = db
 			app.DB.(*runner.DB).DB.Close() // make DB connection unavailable
 			app.Router.ServeHTTP(recorder, request)
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
 
 			Expect(recorder.Code).To(Equal(http.StatusInternalServerError))
 			var obj map[string]interface{}
@@ -210,25 +217,24 @@ var _ = Describe("Offer Template Handler", func() {
 			request2, _ := http.NewRequest("POST", "/templates", offerTemplateReader)
 
 			app.Router.ServeHTTP(recorder, request1)
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
 			Expect(recorder.Code).To(Equal(http.StatusOK))
 
 			recorder = httptest.NewRecorder()
 			app.Router.ServeHTTP(recorder, request2)
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
 			Expect(recorder.Code).To(Equal(http.StatusCreated))
 		})
 	})
 
 	Describe("PUT /templates/{id}/enable", func() {
 		It("should enable an enabled offer template", func() {
-			//Given
 			templateID := "dd21ec96-2890-4ba0-b8e2-40ea67196990"
 			offerTemplateReader := JSONFor(JSON{})
 			request, _ := http.NewRequest("PUT", fmt.Sprintf("/templates/%s/enable", templateID), offerTemplateReader)
 
-			//When
 			app.Router.ServeHTTP(recorder, request)
-
-			//Then
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
 			Expect(recorder.Code).To(Equal(http.StatusOK))
 			var obj map[string]interface{}
 			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
@@ -237,15 +243,12 @@ var _ = Describe("Offer Template Handler", func() {
 		})
 
 		It("should enable a disabled offer template", func() {
-			//Given
 			templateID := "27b0370f-bd61-4346-a10d-50ec052ae125"
 			offerTemplateReader := JSONFor(JSON{})
 			request, _ := http.NewRequest("PUT", fmt.Sprintf("/templates/%s/enable", templateID), offerTemplateReader)
 
-			//When
 			app.Router.ServeHTTP(recorder, request)
-
-			//Then
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
 			Expect(recorder.Code).To(Equal(http.StatusOK))
 			var obj map[string]interface{}
 			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
@@ -264,6 +267,7 @@ var _ = Describe("Offer Template Handler", func() {
 			app.DB = db
 			app.DB.(*runner.DB).DB.Close() // make DB connection unavailable
 			app.Router.ServeHTTP(recorder, request)
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
 
 			Expect(recorder.Code).To(Equal(http.StatusInternalServerError))
 			var obj map[string]interface{}
@@ -276,15 +280,12 @@ var _ = Describe("Offer Template Handler", func() {
 		})
 
 		It("should return status code 404 if id doesn't exist", func() {
-			//Given
 			templateID := uuid.NewV4().String()
 			offerTemplateReader := JSONFor(JSON{})
 			request, _ := http.NewRequest("PUT", fmt.Sprintf("/templates/%s/enable", templateID), offerTemplateReader)
 
-			//When
 			app.Router.ServeHTTP(recorder, request)
-
-			//Then
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
 			Expect(recorder.Code).To(Equal(http.StatusNotFound))
 			var obj map[string]interface{}
 			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
@@ -295,15 +296,12 @@ var _ = Describe("Offer Template Handler", func() {
 		})
 
 		It("should return status code 422 if invalid parameters", func() {
-			//Given
 			templateID := "not-uuid"
 			offerTemplateReader := JSONFor(JSON{})
 			request, _ := http.NewRequest("PUT", fmt.Sprintf("/templates/%s/enable", templateID), offerTemplateReader)
 
-			//When
 			app.Router.ServeHTTP(recorder, request)
-
-			//Then
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
 			Expect(recorder.Code).To(Equal(http.StatusUnprocessableEntity))
 			var obj map[string]interface{}
 			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
@@ -314,7 +312,6 @@ var _ = Describe("Offer Template Handler", func() {
 		})
 
 		It("should return status code 301 if empty id", func() {
-			//Given
 			gameID := "offers-game"
 			offerReader := JSONFor(JSON{
 				"playerId": "player-1",
@@ -322,25 +319,19 @@ var _ = Describe("Offer Template Handler", func() {
 			})
 			request, _ := http.NewRequest("PUT", "/templates//enable", offerReader)
 
-			//When
 			app.Router.ServeHTTP(recorder, request)
-
-			//Then
 			Expect(recorder.Code).To(Equal(http.StatusMovedPermanently))
 		})
 	})
 
 	Describe("PUT /templates/{id}/disable", func() {
 		It("should disable an enabled offer template", func() {
-			//Given
 			templateID := "dd21ec96-2890-4ba0-b8e2-40ea67196990"
 			offerTemplateReader := JSONFor(JSON{})
 			request, _ := http.NewRequest("PUT", fmt.Sprintf("/templates/%s/disable", templateID), offerTemplateReader)
 
-			//When
 			app.Router.ServeHTTP(recorder, request)
-
-			//Then
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
 			Expect(recorder.Code).To(Equal(http.StatusOK))
 			var obj map[string]interface{}
 			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
@@ -349,15 +340,12 @@ var _ = Describe("Offer Template Handler", func() {
 		})
 
 		It("should disable a disabled offer template", func() {
-			//Given
 			templateID := "27b0370f-bd61-4346-a10d-50ec052ae125"
 			offerTemplateReader := JSONFor(JSON{})
 			request, _ := http.NewRequest("PUT", fmt.Sprintf("/templates/%s/disable", templateID), offerTemplateReader)
 
-			//When
 			app.Router.ServeHTTP(recorder, request)
-
-			//Then
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
 			Expect(recorder.Code).To(Equal(http.StatusOK))
 			var obj map[string]interface{}
 			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
@@ -366,17 +354,14 @@ var _ = Describe("Offer Template Handler", func() {
 		})
 
 		It("should use ID from URI even if a valid one is passed in body", func() {
-			//Given
 			templateID := "dd21ec96-2890-4ba0-b8e2-40ea67196990"
 			offerTemplateReader := JSONFor(JSON{
 				"id": "aa65a3f2-7cf8-4d76-957f-0a23a1bbbd32",
 			})
 			request, _ := http.NewRequest("PUT", fmt.Sprintf("/templates/%s/disable", templateID), offerTemplateReader)
 
-			//When
 			app.Router.ServeHTTP(recorder, request)
-
-			//Then
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
 			Expect(recorder.Code).To(Equal(http.StatusOK))
 			var obj map[string]interface{}
 			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
@@ -395,6 +380,7 @@ var _ = Describe("Offer Template Handler", func() {
 			app.DB = db
 			app.DB.(*runner.DB).DB.Close() // make DB connection unavailable
 			app.Router.ServeHTTP(recorder, request)
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
 
 			Expect(recorder.Code).To(Equal(http.StatusInternalServerError))
 			var obj map[string]interface{}
@@ -407,15 +393,12 @@ var _ = Describe("Offer Template Handler", func() {
 		})
 
 		It("should return status code 404 if id doesn't exist", func() {
-			//Given
 			templateID := uuid.NewV4().String()
 			offerTemplateReader := JSONFor(JSON{})
 			request, _ := http.NewRequest("PUT", fmt.Sprintf("/templates/%s/disable", templateID), offerTemplateReader)
 
-			//When
 			app.Router.ServeHTTP(recorder, request)
-
-			//Then
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
 			Expect(recorder.Code).To(Equal(http.StatusNotFound))
 			var obj map[string]interface{}
 			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
@@ -426,15 +409,12 @@ var _ = Describe("Offer Template Handler", func() {
 		})
 
 		It("should return status code 422 if invalid parameters", func() {
-			//Given
 			templateID := "not-uuid"
 			offerTemplateReader := JSONFor(JSON{})
 			request, _ := http.NewRequest("PUT", fmt.Sprintf("/templates/%s/disable", templateID), offerTemplateReader)
 
-			//When
 			app.Router.ServeHTTP(recorder, request)
-
-			//Then
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
 			Expect(recorder.Code).To(Equal(http.StatusUnprocessableEntity))
 			var obj map[string]interface{}
 			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
@@ -445,7 +425,6 @@ var _ = Describe("Offer Template Handler", func() {
 		})
 
 		It("should return status code 301 if empty id", func() {
-			//Given
 			gameID := "offers-game"
 			offerReader := JSONFor(JSON{
 				"playerId": "player-1",
@@ -453,10 +432,7 @@ var _ = Describe("Offer Template Handler", func() {
 			})
 			request, _ := http.NewRequest("PUT", "/templates//disable", offerReader)
 
-			//When
 			app.Router.ServeHTTP(recorder, request)
-
-			//Then
 			Expect(recorder.Code).To(Equal(http.StatusMovedPermanently))
 		})
 	})
@@ -466,6 +442,7 @@ var _ = Describe("Offer Template Handler", func() {
 			request, _ := http.NewRequest("GET", "/templates?game-id=offers-game", nil)
 
 			app.Router.ServeHTTP(recorder, request)
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
 
 			Expect(recorder.Code).To(Equal(http.StatusOK))
 			var obj []map[string]interface{}
@@ -491,6 +468,7 @@ var _ = Describe("Offer Template Handler", func() {
 			request, _ := http.NewRequest("GET", "/templates?game-id=unexistent-game", nil)
 
 			app.Router.ServeHTTP(recorder, request)
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
 			Expect(recorder.Code).To(Equal(http.StatusOK))
 			Expect(recorder.Body.String()).To(Equal("[]"))
 		})
@@ -499,6 +477,7 @@ var _ = Describe("Offer Template Handler", func() {
 			request, _ := http.NewRequest("GET", "/templates", nil)
 
 			app.Router.ServeHTTP(recorder, request)
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
 
 			Expect(recorder.Code).To(Equal(http.StatusBadRequest))
 			var obj map[string]interface{}
@@ -518,6 +497,7 @@ var _ = Describe("Offer Template Handler", func() {
 			request, _ := http.NewRequest("GET", "/templates?game-id=offers-game", nil)
 
 			app.Router.ServeHTTP(recorder, request)
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
 
 			Expect(recorder.Code).To(Equal(http.StatusInternalServerError))
 			var obj map[string]interface{}

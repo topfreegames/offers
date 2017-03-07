@@ -264,6 +264,7 @@ func (a *App) HandleError(w http.ResponseWriter, status int, msg string, err int
 	} else {
 		sErr = errors.NewGenericError(msg, err.(error))
 	}
+	w.Header().Set("Content-Type", "application/json")
 	w.Write(sErr.Serialize())
 }
 

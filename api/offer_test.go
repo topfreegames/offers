@@ -33,32 +33,25 @@ var _ = Describe("Offer Handler", func() {
 
 	Describe("Invalid route", func() {
 		It("should return status code 404 if invalid route", func() {
-			//Given
 			url := "/invalid"
 			request, _ := http.NewRequest("GET", url, nil)
 
-			//When
 			app.Router.ServeHTTP(recorder, request)
-
-			//Then
 			Expect(recorder.Code).To(Equal(http.StatusNotFound))
 		})
 	})
 
 	Describe("GET /offers", func() {
 		It("should return available offers", func() {
-			//Given
 			playerID := "player-1"
 			gameID := "offers-game"
 			url := "/offers?player-id=" + playerID + "&game-id=" + gameID
 			request, _ := http.NewRequest("GET", url, nil)
 			var jsonBody map[string][]map[string]interface{}
 
-			//When
 			app.Router.ServeHTTP(recorder, request)
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
 			err := json.Unmarshal(recorder.Body.Bytes(), &jsonBody)
-
-			//Then
 			Expect(err).NotTo(HaveOccurred())
 			Expect(recorder.Code).To(Equal(http.StatusOK))
 			Expect(jsonBody).To(HaveKey("popup"))
@@ -84,33 +77,27 @@ var _ = Describe("Offer Handler", func() {
 		})
 
 		It("should return empty list of available offers", func() {
-			//Given
 			playerID := "player-1"
 			gameID := "non-existing-offers-game"
 			url := "/offers?player-id=" + playerID + "&game-id=" + gameID
 			request, _ := http.NewRequest("GET", url, nil)
 			var jsonBody map[string]map[string]interface{}
 
-			//When
 			app.Router.ServeHTTP(recorder, request)
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
 			err := json.Unmarshal(recorder.Body.Bytes(), &jsonBody)
-
-			//Then
 			Expect(err).NotTo(HaveOccurred())
 			Expect(jsonBody).To(BeEmpty())
 			Expect(recorder.Code).To(Equal(http.StatusOK))
 		})
 
 		It("should return status code 400 if player-id is not informed available offers", func() {
-			//Given
 			gameID := "offers-game"
 			url := "/offers?game-id=" + gameID
 			request, _ := http.NewRequest("GET", url, nil)
 
-			//When
 			app.Router.ServeHTTP(recorder, request)
-
-			//Then
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
 			Expect(recorder.Code).To(Equal(http.StatusBadRequest))
 			var obj map[string]interface{}
 			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
@@ -122,15 +109,12 @@ var _ = Describe("Offer Handler", func() {
 		})
 
 		It("should return status code 400 if game-id is not informed available offers", func() {
-			//Given
 			playerID := "player-1"
 			url := "/offers?player-id=" + playerID
 			request, _ := http.NewRequest("GET", url, nil)
 
-			//When
 			app.Router.ServeHTTP(recorder, request)
-
-			//Then
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
 			Expect(recorder.Code).To(Equal(http.StatusBadRequest))
 			var obj map[string]interface{}
 			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
@@ -152,6 +136,7 @@ var _ = Describe("Offer Handler", func() {
 			app.DB = db
 			app.DB.(*runner.DB).DB.Close() // make DB connection unavailable
 			app.Router.ServeHTTP(recorder, request)
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
 
 			Expect(recorder.Code).To(Equal(http.StatusInternalServerError))
 			var obj map[string]interface{}
@@ -166,7 +151,6 @@ var _ = Describe("Offer Handler", func() {
 
 	Describe("PUT /offers/{id}/claim", func() {
 		It("should claim valid offer", func() {
-			//Given
 			id := "56fc0477-39f1-485c-898e-4909e9155eb1"
 			gameID := "offers-game"
 			offerReader := JSONFor(JSON{
@@ -175,10 +159,8 @@ var _ = Describe("Offer Handler", func() {
 			})
 			request, _ := http.NewRequest("PUT", fmt.Sprintf("/offers/%s/claim", id), offerReader)
 
-			//When
 			app.Router.ServeHTTP(recorder, request)
-
-			//Then
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
 			Expect(recorder.Body.String()).To(Equal(`{"gems": 5, "gold": 100}`))
 			Expect(recorder.Code).To(Equal(http.StatusOK))
 
@@ -190,7 +172,6 @@ var _ = Describe("Offer Handler", func() {
 		})
 
 		It("should not claim a claimed offer", func() {
-			//Given
 			id := "56fc0477-39f1-485c-898e-4909e9155eb1"
 			gameID := "offers-game"
 			json := JSON{
@@ -202,12 +183,11 @@ var _ = Describe("Offer Handler", func() {
 			request1, _ := http.NewRequest("PUT", fmt.Sprintf("/offers/%s/claim", id), offerReader1)
 			request2, _ := http.NewRequest("PUT", fmt.Sprintf("/offers/%s/claim", id), offerReader2)
 
-			//When
 			app.Router.ServeHTTP(recorder, request1)
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
 			recorder = httptest.NewRecorder()
 			app.Router.ServeHTTP(recorder, request2)
-
-			//Then
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
 			Expect(recorder.Body.String()).To(Equal(`{"gems": 5, "gold": 100}`))
 			Expect(recorder.Code).To(Equal(http.StatusConflict))
 
@@ -219,7 +199,6 @@ var _ = Describe("Offer Handler", func() {
 		})
 
 		It("should return 422 if invalid OfferID", func() {
-			//Given
 			id := "invalid-offer-id"
 			offerReader := JSONFor(JSON{
 				"gameId":   "offers-game",
@@ -227,10 +206,8 @@ var _ = Describe("Offer Handler", func() {
 			})
 			request, _ := http.NewRequest("PUT", fmt.Sprintf("/offers/%s/claim", id), offerReader)
 
-			//When
 			app.Router.ServeHTTP(recorder, request)
-
-			//Then
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
 			Expect(recorder.Code).To(Equal(http.StatusUnprocessableEntity))
 			var obj map[string]interface{}
 			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
@@ -241,15 +218,12 @@ var _ = Describe("Offer Handler", func() {
 		})
 
 		It("should return 422 if missing parameters", func() {
-			//Given
 			offerReader := JSONFor(JSON{})
 			id := "56fc0477-39f1-485c-898e-4909e9155eb1"
 			request, _ := http.NewRequest("PUT", fmt.Sprintf("/offers/%s/claim", id), offerReader)
 
-			//When
 			app.Router.ServeHTTP(recorder, request)
-
-			//Then
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
 			Expect(recorder.Code).To(Equal(http.StatusUnprocessableEntity))
 			var obj map[string]interface{}
 			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
@@ -260,7 +234,6 @@ var _ = Describe("Offer Handler", func() {
 		})
 
 		It("should return 404 if non existing OfferID", func() {
-			//Given
 			id := uuid.NewV4().String()
 			offerReader := JSONFor(JSON{
 				"gameId":   "offers-game",
@@ -268,15 +241,12 @@ var _ = Describe("Offer Handler", func() {
 			})
 			request, _ := http.NewRequest("PUT", fmt.Sprintf("/offers/%s/claim", id), offerReader)
 
-			//When
 			app.Router.ServeHTTP(recorder, request)
-
-			//Then
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
 			Expect(recorder.Code).To(Equal(http.StatusNotFound))
 		})
 
 		It("should return 404 if non existing GameID", func() {
-			//Given
 			id := "56fc0477-39f1-485c-898e-4909e9155eb1"
 			offerReader := JSONFor(JSON{
 				"gameId":   "non-existing-offers-game",
@@ -284,10 +254,8 @@ var _ = Describe("Offer Handler", func() {
 			})
 			request, _ := http.NewRequest("PUT", fmt.Sprintf("/offers/%s/claim", id), offerReader)
 
-			//When
 			app.Router.ServeHTTP(recorder, request)
-
-			//Then
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
 			Expect(recorder.Code).To(Equal(http.StatusNotFound))
 			var obj map[string]interface{}
 			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
@@ -298,7 +266,6 @@ var _ = Describe("Offer Handler", func() {
 		})
 
 		It("should return 404 if non existing PlayerID", func() {
-			//Given
 			id := "56fc0477-39f1-485c-898e-4909e9155eb1"
 			offerReader := JSONFor(JSON{
 				"gameId":   "offers-game",
@@ -306,10 +273,8 @@ var _ = Describe("Offer Handler", func() {
 			})
 			request, _ := http.NewRequest("PUT", fmt.Sprintf("/offers/%s/claim", id), offerReader)
 
-			//When
 			app.Router.ServeHTTP(recorder, request)
-
-			//Then
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
 			Expect(recorder.Code).To(Equal(http.StatusNotFound))
 			var obj map[string]interface{}
 			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
@@ -334,6 +299,7 @@ var _ = Describe("Offer Handler", func() {
 			request, _ := http.NewRequest("PUT", fmt.Sprintf("/offers/%s/claim", id), offerReader)
 
 			app.Router.ServeHTTP(recorder, request)
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
 
 			Expect(recorder.Code).To(Equal(http.StatusInternalServerError))
 			var obj map[string]interface{}
@@ -346,16 +312,13 @@ var _ = Describe("Offer Handler", func() {
 		})
 
 		It("should return status code 400 if invalid json is sent", func() {
-			//Given
 			id := "56fc0477-39f1-485c-898e-4909e9155eb1"
 			invalidJSON := `"gameId:   "offers-g
 											"Player-1"`
 			request, _ := http.NewRequest("PUT", fmt.Sprintf("/offers/%s/claim", id), strings.NewReader(invalidJSON))
 
-			//When
 			app.Router.ServeHTTP(recorder, request)
-
-			//Then
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
 			Expect(recorder.Code).To(Equal(http.StatusBadRequest))
 			var obj map[string]interface{}
 			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
@@ -366,7 +329,6 @@ var _ = Describe("Offer Handler", func() {
 		})
 
 		It("should not claim id passed on body, only from url", func() {
-			//Given
 			id := "56fc0477-39f1-485c-898e-4909e9155eb1"
 			bodyID := "35df52e7-3161-446f-975b-92f32871e37c"
 			gameID := "offers-game"
@@ -377,10 +339,8 @@ var _ = Describe("Offer Handler", func() {
 			})
 			request, _ := http.NewRequest("PUT", fmt.Sprintf("/offers/%s/claim", id), offerReader)
 
-			//When
 			app.Router.ServeHTTP(recorder, request)
-
-			//Then
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
 			Expect(recorder.Code).To(Equal(http.StatusOK))
 
 			//Check if id was claimed and bodyID not
@@ -394,7 +354,6 @@ var _ = Describe("Offer Handler", func() {
 		})
 
 		It("should return status code 301 if empty id", func() {
-			//Given
 			gameID := "offers-game"
 			offerReader := JSONFor(JSON{
 				"playerId": "player-1",
@@ -402,17 +361,13 @@ var _ = Describe("Offer Handler", func() {
 			})
 			request, _ := http.NewRequest("PUT", "/offers//claim", offerReader)
 
-			//When
 			app.Router.ServeHTTP(recorder, request)
-
-			//Then
 			Expect(recorder.Code).To(Equal(http.StatusMovedPermanently))
 		})
 	})
 
 	Describe("POST /offers/{id}/impressions", func() {
 		It("should update last seen at of valid offer", func() {
-			//Given
 			id := "56fc0477-39f1-485c-898e-4909e9155eb1"
 			gameID := "offers-game"
 			offerReader := JSONFor(JSON{
@@ -421,10 +376,8 @@ var _ = Describe("Offer Handler", func() {
 			})
 			request, _ := http.NewRequest("POST", fmt.Sprintf("/offers/%s/impressions", id), offerReader)
 
-			//When
 			app.Router.ServeHTTP(recorder, request)
-
-			//Then
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
 			Expect(recorder.Code).To(Equal(http.StatusOK))
 
 			offer, err := models.GetOfferByID(app.DB, gameID, id, nil)
@@ -435,7 +388,6 @@ var _ = Describe("Offer Handler", func() {
 		})
 
 		It("should return status code 422 if invalid parameters", func() {
-			//Given
 			offerReader := JSONFor(JSON{
 				"playerId": "player-1",
 				"gameId":   "offers-game",
@@ -443,10 +395,8 @@ var _ = Describe("Offer Handler", func() {
 			url := "/offers/invalid-uuid/impressions"
 			request, _ := http.NewRequest("POST", url, offerReader)
 
-			//When
 			app.Router.ServeHTTP(recorder, request)
-
-			//Then
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
 			Expect(recorder.Code).To(Equal(http.StatusUnprocessableEntity))
 			var obj map[string]interface{}
 			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
@@ -457,15 +407,12 @@ var _ = Describe("Offer Handler", func() {
 		})
 
 		It("should return status code 422 if missing body parameters", func() {
-			//Given
 			offerReader := JSONFor(JSON{})
 			id := uuid.NewV4().String()
 			request, _ := http.NewRequest("POST", fmt.Sprintf("/offers/%s/impressions", id), offerReader)
 
-			//When
 			app.Router.ServeHTTP(recorder, request)
-
-			//Then
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
 			Expect(recorder.Code).To(Equal(http.StatusUnprocessableEntity))
 			var obj map[string]interface{}
 			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
@@ -476,7 +423,6 @@ var _ = Describe("Offer Handler", func() {
 		})
 
 		It("should return status code 404 if offer with given ID does not exist", func() {
-			//Given
 			id := uuid.NewV4().String()
 			offerReader := JSONFor(JSON{
 				"playerId": "player-1",
@@ -484,10 +430,8 @@ var _ = Describe("Offer Handler", func() {
 			})
 			request, _ := http.NewRequest("POST", fmt.Sprintf("/offers/%s/impressions", id), offerReader)
 
-			//When
 			app.Router.ServeHTTP(recorder, request)
-
-			//Then
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
 			Expect(recorder.Code).To(Equal(http.StatusNotFound))
 			var obj map[string]interface{}
 			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
@@ -512,6 +456,7 @@ var _ = Describe("Offer Handler", func() {
 			request, _ := http.NewRequest("POST", fmt.Sprintf("/offers/%s/impressions", id), offerReader)
 
 			app.Router.ServeHTTP(recorder, request)
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
 
 			Expect(recorder.Code).To(Equal(http.StatusInternalServerError))
 			var obj map[string]interface{}
@@ -524,7 +469,6 @@ var _ = Describe("Offer Handler", func() {
 		})
 
 		It("should return status code 404 if offer with given ID does not exist", func() {
-			//Given
 			id := uuid.NewV4().String()
 			offerReader := JSONFor(JSON{
 				"playerId": "player-1",
@@ -532,10 +476,8 @@ var _ = Describe("Offer Handler", func() {
 			})
 			request, _ := http.NewRequest("POST", fmt.Sprintf("/offers/%s/impressions", id), offerReader)
 
-			//When
 			app.Router.ServeHTTP(recorder, request)
-
-			//Then
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
 			Expect(recorder.Code).To(Equal(http.StatusNotFound))
 			var obj map[string]interface{}
 			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
@@ -546,7 +488,6 @@ var _ = Describe("Offer Handler", func() {
 		})
 
 		It("should return status code 301 if empty id", func() {
-			//Given
 			gameID := "offers-game"
 			offerReader := JSONFor(JSON{
 				"playerId": "player-1",
@@ -554,10 +495,7 @@ var _ = Describe("Offer Handler", func() {
 			})
 			request, _ := http.NewRequest("PUT", "/offers//impressions", offerReader)
 
-			//When
 			app.Router.ServeHTTP(recorder, request)
-
-			//Then
 			Expect(recorder.Code).To(Equal(http.StatusMovedPermanently))
 		})
 	})

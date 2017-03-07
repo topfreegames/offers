@@ -38,7 +38,7 @@ var _ = Describe("Game Handler", func() {
 			request, _ := http.NewRequest("PUT", fmt.Sprintf("/games/%s", id), gameReader)
 
 			app.Router.ServeHTTP(recorder, request)
-
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
 			Expect(recorder.Code).To(Equal(http.StatusOK))
 			var obj map[string]interface{}
 			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
@@ -54,7 +54,7 @@ var _ = Describe("Game Handler", func() {
 			request, _ := http.NewRequest("PUT", fmt.Sprintf("/games/%s", id), gameReader)
 
 			app.Router.ServeHTTP(recorder, request)
-
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
 			Expect(recorder.Code).To(Equal(http.StatusUnprocessableEntity))
 			var obj map[string]interface{}
 			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
@@ -78,7 +78,7 @@ var _ = Describe("Game Handler", func() {
 			request, _ := http.NewRequest("PUT", fmt.Sprintf("/games/%s", id), gameReader)
 
 			app.Router.ServeHTTP(recorder, request)
-
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
 			Expect(recorder.Code).To(Equal(http.StatusUnprocessableEntity))
 			var obj map[string]interface{}
 			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
@@ -104,7 +104,7 @@ var _ = Describe("Game Handler", func() {
 			app.Router.ServeHTTP(recorder, request)
 
 			Expect(recorder.Code).To(Equal(http.StatusUnprocessableEntity))
-
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
 			var obj map[string]interface{}
 			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
 			Expect(err).NotTo(HaveOccurred())
@@ -124,7 +124,7 @@ var _ = Describe("Game Handler", func() {
 			request, _ := http.NewRequest("PUT", fmt.Sprintf("/games/%s", id), gameReader)
 
 			app.Router.ServeHTTP(recorder, request)
-
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
 			Expect(recorder.Code).To(Equal(http.StatusUnprocessableEntity))
 			var obj map[string]interface{}
 			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
@@ -146,7 +146,7 @@ var _ = Describe("Game Handler", func() {
 			request, _ := http.NewRequest("PUT", fmt.Sprintf("/games/%s", id), gameReader)
 
 			app.Router.ServeHTTP(recorder, request)
-
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
 			Expect(recorder.Code).To(Equal(http.StatusUnprocessableEntity))
 			var obj map[string]interface{}
 			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
@@ -164,7 +164,6 @@ var _ = Describe("Game Handler", func() {
 			request, _ := http.NewRequest("PUT", "/games/", gameReader)
 
 			app.Router.ServeHTTP(recorder, request)
-
 			Expect(recorder.Code).To(Equal(http.StatusNotFound))
 			Expect(recorder.Body.String()).To(Equal("404 page not found\n"))
 		})
@@ -184,7 +183,7 @@ var _ = Describe("Game Handler", func() {
 			request, _ := http.NewRequest("PUT", fmt.Sprintf("/games/%s", id), gameReader)
 
 			app.Router.ServeHTTP(recorder, request)
-
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
 			Expect(recorder.Code).To(Equal(http.StatusInternalServerError))
 			var obj map[string]interface{}
 			err = json.Unmarshal([]byte(recorder.Body.String()), &obj)
@@ -201,7 +200,7 @@ var _ = Describe("Game Handler", func() {
 			request, _ := http.NewRequest("GET", "/games", nil)
 
 			app.Router.ServeHTTP(recorder, request)
-
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
 			Expect(recorder.Code).To(Equal(http.StatusOK))
 			var obj []map[string]interface{}
 			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
@@ -225,6 +224,7 @@ var _ = Describe("Game Handler", func() {
 			request, _ := http.NewRequest("GET", "/games", nil)
 
 			app.Router.ServeHTTP(recorder, request)
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
 			Expect(recorder.Code).To(Equal(http.StatusOK))
 			Expect(recorder.Body.String()).To(Equal("[]"))
 		})
@@ -238,7 +238,7 @@ var _ = Describe("Game Handler", func() {
 			request, _ := http.NewRequest("GET", "/games", nil)
 
 			app.Router.ServeHTTP(recorder, request)
-
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
 			Expect(recorder.Code).To(Equal(http.StatusInternalServerError))
 			var obj map[string]interface{}
 			err = json.Unmarshal([]byte(recorder.Body.String()), &obj)
