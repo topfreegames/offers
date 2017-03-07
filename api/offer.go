@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/Sirupsen/logrus"
 	e "github.com/topfreegames/offers/errors"
 	"github.com/topfreegames/offers/models"
 )
@@ -38,12 +39,21 @@ func (h *OfferRequestHandler) getOffers(w http.ResponseWriter, r *http.Request) 
 	mr := metricsReporterFromCtx(r.Context())
 	playerID := r.URL.Query().Get("player-id")
 	gameID := r.URL.Query().Get("game-id")
+	logger := h.App.Logger.WithFields(logrus.Fields{
+		"source":    "offerHandler",
+		"operation": "getOffers",
+		"gameID":    gameID,
+		"playerID":  playerID,
+	})
+
 	if playerID == "" {
 		err := fmt.Errorf("The player-id parameter cannot be empty")
+		logger.WithError(err).Error("Failed to retrieve offer for player.")
 		h.App.HandleError(w, http.StatusBadRequest, "The player-id parameter cannot be empty.", err)
 		return
 	} else if gameID == "" {
 		err := fmt.Errorf("The game-id parameter cannot be empty")
+		logger.WithError(err).Error("Failed to retrieve offer for player.")
 		h.App.HandleError(w, http.StatusBadRequest, "The game-id parameter cannot be empty.", err)
 		return
 	}
@@ -52,6 +62,7 @@ func (h *OfferRequestHandler) getOffers(w http.ResponseWriter, r *http.Request) 
 	ots, err := models.GetAvailableOffers(h.App.DB, playerID, gameID, currentTime, mr)
 
 	if err != nil {
+		logger.WithError(err).Error("Failed to retrieve offer for player.")
 		h.App.HandleError(w, http.StatusInternalServerError, "Failed to retrieve offer for player", err)
 		return
 	}
@@ -59,10 +70,12 @@ func (h *OfferRequestHandler) getOffers(w http.ResponseWriter, r *http.Request) 
 	bytes, err := json.Marshal(ots)
 
 	if err != nil {
+		logger.WithError(err).Error("Failed to parse structs to JSON.")
 		h.App.HandleError(w, http.StatusInternalServerError, "Failed to parse structs to JSON", err)
 		return
 	}
 
+	logger.Info("Retrieved player offers successfully")
 	WriteBytes(w, http.StatusOK, bytes)
 }
 
@@ -71,10 +84,16 @@ func (h *OfferRequestHandler) claimOffer(w http.ResponseWriter, r *http.Request)
 	offer := offerToUpdateFromCtx(r.Context())
 	offerID := paramKeyFromContext(r.Context())
 	currentTime := h.App.Clock.GetTime()
+	logger := h.App.Logger.WithFields(logrus.Fields{
+		"source":    "offerHandler",
+		"operation": "claimOffer",
+		"offer":     offer,
+		"offerID":   offerID,
+	})
 
 	contents, alreadyClaimed, err := models.ClaimOffer(h.App.DB, offerID, offer.PlayerID, offer.GameID, currentTime, mr)
-
 	if err != nil {
+		logger.WithError(err).Error("Failed to claim offer.")
 		if modelNotFound, ok := err.(*e.ModelNotFoundError); ok {
 			h.App.HandleError(w, http.StatusNotFound, modelNotFound.Error(), modelNotFound)
 			return
@@ -84,6 +103,7 @@ func (h *OfferRequestHandler) claimOffer(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	logger.WithField("alreadyClaimed", alreadyClaimed).Info("Claimed offer successfully")
 	if alreadyClaimed {
 		WriteBytes(w, http.StatusConflict, contents)
 		return
@@ -98,10 +118,16 @@ func (h *OfferRequestHandler) updateOfferLastSeenAt(w http.ResponseWriter, r *ht
 	offer := offerToUpdateFromCtx(r.Context())
 	offerID := paramKeyFromContext(r.Context())
 	currentTime := h.App.Clock.GetTime()
+	logger := h.App.Logger.WithFields(logrus.Fields{
+		"source":    "offerHandler",
+		"operation": "updateOfferLastSeenAt",
+		"offer":     offer,
+		"offerID":   offerID,
+	})
 
 	err := models.UpdateOfferLastSeenAt(h.App.DB, offerID, offer.PlayerID, offer.GameID, currentTime, mr)
-
 	if err != nil {
+		logger.WithError(err).Error("Failed to updated offer impressions.")
 		if modelNotFound, ok := err.(*e.ModelNotFoundError); ok {
 			h.App.HandleError(w, http.StatusNotFound, modelNotFound.Error(), modelNotFound)
 			return
@@ -111,5 +137,6 @@ func (h *OfferRequestHandler) updateOfferLastSeenAt(w http.ResponseWriter, r *ht
 		return
 	}
 
+	logger.Info("Upated offer impressions successfully")
 	Write(w, http.StatusOK, "")
 }

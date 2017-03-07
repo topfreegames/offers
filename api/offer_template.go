@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/Sirupsen/logrus"
 	"github.com/topfreegames/offers/errors"
 	"github.com/topfreegames/offers/models"
 )
@@ -42,6 +43,14 @@ func (g *OfferTemplateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 func (g *OfferTemplateHandler) insertOfferTemplate(w http.ResponseWriter, r *http.Request) {
 	mr := metricsReporterFromCtx(r.Context())
 	ot := offerTemplateFromCtx(r.Context())
+	userEmail := userEmailFromContext(r.Context())
+
+	logger := g.App.Logger.WithFields(logrus.Fields{
+		"source":        "offerTemplateHandler",
+		"operation":     "insertOfferTemplate",
+		"userEmail":     userEmail,
+		"offerTemplate": ot,
+	})
 
 	var err error
 	err = mr.WithSegment(models.SegmentModel, func() error {
@@ -50,6 +59,7 @@ func (g *OfferTemplateHandler) insertOfferTemplate(w http.ResponseWriter, r *htt
 	})
 
 	if err != nil {
+		logger.WithError(err).Error("Insert offer template failed.")
 		if foreignKeyError, ok := err.(*errors.InvalidModelError); ok {
 			g.App.HandleError(w, http.StatusUnprocessableEntity, foreignKeyError.Error(), foreignKeyError)
 			return
@@ -66,16 +76,26 @@ func (g *OfferTemplateHandler) insertOfferTemplate(w http.ResponseWriter, r *htt
 
 	bytesRes, err := json.Marshal(ot)
 	if err != nil {
+		logger.WithError(err).Error("Failed to build offer template response.")
 		g.App.HandleError(w, http.StatusInternalServerError, "Failed to build offer template response", err)
 		return
 	}
 
+	logger.Info("Inserted offer template successfuly.")
 	WriteBytes(w, http.StatusCreated, bytesRes)
 }
 
 func (g *OfferTemplateHandler) setEnabledOfferTemplate(w http.ResponseWriter, r *http.Request, enable bool) {
 	mr := metricsReporterFromCtx(r.Context())
 	offerTemplateID := paramKeyFromContext(r.Context())
+	userEmail := userEmailFromContext(r.Context())
+
+	logger := g.App.Logger.WithFields(logrus.Fields{
+		"source":          "offerTemplateHandler",
+		"operation":       "setEnabledOfferTemplate",
+		"userEmail":       userEmail,
+		"offerTemplateID": offerTemplateID,
+	})
 
 	var err error
 	err = mr.WithSegment(models.SegmentModel, func() error {
@@ -83,6 +103,7 @@ func (g *OfferTemplateHandler) setEnabledOfferTemplate(w http.ResponseWriter, r 
 	})
 
 	if err != nil {
+		logger.WithError(err).Error("Update offer template failed.")
 		if modelNotFound, ok := err.(*errors.ModelNotFoundError); ok {
 			g.App.HandleError(w, http.StatusNotFound, "Offer template not found for this ID", modelNotFound)
 			return
@@ -91,6 +112,7 @@ func (g *OfferTemplateHandler) setEnabledOfferTemplate(w http.ResponseWriter, r 
 		return
 	}
 
+	logger.Info("Updated offer template successfuly.")
 	bytesRes, _ := json.Marshal(map[string]interface{}{"id": offerTemplateID})
 	WriteBytes(w, http.StatusOK, bytesRes)
 }
@@ -98,8 +120,18 @@ func (g *OfferTemplateHandler) setEnabledOfferTemplate(w http.ResponseWriter, r 
 func (g *OfferTemplateHandler) list(w http.ResponseWriter, r *http.Request) {
 	mr := metricsReporterFromCtx(r.Context())
 	gameID := r.URL.Query().Get("game-id")
+	userEmail := userEmailFromContext(r.Context())
+
+	logger := g.App.Logger.WithFields(logrus.Fields{
+		"source":    "offerTemplateHandler",
+		"operation": "list",
+		"userEmail": userEmail,
+		"gameID":    gameID,
+	})
+
 	if gameID == "" {
 		err := fmt.Errorf("The game-id parameter cannot be empty")
+		logger.WithError(err).Error("List game offer templates failed.")
 		g.App.HandleError(w, http.StatusBadRequest, "The game-id parameter cannot be empty.", err)
 		return
 	}
@@ -112,10 +144,12 @@ func (g *OfferTemplateHandler) list(w http.ResponseWriter, r *http.Request) {
 	})
 
 	if err != nil {
+		logger.WithError(err).Error("List game offer templates failed.")
 		g.App.HandleError(w, http.StatusInternalServerError, "List game offer templates failed.", err)
 		return
 	}
 
+	logger.Info("Listed game offer templates successfully.")
 	if len(offerTemplates) == 0 {
 		Write(w, http.StatusOK, "[]")
 		return

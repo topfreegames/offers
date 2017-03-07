@@ -11,6 +11,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/Sirupsen/logrus"
 	"github.com/topfreegames/offers/models"
 )
 
@@ -33,6 +34,13 @@ func (g *GameHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (g *GameHandler) list(w http.ResponseWriter, r *http.Request) {
+	userEmail := userEmailFromContext(r.Context())
+	logger := g.App.Logger.WithFields(logrus.Fields{
+		"source":    "gameHandler",
+		"operation": "list",
+		"userEmail": userEmail,
+	})
+
 	mr := metricsReporterFromCtx(r.Context())
 
 	var err error
@@ -43,10 +51,12 @@ func (g *GameHandler) list(w http.ResponseWriter, r *http.Request) {
 	})
 
 	if err != nil {
+		logger.WithError(err).Error("List games failed.")
 		g.App.HandleError(w, http.StatusInternalServerError, "List games failed.", err)
 		return
 	}
 
+	logger.Info("Listed games successfully.")
 	if len(games) == 0 {
 		Write(w, http.StatusOK, "[]")
 		return
@@ -58,6 +68,14 @@ func (g *GameHandler) list(w http.ResponseWriter, r *http.Request) {
 func (g *GameHandler) upsert(w http.ResponseWriter, r *http.Request) {
 	mr := metricsReporterFromCtx(r.Context())
 	game := gameFromCtx(r.Context())
+	userEmail := userEmailFromContext(r.Context())
+
+	logger := g.App.Logger.WithFields(logrus.Fields{
+		"source":    "gameHandler",
+		"operation": "upsert",
+		"userEmail": userEmail,
+		"game":      game,
+	})
 
 	err := mr.WithSegment(models.SegmentModel, func() error {
 		currentTime := g.App.Clock.GetTime()
@@ -65,9 +83,11 @@ func (g *GameHandler) upsert(w http.ResponseWriter, r *http.Request) {
 	})
 
 	if err != nil {
+		logger.WithError(err).Error("Upserting game failed.")
 		g.App.HandleError(w, http.StatusInternalServerError, "Upserting game failed", err)
 		return
 	}
+	logger.Info("Upserted game successfully.")
 	bytesRes, _ := json.Marshal(map[string]interface{}{"gameId": game.ID})
 	WriteBytes(w, http.StatusOK, bytesRes)
 }
