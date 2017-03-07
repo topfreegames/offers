@@ -210,7 +210,7 @@ func theFollowingPlayersExistInTheGame(gameID string, players *gherkin.DataTable
 					return err
 				}
 
-				err = models.UpdateOfferLastSeenAt(app.DB, offer.ID, playerID, gameID, currentTime, nil)
+				_, err = models.UpdateOfferLastSeenAt(app.DB, offer.ID, playerID, gameID, currentTime, nil)
 				if err != nil {
 					return err
 				}

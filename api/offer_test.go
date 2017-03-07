@@ -418,7 +418,56 @@ var _ = Describe("Offer Handler", func() {
 			app.Router.ServeHTTP(recorder, request)
 			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
 			Expect(recorder.Code).To(Equal(http.StatusOK))
+			var obj map[string]interface{}
+			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(int64(obj["nextAt"].(float64))).To(Equal(app.Clock.GetTime().Unix() + 1))
+			offer, err := models.GetOfferByID(app.DB, gameID, id, nil)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(offer).NotTo(BeNil())
+			Expect(offer.LastSeenAt.Time.Unix()).To(Equal(app.Clock.GetTime().Unix()))
+			Expect(offer.SeenCounter).To(Equal(1))
+		})
 
+		It("should return the current timestamp as nextAt if offer reached max period", func() {
+			id := "5ba8848f-1df0-45b3-b8b1-27a7d5eedd6a"
+			gameID := "limited-offers-game"
+			offerReader := JSONFor(JSON{
+				"playerId": "player-1",
+				"gameId":   gameID,
+			})
+			request, _ := http.NewRequest("POST", fmt.Sprintf("/offers/%s/impressions", id), offerReader)
+
+			app.Router.ServeHTTP(recorder, request)
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
+			Expect(recorder.Code).To(Equal(http.StatusOK))
+			var obj map[string]interface{}
+			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(obj).To(HaveLen(0))
+			offer, err := models.GetOfferByID(app.DB, gameID, id, nil)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(offer).NotTo(BeNil())
+			Expect(offer.LastSeenAt.Time.Unix()).To(Equal(app.Clock.GetTime().Unix()))
+			Expect(offer.SeenCounter).To(Equal(1))
+		})
+
+		It("should return nextAt equal to now if offer has no every in frequency", func() {
+			id := "4407b770-5b24-4ffa-8563-0694d1a10156"
+			gameID := "offers-game"
+			offerReader := JSONFor(JSON{
+				"playerId": "player-11",
+				"gameId":   gameID,
+			})
+			request, _ := http.NewRequest("POST", fmt.Sprintf("/offers/%s/impressions", id), offerReader)
+
+			app.Router.ServeHTTP(recorder, request)
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
+			Expect(recorder.Code).To(Equal(http.StatusOK))
+			var obj map[string]interface{}
+			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(int64(obj["nextAt"].(float64))).To(Equal(app.Clock.GetTime().Unix()))
 			offer, err := models.GetOfferByID(app.DB, gameID, id, nil)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(offer).NotTo(BeNil())

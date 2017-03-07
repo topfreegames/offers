@@ -147,7 +147,7 @@ Offers API
 
     * Field Descriptions
        - **name**:         Prettier game identifier to show on UI.  
-       - **key**:          Identifies an offer template. It is common between the templates versions, meaning it keeps the same when an offer is updated. 
+       - **key**:          Identifies an offer template. It is common between the templates versions, meaning it keeps the same when an offer is updated.
        - **productId**:    Identifier of the item to be bought on PlayStore or AppStore.  
        - **gameId**:       ID of the game this template was made for (must exist on Games table on DB).  
        - **contents**:     What the offer provides (ex.: { "gem": 5, "gold": 100 }).  
@@ -456,8 +456,21 @@ Offers API
       }
     ```
 
-  * Success Response
+  * Success Response (if the player can still see the offer)
     * Code: `200`
+    * Content:
+      ```
+        {
+          "nextAt": [int64]  // unix timestamp of the next time the offer can be shown
+        }
+      ```
+
+  * Success Response (if the player can no longer see the offer)
+    * Code: `200`
+    * Content:
+      ```
+        {}
+      ```
 
   * Error Response
     * If missing or invalid arguments.

@@ -125,7 +125,7 @@ func (h *OfferRequestHandler) updateOfferLastSeenAt(w http.ResponseWriter, r *ht
 		"offerID":   offerID,
 	})
 
-	err := models.UpdateOfferLastSeenAt(h.App.DB, offerID, offer.PlayerID, offer.GameID, currentTime, mr)
+	nextAt, err := models.UpdateOfferLastSeenAt(h.App.DB, offerID, offer.PlayerID, offer.GameID, currentTime, mr)
 	if err != nil {
 		logger.WithError(err).Error("Failed to updated offer impressions.")
 		if modelNotFound, ok := err.(*e.ModelNotFoundError); ok {
@@ -138,5 +138,10 @@ func (h *OfferRequestHandler) updateOfferLastSeenAt(w http.ResponseWriter, r *ht
 	}
 
 	logger.Info("Upated offer impressions successfully")
-	Write(w, http.StatusOK, "")
+	if nextAt == 0 {
+		Write(w, http.StatusOK, "{}")
+		return
+	}
+	bytesRes, _ := json.Marshal(map[string]interface{}{"nextAt": nextAt})
+	WriteBytes(w, http.StatusOK, bytesRes)
 }

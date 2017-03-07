@@ -38,7 +38,7 @@ const enabledOfferTemplates = `
 //GetOfferTemplateByID returns OfferTemplate by ID
 func GetOfferTemplateByID(db runner.Connection, id string, mr *MixedMetricsReporter) (*OfferTemplate, error) {
 	var ot OfferTemplate
-	err := mr.WithDatastoreSegment("offer_templates", "select by id", func() error {
+	err := mr.WithDatastoreSegment("offer_templates", SegmentSelect, func() error {
 		return db.
 			Select(`
 				id, key, name, product_id, game_id,
@@ -94,7 +94,7 @@ func GetEnabledOfferTemplates(db runner.Connection, gameID string, mr *MixedMetr
 //ListOfferTemplates returns all the offer templates for a given game
 func ListOfferTemplates(db runner.Connection, gameID string, mr *MixedMetricsReporter) ([]*OfferTemplate, error) {
 	var ots []*OfferTemplate
-	err := mr.WithDatastoreSegment("offer_templates", "select", func() error {
+	err := mr.WithDatastoreSegment("offer_templates", SegmentSelect, func() error {
 		return db.
 			Select(`
 				id, key, name, product_id, game_id,

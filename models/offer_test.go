@@ -340,7 +340,7 @@ var _ = Describe("Offers Model", func() {
 
 			//When
 			offerBefore, err1 := models.GetOfferByID(db, "offers-game", defaultOfferID, nil)
-			err2 := models.UpdateOfferLastSeenAt(db, defaultOfferID, playerID, gameID, currentTime, nil)
+			nextAt, err2 := models.UpdateOfferLastSeenAt(db, defaultOfferID, playerID, gameID, currentTime, nil)
 			offerAfter, err3 := models.GetOfferByID(db, "offers-game", defaultOfferID, nil)
 
 			//Then
@@ -351,6 +351,45 @@ var _ = Describe("Offers Model", func() {
 			Expect(offerAfter.LastSeenAt.Valid).To(BeTrue())
 			Expect(offerBefore.SeenCounter).To(Equal(0))
 			Expect(offerAfter.SeenCounter).To(Equal(1))
+			Expect(nextAt).To(Equal(currentTime.Unix() + 1))
+		})
+
+		It("should return 0 nextAt if offer reached max period", func() {
+			//Given
+			playerID := "player-1"
+			gameID := "limited-offers-game"
+			currentTime := time.Now()
+			limitedOfferID := "5ba8848f-1df0-45b3-b8b1-27a7d5eedd6a"
+
+			//When
+			nextAt, err1 := models.UpdateOfferLastSeenAt(db, limitedOfferID, playerID, gameID, currentTime, nil)
+			offerAfter, err2 := models.GetOfferByID(db, gameID, limitedOfferID, nil)
+
+			//Then
+			Expect(err1).NotTo(HaveOccurred())
+			Expect(err2).NotTo(HaveOccurred())
+			Expect(offerAfter.LastSeenAt.Time.Unix()).To(Equal(currentTime.Unix()))
+			Expect(offerAfter.LastSeenAt.Valid).To(BeTrue())
+			Expect(nextAt).To(Equal(int64(0)))
+		})
+
+		It("should return nextAt equal to now if offer has no every in frequency", func() {
+			//Given
+			playerID := "player-11"
+			gameID := "offers-game"
+			currentTime := time.Now()
+			limitedOfferID := "4407b770-5b24-4ffa-8563-0694d1a10156"
+
+			//When
+			nextAt, err1 := models.UpdateOfferLastSeenAt(db, limitedOfferID, playerID, gameID, currentTime, nil)
+			offerAfter, err2 := models.GetOfferByID(db, gameID, limitedOfferID, nil)
+
+			//Then
+			Expect(err1).NotTo(HaveOccurred())
+			Expect(err2).NotTo(HaveOccurred())
+			Expect(offerAfter.LastSeenAt.Time.Unix()).To(Equal(currentTime.Unix()))
+			Expect(offerAfter.LastSeenAt.Valid).To(BeTrue())
+			Expect(nextAt).To(Equal(currentTime.Unix()))
 		})
 
 		It("should return status code 422 if invalid id", func() {
@@ -360,10 +399,11 @@ var _ = Describe("Offers Model", func() {
 			gameID := "offers-game"
 
 			//When
-			err := models.UpdateOfferLastSeenAt(db, id, playerID, gameID, time.Now(), nil)
+			nextAt, err := models.UpdateOfferLastSeenAt(db, id, playerID, gameID, time.Now(), nil)
 
 			//Then
 			Expect(err).To(HaveOccurred())
+			Expect(nextAt).To(Equal(int64(0)))
 		})
 	})
 
@@ -447,7 +487,7 @@ var _ = Describe("Offers Model", func() {
 			currentTime := time.Unix(1486678000, 0)
 
 			//When
-			err1 := models.UpdateOfferLastSeenAt(db, defaultOfferID, playerID, gameID, currentTime, nil)
+			_, err1 := models.UpdateOfferLastSeenAt(db, defaultOfferID, playerID, gameID, currentTime, nil)
 			templates, err2 := models.GetAvailableOffers(db, playerID, gameID, currentTime, nil)
 
 			//Then
@@ -466,7 +506,7 @@ var _ = Describe("Offers Model", func() {
 
 			//When
 			templatesBefore, err1 := models.GetAvailableOffers(db, playerID, gameID, currentTime, nil)
-			err2 := models.UpdateOfferLastSeenAt(db, offerID, playerID, gameID, currentTime, nil)
+			_, err2 := models.UpdateOfferLastSeenAt(db, offerID, playerID, gameID, currentTime, nil)
 			templatesAfter, err3 := models.GetAvailableOffers(db, playerID, gameID, currentTime, nil)
 
 			//Then
@@ -654,7 +694,7 @@ var _ = Describe("Offers Model", func() {
 			offerID := offers[place][0].ID
 
 			// Sees once
-			err = models.UpdateOfferLastSeenAt(db, offerID, playerID, gameID, currentTime, nil)
+			_, err = models.UpdateOfferLastSeenAt(db, offerID, playerID, gameID, currentTime, nil)
 			Expect(err).NotTo(HaveOccurred())
 
 			// Disable offer template
@@ -674,7 +714,7 @@ var _ = Describe("Offers Model", func() {
 			offerID = offers[place][0].ID
 
 			// Sees twice
-			err = models.UpdateOfferLastSeenAt(db, offerID, playerID, gameID, currentTime, nil)
+			_, err = models.UpdateOfferLastSeenAt(db, offerID, playerID, gameID, currentTime, nil)
 			Expect(err).NotTo(HaveOccurred())
 
 			// Get offer, expect unique-place to not be returned

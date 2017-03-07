@@ -143,7 +143,7 @@ func ClaimOffer(db runner.Connection, offerID, playerID, gameID string, t time.T
 }
 
 //UpdateOfferLastSeenAt updates last seen timestamp of an offer
-func UpdateOfferLastSeenAt(db runner.Connection, offerID, playerID, gameID string, t time.Time, mr *MixedMetricsReporter) error {
+func UpdateOfferLastSeenAt(db runner.Connection, offerID, playerID, gameID string, t time.Time, mr *MixedMetricsReporter) (int64, error) {
 	var offer Offer
 
 	query := `UPDATE offers
@@ -154,18 +154,46 @@ func UpdateOfferLastSeenAt(db runner.Connection, offerID, playerID, gameID strin
               id = $2 AND
               player_id = $3 AND
               game_id = $4
-            RETURNING id, last_seen_at`
+            RETURNING id, last_seen_at, offer_template_id, seen_counter`
 	err := mr.WithDatastoreSegment("offers", SegmentUpdate, func() error {
 		return db.SQL(query, t, offerID, playerID, gameID).QueryStruct(&offer)
 	})
 
-	err = HandleNotFoundError("Offer", map[string]interface{}{
-		"ID":       offerID,
-		"GameID":   gameID,
-		"PlayerID": playerID,
-	}, err)
+	if err != nil {
+		err = HandleNotFoundError("Offer", map[string]interface{}{
+			"ID":       offerID,
+			"GameID":   gameID,
+			"PlayerID": playerID,
+		}, err)
+		return 0, err
+	}
 
-	return err
+	var offerTemplate OfferTemplate
+	err = mr.WithDatastoreSegment("offer_templates", SegmentSelect, func() error {
+		return db.
+			Select("frequency").
+			From("offer_templates").
+			Where("id = $1", offer.OfferTemplateID).
+			QueryStruct(&offerTemplate)
+	})
+	if err != nil {
+		return 0, err
+	}
+
+	var f FrequencyOrPeriod
+	json.Unmarshal(offerTemplate.Frequency, &f)
+	if f.Max != 0 && offer.SeenCounter >= f.Max {
+		return 0, nil
+	}
+
+	if f.Every != "" {
+		duration, err := time.ParseDuration(f.Every)
+		if err != nil {
+			return 0, err
+		}
+		return t.Add(duration).Unix(), nil
+	}
+	return t.Unix(), nil
 }
 
 //GetAvailableOffers returns the offers that match the criteria of enabled offer templates

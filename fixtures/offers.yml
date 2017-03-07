@@ -66,3 +66,10 @@
     offer_template_key: a158bcf0-c527-4bff-975e-5327fbdb5696
     created_at: 2016-01-01 12:30:12
     seen_counter: 1
+-
+    id: 4407b770-5b24-4ffa-8563-0694d1a10156
+    game_id: offers-game
+    player_id: player-11
+    offer_template_id: 5fed76ab-1fd7-4a91-972d-bca228ce80c4
+    offer_template_key: 471c730b-b8ed-4caa-a245-f46822914c8c
+    created_at: 2016-01-01 12:30:12
