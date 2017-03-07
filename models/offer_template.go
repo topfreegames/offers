@@ -8,6 +8,7 @@
 package models
 
 import (
+	"fmt"
 	"github.com/topfreegames/offers/errors"
 	"gopkg.in/mgutz/dat.v2/dat"
 	runner "gopkg.in/mgutz/dat.v2/sqlx-runner"
@@ -16,7 +17,7 @@ import (
 //OfferTemplate contains the parameters of a template
 type OfferTemplate struct {
 	ID        string   `db:"id" json:"id" valid:"uuidv4"`
-	Key       string   `db:"key" json:"key" valid:"uuidv4,required"`
+	Key       string   `db:"key" json:"key" valid:"uuidv4"`
 	Name      string   `db:"name" json:"name" valid:"ascii,stringlength(1|255),required"`
 	ProductID string   `db:"product_id" json:"productId" valid:"ascii,stringlength(1|255),required"`
 	GameID    string   `db:"game_id" json:"gameId" valid:"matches(^[^-][a-z0-9-]*$),stringlength(1|255),required"`
@@ -38,7 +39,7 @@ const enabledOfferTemplates = `
 //GetOfferTemplateByID returns OfferTemplate by ID
 func GetOfferTemplateByID(db runner.Connection, id string, mr *MixedMetricsReporter) (*OfferTemplate, error) {
 	var ot OfferTemplate
-	err := mr.WithDatastoreSegment("offer_templates", SegmentSelect, func() error {
+	err := mr.WithDatastoreSegment("offer_templates", "select by id", func() error {
 		return db.
 			Select(`
 				id, key, name, product_id, game_id,
@@ -87,6 +88,7 @@ func GetEnabledOfferTemplates(db runner.Connection, gameID string, mr *MixedMetr
 			OrderBy("name asc").
 			QueryStructs(&ots)
 	})
+
 	err = HandleNotFoundError("OfferTemplate", map[string]interface{}{"enabled": true}, err)
 	return ots, err
 }
@@ -94,7 +96,7 @@ func GetEnabledOfferTemplates(db runner.Connection, gameID string, mr *MixedMetr
 //ListOfferTemplates returns all the offer templates for a given game
 func ListOfferTemplates(db runner.Connection, gameID string, mr *MixedMetricsReporter) ([]*OfferTemplate, error) {
 	var ots []*OfferTemplate
-	err := mr.WithDatastoreSegment("offer_templates", SegmentSelect, func() error {
+	err := mr.WithDatastoreSegment("offer_templates", "select", func() error {
 		return db.
 			Select(`
 				id, key, name, product_id, game_id,
@@ -109,34 +111,69 @@ func ListOfferTemplates(db runner.Connection, gameID string, mr *MixedMetricsRep
 }
 
 // InsertOfferTemplate inserts a new offer template into DB
-func InsertOfferTemplate(db runner.Connection, ot *OfferTemplate, mr *MixedMetricsReporter) (*OfferTemplate, error) {
-	_, err := GetEnabledOfferTemplateByKeyAndGame(db, ot.Key, ot.GameID, mr)
-
-	if err != nil {
-		notFoundErr := HandleNotFoundError("OfferTemplate", map[string]interface{}{"Key": ot.Key}, err)
-		if err == notFoundErr {
-			return nil, err
-		}
-	} else {
-		msg := "An offer template with key " + ot.Key + " already exist and is enabled"
-		return ot, errors.NewConflictedModelError("OfferTemplate", msg)
-	}
+func InsertOfferTemplate(db runner.Connection, ot *OfferTemplate, onlyInsert bool, mr *MixedMetricsReporter) (*OfferTemplate, error) {
+	olderOt, err := GetEnabledOfferTemplateByKeyAndGame(db, ot.Key, ot.GameID, mr)
 
 	if ot.Metadata == nil {
 		ot.Metadata = dat.JSON([]byte(`{}`))
 	}
 
+	if err != nil {
+		notFoundErr := HandleNotFoundError("OfferTemplate", map[string]interface{}{"Key": ot.Key}, err)
+		// If err isn't of type NotFoundError, the handle returns err itself. So it is some error not foreseen
+		if err == notFoundErr {
+			return nil, err
+		}
+
+		err = mr.WithDatastoreSegment("offer_templates", SegmentInsert, func() error {
+			return db.
+				InsertInto("offer_templates").
+				Columns("name", "key", "product_id", "game_id", "contents", "period", "frequency", "trigger", "placement", "metadata").
+				Record(ot).
+				Returning("id, enabled").
+				QueryStruct(ot)
+		})
+		return ot, HandleForeignKeyViolationError("OfferTemplate", err)
+	} else if onlyInsert {
+		return nil, errors.NewConflictedModelError("OfferTemplate", fmt.Sprintf("There is another enabled offer template with key %s", ot.Key))
+	}
+
+	transaction, err := db.Begin()
+	if err != nil {
+		return nil, err
+	}
+	defer transaction.AutoRollback()
+
+	err = mr.WithDatastoreSegment("offer_templates", SegmentUpdate, func() error {
+		return transaction.
+			Update("offer_templates").
+			Set("enabled", false).
+			Where("id = $1 AND game_id = $2", olderOt.ID, olderOt.GameID).
+			Returning("id", "game_id").
+			QueryStruct(olderOt)
+	})
+
+	if err != nil {
+		return nil, HandleNotFoundError("OfferTemplate", map[string]interface{}{
+			"ID":     olderOt.ID,
+			"GameID": olderOt.GameID,
+		}, err)
+	}
+
 	err = mr.WithDatastoreSegment("offer_templates", SegmentInsert, func() error {
-		return db.
+		return transaction.
 			InsertInto("offer_templates").
 			Columns("name", "key", "product_id", "game_id", "contents", "period", "frequency", "trigger", "placement", "metadata").
 			Record(ot).
 			Returning("id, enabled").
 			QueryStruct(ot)
 	})
+	if err != nil {
+		return nil, HandleForeignKeyViolationError("OfferTemplate", err)
+	}
 
-	foreignKeyErr := HandleForeignKeyViolationError("OfferTemplate", err)
-	return ot, foreignKeyErr
+	err = transaction.Commit()
+	return ot, err
 }
 
 //SetEnabledOfferTemplate can enable or disable an offer template

@@ -198,12 +198,13 @@ func UpdateOfferLastSeenAt(db runner.Connection, offerID, playerID, gameID strin
 
 //GetAvailableOffers returns the offers that match the criteria of enabled offer templates
 func GetAvailableOffers(db runner.Connection, playerID, gameID string, t time.Time, mr *MixedMetricsReporter) (map[string][]*OfferToReturn, error) {
+	offerTemplatesByPlacement := make(map[string][]*OfferToReturn)
 	eot, err := GetEnabledOfferTemplates(db, gameID, mr)
 	if err != nil {
 		return nil, err
 	}
 	if len(eot) == 0 {
-		return map[string][]*OfferToReturn{}, nil
+		return offerTemplatesByPlacement, nil
 	}
 
 	var trigger TimeTrigger
@@ -212,7 +213,7 @@ func GetAvailableOffers(db runner.Connection, playerID, gameID string, t time.Ti
 		return nil, err
 	}
 	if len(filteredOts) == 0 {
-		return map[string][]*OfferToReturn{}, nil
+		return offerTemplatesByPlacement, nil
 	}
 
 	offerTemplateKeys := make([]string, len(filteredOts))
@@ -229,7 +230,7 @@ func GetAvailableOffers(db runner.Connection, playerID, gameID string, t time.Ti
 		return nil, err
 	}
 	if len(filteredOts) == 0 {
-		return map[string][]*OfferToReturn{}, nil
+		return offerTemplatesByPlacement, nil
 	}
 
 	playerOffersByOfferTemplateID := map[string]*Offer{}
@@ -244,10 +245,9 @@ func GetAvailableOffers(db runner.Connection, playerID, gameID string, t time.Ti
 		return nil, err
 	}
 	if len(filteredOts) == 0 {
-		return map[string][]*OfferToReturn{}, nil
+		return offerTemplatesByPlacement, nil
 	}
 
-	offerTemplatesByPlacement := make(map[string][]*OfferToReturn)
 	for _, ot := range filteredOts {
 		var trigger Times
 		json.Unmarshal(ot.Trigger, &trigger)

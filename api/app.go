@@ -97,14 +97,25 @@ func (a *App) getRouter() *mux.Router {
 		&VersionMiddleware{},
 	)).Methods("GET").Name("offer_templates")
 
-	r.Handle("/templates", Chain(
+	r.Handle("/templates/{id}/insert", Chain(
 		&OfferTemplateHandler{App: a, Method: "insert"},
 		&NewRelicMiddleware{App: a},
 		&AuthMiddleware{App: a},
 		&LoggingMiddleware{App: a},
 		&VersionMiddleware{},
+		NewParamKeyMiddleware(a, govalidator.IsUUIDv4),
 		NewValidationMiddleware(func() interface{} { return &models.OfferTemplate{} }),
 	)).Methods("POST").Name("offer_templates")
+
+	r.HandleFunc("/templates/{id}/update", Chain(
+		&OfferTemplateHandler{App: a, Method: "update"},
+		&NewRelicMiddleware{App: a},
+		&AuthMiddleware{App: a},
+		&LoggingMiddleware{App: a},
+		&VersionMiddleware{},
+		NewParamKeyMiddleware(a, govalidator.IsUUIDv4),
+		NewValidationMiddleware(func() interface{} { return &models.OfferTemplate{} }),
+	).ServeHTTP).Methods("POST").Name("offer_templates")
 
 	r.Handle("/templates/{id}/enable", Chain(
 		&OfferTemplateHandler{App: a, Method: "enable"},

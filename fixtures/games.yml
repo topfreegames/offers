@@ -25,3 +25,11 @@
     id: limited-offers-game
     name: game-4
     created_at: 2016-01-01 12:30:12
+-
+    id: offers-game-to-update
+    name: offers-game-3
+    created_at: 2016-01-01 12:30:12
+-
+    id: unique-offers-game
+    name: unique-game
+    created_at: 2016-01-01 12:30:12

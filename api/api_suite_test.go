@@ -57,7 +57,7 @@ var _ = BeforeEach(func() {
 })
 
 var _ = AfterEach(func() {
-	err := app.DB.(*runner.Tx).Rollback()
+	err := app.DB.(*runner.Tx).AutoRollback()
 	Expect(err).NotTo(HaveOccurred())
 	app.DB = db
 })

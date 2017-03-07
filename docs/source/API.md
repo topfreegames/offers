@@ -116,15 +116,123 @@ Offers API
 ## Offer Template Routes
 
   ### Insert Offer Template
-  `POST /templates`
+  `POST /templates/:key/insert`
 
-  Insert a new Offer Template into database.
+  Insert a new Offer Template into database. key is an `uuidv4`. If trying to insert when another offer template exists with the same key and is enabled, this returns a conflict error. 
 
   * Payload
     ```
       {
         "name":      [string], // required, 255 characters max
-        "key":       [uuidv4], // required
+        "productId": [string], // required, 255 characters max
+        "gameId":    [string], // required, matches ^[^-][a-z0-9-]*$
+        "contents":  [json],   // required
+        "placement": [string], // required, 255 characters max
+        "period":    {         // required
+          "every": [string],   // required
+          "max":   [int]       // required
+        },   
+        "frequency": {         // required
+          "every": [string],   // required
+          "max":   [int]       // required
+        },   
+        "trigger":   {         // required
+          "from":  [int],      // required
+          "to":    [int]       // required
+        },
+        "metadata":  [json]    // optional
+      }
+    ```
+
+    * Field Descriptions
+       - **name**:         Prettier game identifier to show on UI.  
+       - **key**:          Identifies an offer template. It is common between the templates versions, meaning it keeps the same when an offer is updated. 
+       - **productId**:    Identifier of the item to be bought on PlayStore or AppStore.  
+       - **gameId**:       ID of the game this template was made for (must exist on Games table on DB).  
+       - **contents**:     What the offer provides (ex.: { "gem": 5, "gold": 100 }).  
+       - **metadata**:     Any information the Front wants to access later.  
+       - **period**:       Enable player to buy offer every x times, at most y times. <ul><li>every: decimal number with unit suffix, such as "300ms", "-1.5h" or "2h45m". Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h"</li><li>max: maximum number of times this offer can be bought by the player</li></ul>If "every" is an empty string, then the offer can be bought max times with no time restriction.  If "max" is 0, then the offer can be bought infinite times with time restriction.  They can't be "" and 0 at the same time.
+       - **frequency**:    Enable player to see offer on UI x/unit of time, at most y times. <ul><li>every: decimal number with unit suffix, such as "300ms", "-1.5h" or "2h45m". Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h"</li><li>max: maximum number of times this offer can be seen by the player</li></ul>If "every" is an empty string, then the offer can be seen max times with no time restriction.  If "max" is 0, then the offer can be seen infinite times with time restriction.  They can't be "" and 0 at the same time.  
+       - **trigger**:      Time when the offer is available.  
+       - **enabled**:      True if the offer is enabled.  
+       - **placement**:    Where the offer is shown in the UI.  
+
+  * Success Response
+    * Code: `200`
+    * Content:
+      ```
+        {
+          "id":        [uuidv4],   // offer template unique identifier
+          "key":       [uuidv4],
+          "name":      [string],
+          "productId": [string],
+          "gameId":    [string],
+          "contents":  [json],  
+          "metadata":  [json],  
+          "placement": [string],
+          "period":    {        
+            "every": [string],  
+            "max":   [int]      
+          },   
+          "frequency": {        
+            "every": [string],  
+            "max":   [int]      
+          },   
+          "trigger":   {        
+            "from":  [int],     
+            "to":    [int]      
+          },
+          "enabled": true     // created templates are enabled by default
+        }
+      ```
+
+  * Error response
+
+    It will return an error if the request has missing or invalid arguments
+
+    * Code: `422`
+    * Content:
+      ```
+        {
+          "error": [string],       // error
+          "code":  [string],       // error code
+          "description": [string]  // error description
+        }
+      ```
+
+    It will return an error if there is another offer template with the same key that is enabled
+
+    * Code: `409`
+    * Content:
+      ```
+        {
+          "error": [string],       // error
+          "code":  [string],       // error code
+          "description": [string]  // error description
+        }
+      ```
+
+    It will return an error if the query on db (insert) failed
+
+    * Code: `500`
+    * Content:
+      ```
+        {
+          "error": [string],       // error
+          "code":  [string],       // error code
+          "description": [string]  // error description
+        }
+      ```
+
+  ### Update Offer Template
+  `POST /templates/:key/update`
+
+  Update Offer Template into database. key is an `uuidv4`. If key doesn't exist or there is a disabled offer template with given key, it inserts. If there is an enabled template with the given key, this template becomes disabled and the new template is inserted.
+
+  * Payload
+    ```
+      {
+        "name":      [string], // required, 255 characters max
         "productId": [string], // required, 255 characters max
         "gameId":    [string], // required, matches ^[^-][a-z0-9-]*$
         "contents":  [json],   // required
