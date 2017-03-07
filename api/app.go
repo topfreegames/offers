@@ -62,6 +62,7 @@ func (a *App) getRouter() *mux.Router {
 		&HealthcheckHandler{App: a},
 		&MetricsReporterMiddleware{App: a},
 		&NewRelicMiddleware{App: a},
+		&AuthMiddleware{App: a},
 		&LoggingMiddleware{App: a},
 		&VersionMiddleware{},
 	)).Methods("GET").Name("healthcheck")
@@ -70,6 +71,7 @@ func (a *App) getRouter() *mux.Router {
 		&GameHandler{App: a, Method: "list"},
 		&MetricsReporterMiddleware{App: a},
 		&NewRelicMiddleware{App: a},
+		&AuthMiddleware{App: a},
 		&LoggingMiddleware{App: a},
 		&VersionMiddleware{},
 	)).Methods("GET").Name("game")
@@ -78,6 +80,7 @@ func (a *App) getRouter() *mux.Router {
 		&GameHandler{App: a, Method: "upsert"},
 		&MetricsReporterMiddleware{App: a},
 		&NewRelicMiddleware{App: a},
+		&AuthMiddleware{App: a},
 		&LoggingMiddleware{App: a},
 		&VersionMiddleware{},
 		NewParamKeyMiddleware(a, func(id string) bool {
@@ -89,6 +92,7 @@ func (a *App) getRouter() *mux.Router {
 	r.Handle("/templates", Chain(
 		&OfferTemplateHandler{App: a, Method: "list"},
 		&NewRelicMiddleware{App: a},
+		&AuthMiddleware{App: a},
 		&LoggingMiddleware{App: a},
 		&VersionMiddleware{},
 	)).Methods("GET").Name("offer_templates")
@@ -96,6 +100,7 @@ func (a *App) getRouter() *mux.Router {
 	r.Handle("/templates", Chain(
 		&OfferTemplateHandler{App: a, Method: "insert"},
 		&NewRelicMiddleware{App: a},
+		&AuthMiddleware{App: a},
 		&LoggingMiddleware{App: a},
 		&VersionMiddleware{},
 		NewValidationMiddleware(func() interface{} { return &models.OfferTemplate{} }),
@@ -104,6 +109,7 @@ func (a *App) getRouter() *mux.Router {
 	r.Handle("/templates/{id}/enable", Chain(
 		&OfferTemplateHandler{App: a, Method: "enable"},
 		&NewRelicMiddleware{App: a},
+		&AuthMiddleware{App: a},
 		&LoggingMiddleware{App: a},
 		&VersionMiddleware{},
 		NewParamKeyMiddleware(a, govalidator.IsUUIDv4),
@@ -112,6 +118,7 @@ func (a *App) getRouter() *mux.Router {
 	r.Handle("/templates/{id}/disable", Chain(
 		&OfferTemplateHandler{App: a, Method: "disable"},
 		&NewRelicMiddleware{App: a},
+		&AuthMiddleware{App: a},
 		&LoggingMiddleware{App: a},
 		&VersionMiddleware{},
 		NewParamKeyMiddleware(a, govalidator.IsUUIDv4),
@@ -120,6 +127,7 @@ func (a *App) getRouter() *mux.Router {
 	r.Handle("/offers", Chain(
 		&OfferRequestHandler{App: a, Method: "get-offers"},
 		&NewRelicMiddleware{App: a},
+		&AuthMiddleware{App: a},
 		&LoggingMiddleware{App: a},
 		&VersionMiddleware{},
 	)).Methods("GET").Name("offers")
@@ -127,6 +135,7 @@ func (a *App) getRouter() *mux.Router {
 	r.Handle("/offers/{id}/claim", Chain(
 		&OfferRequestHandler{App: a, Method: "claim"},
 		&NewRelicMiddleware{App: a},
+		&AuthMiddleware{App: a},
 		&LoggingMiddleware{App: a},
 		&VersionMiddleware{},
 		NewParamKeyMiddleware(a, govalidator.IsUUIDv4),
@@ -136,6 +145,7 @@ func (a *App) getRouter() *mux.Router {
 	r.HandleFunc("/offers/{id}/impressions", Chain(
 		&OfferRequestHandler{App: a, Method: "impressions"},
 		&NewRelicMiddleware{App: a},
+		&AuthMiddleware{App: a},
 		&LoggingMiddleware{App: a},
 		&VersionMiddleware{},
 		NewParamKeyMiddleware(a, govalidator.IsUUIDv4),

@@ -38,6 +38,7 @@ func loggerFromContext(ctx context.Context) logrus.FieldLogger {
 	return ctx.Value(loggerKey).(logrus.FieldLogger)
 }
 
+// ServeHTTP method
 func (m *LoggingMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := newContextWithRequestIDAndLogger(r.Context(), m.App.Logger, r)
 
