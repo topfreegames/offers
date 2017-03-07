@@ -45,6 +45,7 @@ type OfferToReturn struct {
 	Metadata             dat.JSON `json:"metadata"`
 	RemainingPurchases   int      `json:"remainingPurchases,omitempty"`
 	RemainingImpressions int      `json:"remainingImpressions,omitempty"`
+	ExpireAt             int64    `json:"expireAt"`
 }
 
 //FrequencyOrPeriod is the struct for basic Frequecy and Period types
@@ -220,11 +221,13 @@ func GetAvailableOffers(db runner.Connection, playerID, gameID string, t time.Ti
 
 	offerTemplatesByPlacement := make(map[string][]*OfferToReturn)
 	for _, ot := range filteredOts {
-
+		var trigger Times
+		json.Unmarshal(ot.Trigger, &trigger)
 		offerToReturn := &OfferToReturn{
 			ProductID: ot.ProductID,
 			Contents:  ot.Contents,
 			Metadata:  ot.Metadata,
+			ExpireAt:  trigger.To,
 		}
 		var f FrequencyOrPeriod
 		var p FrequencyOrPeriod

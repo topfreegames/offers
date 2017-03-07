@@ -388,6 +388,7 @@ var _ = Describe("Offers Model", func() {
 			Expect(templates["popup"][0].Metadata).To(Equal(dat.JSON([]byte(`{}`))))
 			Expect(templates["popup"][0].RemainingPurchases).To(Equal(0))
 			Expect(templates["popup"][0].RemainingImpressions).To(Equal(0))
+			Expect(templates["popup"][0].ExpireAt).To(Equal(int64(1486679000)))
 
 			Expect(templates).To(HaveKey("store"))
 			Expect(templates["store"]).To(HaveLen(2))
@@ -397,6 +398,7 @@ var _ = Describe("Offers Model", func() {
 			Expect(templates["store"][0].Metadata).To(Equal(dat.JSON([]byte(`{"meta": "data"}`))))
 			Expect(templates["store"][0].RemainingPurchases).To(Equal(0))
 			Expect(templates["store"][0].RemainingImpressions).To(Equal(0))
+			Expect(templates["store"][0].ExpireAt).To(Equal(int64(1486679200)))
 
 			Expect(templates["store"][1].ID).To(Equal("6c4a79f2-24b8-4be9-93d4-12413b789823"))
 			Expect(templates["store"][1].ProductID).To(Equal("com.tfg.sample.3"))
@@ -404,6 +406,7 @@ var _ = Describe("Offers Model", func() {
 			Expect(templates["store"][1].Metadata).To(Equal(dat.JSON([]byte(`{}`))))
 			Expect(templates["store"][1].RemainingPurchases).To(Equal(1))
 			Expect(templates["store"][1].RemainingImpressions).To(Equal(1))
+			Expect(templates["store"][1].ExpireAt).To(Equal(int64(1486679100)))
 		})
 
 		It("should return offers for two different players of game offers-game", func() {

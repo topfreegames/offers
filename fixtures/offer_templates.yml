@@ -41,7 +41,7 @@
     metadata: '{"meta": "data"}'
     period: '{"every": "1s"}'
     frequency: '{"every": "1s"}'
-    trigger: '{"from": 1486678000, "to": 1486679000}'
+    trigger: '{"from": 1486678000, "to": 1486679200}'
     placement: store
     enabled: true
 -
@@ -54,7 +54,7 @@
     metadata: '{}'
     period: '{"max": 1}'
     frequency: '{"every": "1s", "max": 2}'
-    trigger: '{"from": 1486678000, "to": 1486679000}'
+    trigger: '{"from": 1486678000, "to": 1486679100}'
     placement: store
     enabled: true
 -
