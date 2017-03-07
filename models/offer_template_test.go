@@ -46,11 +46,12 @@ var _ = Describe("Offer Template Models", func() {
 
 	Describe("Offer Template instance", func() {
 		It("should create a template with valid parameters", func() {
+			gameID := "game-id"
 			offerTemplate := &models.OfferTemplate{
 				Name:      "New Awesome Game",
 				Key:       uuid.NewV4().String(),
 				ProductID: "com.tfg.example",
-				GameID:    "game-id",
+				GameID:    gameID,
 				Contents:  dat.JSON([]byte(`{"gems": 5, "gold": 100}`)),
 				Period:    dat.JSON([]byte(`{"every": "10m"}`)),
 				Frequency: dat.JSON([]byte(`{"every": "24h"}`)),
@@ -58,7 +59,7 @@ var _ = Describe("Offer Template Models", func() {
 				Placement: "popup",
 			}
 
-			ot, err := models.InsertOfferTemplate(db, offerTemplate, nil)
+			ot, err := models.InsertOfferTemplate(db, offerTemplate, true, nil)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(ot.ID).NotTo(Equal(""))
 			Expect(ot.Name).To(Equal(offerTemplate.Name))
@@ -98,7 +99,7 @@ var _ = Describe("Offer Template Models", func() {
 				Trigger:   dat.JSON([]byte(`{"from": 1487280506875, "to": 1487366964730}`)),
 				Placement: "popup",
 			}
-			_, err := models.InsertOfferTemplate(db, offerTemplate, nil)
+			_, err := models.InsertOfferTemplate(db, offerTemplate, true, nil)
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(Equal("OfferTemplate could not be saved due to: insert or update on table \"offer_templates\" violates foreign key constraint \"offer_templates_game_id_fkey\""))
 
@@ -112,13 +113,14 @@ var _ = Describe("Offer Template Models", func() {
 			Expect(err.Error()).To(Equal("sql: no rows in result set"))
 		})
 
-		It("should return error if inserting offer template with repeated key and game with an enabled offer template", func() {
+		It("should update offer template if inserting with repeated key and game with an enabled offer template", func() {
 			//Given
+			offerTemplateID := "5fed76ab-1fd7-4a91-972d-bca228ce80c4"
 			offerTemplate := &models.OfferTemplate{
-				Name:      "template-1",
-				Key:       "da700673-0415-43c3-a8e0-18331b794482",
+				Name:      "new-template",
+				Key:       "471c730b-b8ed-4caa-a245-f46822914c8c",
 				ProductID: "com.tfg.example",
-				GameID:    "offers-game",
+				GameID:    "unique-offers-game",
 				Contents:  dat.JSON([]byte(`{"gems": 5, "gold": 100}`)),
 				Period:    dat.JSON([]byte(`{"every": "10m"}`)),
 				Frequency: dat.JSON([]byte(`{"every": "24h"}`)),
@@ -127,11 +129,16 @@ var _ = Describe("Offer Template Models", func() {
 			}
 
 			//When
-			_, err := models.InsertOfferTemplate(db, offerTemplate, nil)
+			newOfferTemplate, err := models.InsertOfferTemplate(db, offerTemplate, false, nil)
+			Expect(err).NotTo(HaveOccurred())
+			oldOfferTemplate, err := models.GetOfferTemplateByID(db, offerTemplateID, nil)
+			Expect(err).NotTo(HaveOccurred())
 
 			//Then
-			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(Equal(`OfferTemplate could not be saved due to: An offer template with key da700673-0415-43c3-a8e0-18331b794482 already exist and is enabled`))
+			Expect(err).NotTo(HaveOccurred())
+			Expect(newOfferTemplate.Name).To(Equal(offerTemplate.Name))
+			Expect(newOfferTemplate.Enabled).To(BeTrue())
+			Expect(oldOfferTemplate.Enabled).To(BeFalse())
 		})
 
 		It("should insert offer template with repeated key and game with a disabled offer template", func() {
@@ -150,7 +157,7 @@ var _ = Describe("Offer Template Models", func() {
 
 			//When
 			err1 := models.SetEnabledOfferTemplate(db, "dd21ec96-2890-4ba0-b8e2-40ea67196990", false, nil)
-			_, err2 := models.InsertOfferTemplate(db, offerTemplate, nil)
+			_, err2 := models.InsertOfferTemplate(db, offerTemplate, true, nil)
 
 			//Then
 			Expect(err1).NotTo(HaveOccurred())
@@ -166,14 +173,14 @@ var _ = Describe("Offer Template Models", func() {
 			}
 
 			//When
-			_, err := models.InsertOfferTemplate(db, offerTemplate, nil)
+			_, err := models.InsertOfferTemplate(db, offerTemplate, true, nil)
 
 			//Then
 			Expect(err).To(HaveOccurred())
 		})
 
 		It("should return error if DB is closed", func() {
-			oldDB := db
+			oldDB := conn
 			db, err := GetTestDB()
 			Expect(err).NotTo(HaveOccurred())
 			db.(*runner.DB).DB.Close() // make DB connection unavailable
@@ -189,10 +196,32 @@ var _ = Describe("Offer Template Models", func() {
 				Placement: "popup",
 			}
 
-			_, err = models.InsertOfferTemplate(db, offerTemplate, nil)
+			_, err = models.InsertOfferTemplate(db, offerTemplate, true, nil)
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(Equal("sql: database is closed"))
 			db = oldDB // avoid errors in after each
+		})
+
+		It("should not create new offer template if inserting with repeated key", func() {
+			//Given
+			offerTemplate := &models.OfferTemplate{
+				Name:      "new-template",
+				Key:       "471c730b-b8ed-4caa-a245-f46822914c8c",
+				ProductID: "com.tfg.example",
+				GameID:    "unique-offers-game",
+				Contents:  dat.JSON([]byte(`{"gems": 5, "gold": 100}`)),
+				Period:    dat.JSON([]byte(`{"every": "10m"}`)),
+				Frequency: dat.JSON([]byte(`{"every": "24h"}`)),
+				Trigger:   dat.JSON([]byte(`{"from": 1487280506875}`)),
+				Placement: "popup",
+			}
+
+			//When
+			_, err := models.InsertOfferTemplate(db, offerTemplate, true, nil)
+
+			//Then
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(Equal("OfferTemplate could not be saved due to: There is another enabled offer template with key 471c730b-b8ed-4caa-a245-f46822914c8c"))
 		})
 	})
 
@@ -200,7 +229,7 @@ var _ = Describe("Offer Template Models", func() {
 		It("Should return the full list of offer templates for the given game", func() {
 			games, err := models.ListOfferTemplates(db, "offers-game", nil)
 			Expect(err).NotTo(HaveOccurred())
-			Expect(games).To(HaveLen(5))
+			Expect(games).To(HaveLen(4))
 		})
 	})
 
@@ -209,29 +238,28 @@ var _ = Describe("Offer Template Models", func() {
 			ots, err := models.GetEnabledOfferTemplates(db, "offers-game", nil)
 
 			Expect(err).NotTo(HaveOccurred())
-			Expect(ots).To(HaveLen(4))
+			Expect(ots).To(HaveLen(3))
 			Expect(ots[0].Name).To(Equal("template-1"))
-			Expect(ots[1].ID).To(Equal("5fed76ab-1fd7-4a91-972d-bca228ce80c4"))
-			Expect(ots[1].Key).To(Equal("471c730b-b8ed-4caa-a245-f46822914c8c"))
-			Expect(ots[1].Name).To(Equal("template-10"))
-			Expect(ots[1].ProductID).To(Equal("com.tfg.sample"))
-			Expect(ots[1].Contents).To(Equal(dat.JSON([]byte(`{"gems": 5, "gold": 100}`))))
-			Expect(ots[1].Metadata).To(Equal(dat.JSON([]byte(`{}`))))
-			Expect(ots[1].Period).To(Equal(dat.JSON([]byte(`{"every": "12h"}`))))
-			Expect(ots[1].Frequency).To(BeEquivalentTo(dat.JSON([]byte(`{"max": 2}`))))
-			Expect(ots[1].Trigger).To(Equal(dat.JSON([]byte(`{"to": 1486679000, "from": 1486678000}`))))
-			Expect(ots[1].Placement).To(Equal("unique-place"))
-			Expect(ots[2].ID).To(Equal("d5114990-77d7-45c4-ba5f-462fc86b213f"))
-			Expect(ots[2].Key).To(Equal("bd36b563-8fd4-4f08-82bb-d9344717b50c"))
-			Expect(ots[2].Name).To(Equal("template-2"))
-			Expect(ots[2].ProductID).To(Equal("com.tfg.sample.2"))
-			Expect(ots[2].Contents).To(Equal(dat.JSON([]byte(`{"gems": 100, "gold": 5}`))))
-			Expect(ots[2].Metadata).To(Equal(dat.JSON([]byte(`{"meta": "data"}`))))
-			Expect(ots[2].Period).To(Equal(dat.JSON([]byte(`{"every": "1s"}`))))
-			Expect(ots[2].Frequency).To(BeEquivalentTo(dat.JSON([]byte(`{"every": "1s"}`))))
-			Expect(ots[2].Trigger).To(Equal(dat.JSON([]byte(`{"to": 1486679200, "from": 1486678000}`))))
+			Expect(ots[1].ID).To(Equal("d5114990-77d7-45c4-ba5f-462fc86b213f"))
+			Expect(ots[1].Key).To(Equal("bd36b563-8fd4-4f08-82bb-d9344717b50c"))
+			Expect(ots[1].Name).To(Equal("template-2"))
+			Expect(ots[1].ProductID).To(Equal("com.tfg.sample.2"))
+			Expect(ots[1].Contents).To(Equal(dat.JSON([]byte(`{"gems": 100, "gold": 5}`))))
+			Expect(ots[1].Metadata).To(Equal(dat.JSON([]byte(`{"meta": "data"}`))))
+			Expect(ots[1].Period).To(Equal(dat.JSON([]byte(`{"every": "1s"}`))))
+			Expect(ots[1].Frequency).To(BeEquivalentTo(dat.JSON([]byte(`{"every": "1s"}`))))
+			Expect(ots[1].Trigger).To(Equal(dat.JSON([]byte(`{"to": 1486679200, "from": 1486678000}`))))
+			Expect(ots[1].Placement).To(Equal("store"))
+			Expect(ots[2].ID).To(Equal("a411fbcf-dddc-4153-b42b-3f9b2684c965"))
+			Expect(ots[2].Key).To(Equal("a158bcf0-c527-4bff-975e-5327fbdb5696"))
+			Expect(ots[2].Name).To(Equal("template-3"))
+			Expect(ots[2].ProductID).To(Equal("com.tfg.sample.3"))
+			Expect(ots[2].Contents).To(Equal(dat.JSON([]byte(`{"gems": 5, "gold": 100}`))))
+			Expect(ots[2].Metadata).To(Equal(dat.JSON([]byte(`{}`))))
+			Expect(ots[2].Period).To(Equal(dat.JSON([]byte(`{"max": 1}`))))
+			Expect(ots[2].Frequency).To(BeEquivalentTo(dat.JSON([]byte(`{"max": 2, "every": "1s"}`))))
+			Expect(ots[2].Trigger).To(Equal(dat.JSON([]byte(`{"to": 1486679100, "from": 1486678000}`))))
 			Expect(ots[2].Placement).To(Equal("store"))
-			Expect(ots[3].Name).To(Equal("template-3"))
 		})
 	})
 

@@ -140,11 +140,37 @@
     key: 471c730b-b8ed-4caa-a245-f46822914c8c
     name: template-10
     product_id: com.tfg.sample
-    game_id: offers-game
+    game_id: unique-offers-game
     contents: '{"gems": 5, "gold": 100}'
     metadata: '{}'
     period: '{"every": "12h"}'
     frequency: '{"max": 2}'
     trigger: '{"from": 1486678000, "to": 1486679000}'
     placement: unique-place
+    enabled: true
+-
+    id: 8080cd21-6ed7-44d2-b243-8e8161d27c9c
+    key: 6b792eb5-f103-4e8e-9561-aa322e06243a
+    name: template-to-update
+    product_id: com.tfg.sample
+    game_id: offers-game-to-update
+    contents: '{"gems": 5, "gold": 100}'
+    metadata: '{}'
+    period: '{"every": "12h"}'
+    frequency: '{"max": 2}'
+    trigger: '{"from": 1486678000, "to": 1486679000}'
+    placement: popup
+    enabled: true
+-
+    id: 3479fa18-6739-4ea8-a011-24ae40ce1c02
+    key: f8f8c92a-fb88-4a7d-8a5b-b8de66d7b5ac
+    name: template-to-update
+    product_id: com.tfg.sample
+    game_id: offers-game-to-update
+    contents: '{"gems": 5, "gold": 100}'
+    metadata: '{}'
+    period: '{"every": "12h"}'
+    frequency: '{"max": 2}'
+    trigger: '{"from": 1486678000, "to": 1486679000}'
+    placement: store
     enabled: true

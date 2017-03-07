@@ -27,7 +27,7 @@ type OfferTemplateHandler struct {
 func (g *OfferTemplateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	switch g.Method {
 	case "insert":
-		g.insertOfferTemplate(w, r)
+		g.insert(w, r, true)
 		return
 	case "enable":
 		g.setEnabledOfferTemplate(w, r, true)
@@ -37,12 +37,17 @@ func (g *OfferTemplateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	case "list":
 		g.list(w, r)
 		return
+	case "update":
+		g.insert(w, r, false)
+		return
 	}
 }
 
-func (g *OfferTemplateHandler) insertOfferTemplate(w http.ResponseWriter, r *http.Request) {
+func (g *OfferTemplateHandler) insert(w http.ResponseWriter, r *http.Request, onlyInsert bool) {
 	mr := metricsReporterFromCtx(r.Context())
 	ot := offerTemplateFromCtx(r.Context())
+	offerTemplateKey := paramKeyFromContext(r.Context())
+	ot.Key = offerTemplateKey
 	userEmail := userEmailFromContext(r.Context())
 
 	logger := g.App.Logger.WithFields(logrus.Fields{
@@ -53,8 +58,9 @@ func (g *OfferTemplateHandler) insertOfferTemplate(w http.ResponseWriter, r *htt
 	})
 
 	var err error
+
 	err = mr.WithSegment(models.SegmentModel, func() error {
-		ot, err = models.InsertOfferTemplate(g.App.DB, ot, mr)
+		ot, err = models.InsertOfferTemplate(g.App.DB, ot, onlyInsert, mr)
 		return err
 	})
 
@@ -83,6 +89,9 @@ func (g *OfferTemplateHandler) insertOfferTemplate(w http.ResponseWriter, r *htt
 
 	logger.Info("Inserted offer template successfuly.")
 	WriteBytes(w, http.StatusCreated, bytesRes)
+}
+
+func (g *OfferTemplateHandler) update(w http.ResponseWriter, r *http.Request) {
 }
 
 func (g *OfferTemplateHandler) setEnabledOfferTemplate(w http.ResponseWriter, r *http.Request, enable bool) {

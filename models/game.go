@@ -67,12 +67,13 @@ func UpsertGame(db runner.Connection, game *Game, t time.Time, mr *MixedMetricsR
 	}
 	game.UpdatedAt = dat.NullTimeFrom(t)
 	return mr.WithDatastoreSegment("games", SegmentUpsert, func() error {
-		return db.
+		err := db.
 			Upsert("games").
 			Columns("id", "name", "updated_at", "metadata").
 			Record(game).
 			Where("id=$1", game.ID).
 			Returning("created_at", "updated_at").
 			QueryStruct(game)
+		return err
 	})
 }
