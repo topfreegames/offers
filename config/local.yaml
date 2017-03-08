@@ -6,7 +6,12 @@ postgres:
   sslMode: "disable"
   maxIdleConns: 10
   maxOpenConns: 10
-
 newrelic:
   app: offers
   key:
+redis:
+  host: localhost
+  port: 6333
+  password: ""
+  db: 0
+  maxPoolSize: 20

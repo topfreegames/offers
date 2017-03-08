@@ -1,5 +1,5 @@
-hash: 1c224cadf20301fe9b75b4f118947d60850f41c45d1daca8890d131f18193522
-updated: 2017-02-22T14:37:43.0124492-03:00
+hash: b0d09bd4b1db565837b11a3c6d0064c543b28cc7d4ffbf555ec8b8bd1edee9f1
+updated: 2017-03-08T13:54:16.892221706-03:00
 imports:
 - name: github.com/asaskevich/govalidator
   version: 7b3beb6df3c42abd3509abfc3bcacc0fbfb7c877
@@ -115,7 +115,7 @@ imports:
 - name: github.com/satori/go.uuid
   version: 0aa62d5ddceb50dbcb909d790b5345affd3669b6
 - name: github.com/Sirupsen/logrus
-  version: c078b1e43f58d563c74cebe63c85789e76ddb627
+  version: 0208149b40d863d2c1a2f8fe5753096a9cf2cc8b
 - name: github.com/spf13/afero
   version: 20500e2abd0d1f4564a499e83d11d6c73cd58c27
   subpackages:
@@ -156,6 +156,14 @@ imports:
   - postgres
   - reflectx
   - sqlx-runner
+- name: gopkg.in/redis.v5
+  version: a16aeec10ff407b1e7be6dd35797ccf5426ef0f0
+  subpackages:
+  - internal
+  - internal/consistenthash
+  - internal/hashtag
+  - internal/pool
+  - internal/proto
 - name: gopkg.in/yaml.v2
   version: e4d366fc3c7938e2958e662b4258c7a89e1f0e3e
 testImports: []

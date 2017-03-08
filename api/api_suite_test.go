@@ -60,6 +60,8 @@ var _ = AfterEach(func() {
 	err := app.DB.(*runner.Tx).Rollback()
 	Expect(err).NotTo(HaveOccurred())
 	app.DB = db
+	status := app.RedisClient.Client.FlushAll()
+	Expect(status.Err()).NotTo(HaveOccurred())
 })
 
 var _ = AfterSuite(func() {
@@ -68,6 +70,9 @@ var _ = AfterSuite(func() {
 		Expect(err).NotTo(HaveOccurred())
 		db = nil
 	}
+
+	status := app.RedisClient.Client.FlushAll()
+	Expect(status.Err()).NotTo(HaveOccurred())
 
 	if closer != nil {
 		closer.Close()

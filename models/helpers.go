@@ -21,6 +21,53 @@ import (
 	runner "gopkg.in/mgutz/dat.v2/sqlx-runner"
 )
 
+//ClaimOfferPayload has required fields for claiming an offer
+type ClaimOfferPayload struct {
+	GameID          string `json:"gameId" valid:"matches(^[^-][a-z0-9-]*$),stringlength(1|255),required"`
+	PlayerID        string `json:"playerId" valid:"ascii,stringlength(1|1000),required"`
+	ProductID       string `json:"productId" valid:"ascii,stringlength(1|255),required"`
+	Timestamp       int64  `json:"timestamp" valid:"int64,required"`
+	TransactionID   string `json:"transactionId" valid:"uuidv4,required"`
+	OfferInstanceID string `json:"id" valid:"uuidv4,optional"`
+}
+
+//OfferImpressionPayload has required fields for an offer impression
+type OfferImpressionPayload struct {
+	GameID       string `json:"gameId" valid:"matches(^[^-][a-z0-9-]*$),stringlength(1|255),required"`
+	PlayerID     string `json:"playerId" valid:"ascii,stringlength(1|1000),required"`
+	ImpressionID string `json:"impressionId" valid:"uuidv4,required"`
+}
+
+//GetTransactionsKey returns the key of the player's purchase transactions in redis
+func GetTransactionsKey(playerID string) string {
+	return fmt.Sprintf("transactions:%s", playerID)
+}
+
+//GetClaimCounterKey returns the key of the player's claim counter
+func GetClaimCounterKey(playerID, offerID string) string {
+	return fmt.Sprintf("claim:counter:%s:%s", playerID, offerID)
+}
+
+//GetClaimTimestampKey returns the key of the player's last claim timestamp
+func GetClaimTimestampKey(playerID, offerID string) string {
+	return fmt.Sprintf("claim:timestamp:%s:%s", playerID, offerID)
+}
+
+//GetImpressionsKey returns the key of the player's impressions in redis
+func GetImpressionsKey(playerID string) string {
+	return fmt.Sprintf("impressions:%s", playerID)
+}
+
+//GetViewCounterKey returns the key of the player's impressions counter
+func GetViewCounterKey(playerID, offerID string) string {
+	return fmt.Sprintf("view:counter:%s:%s", playerID, offerID)
+}
+
+//GetViewTimestampKey returns the key of the player's last impression timestamp
+func GetViewTimestampKey(playerID, offerID string) string {
+	return fmt.Sprintf("view:timestamp:%s:%s", playerID, offerID)
+}
+
 //GetDB Connection using the given properties
 func GetDB(
 	host string, user string, port int, sslmode string,

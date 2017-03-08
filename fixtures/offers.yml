@@ -6,84 +6,158 @@
 #Copyright © 2017 Top Free Games <backend@tfgco.com>
 
 -
-    id: 56fc0477-39f1-485c-898e-4909e9155eb1
+    id: dd21ec96-2890-4ba0-b8e2-40ea67196990
     game_id: offers-game
-    player_id: player-1
-    offer_template_id: dd21ec96-2890-4ba0-b8e2-40ea67196990
-    offer_template_key: da700673-0415-43c3-a8e0-18331b794482
-    created_at: 2016-01-01 12:30:12
+    name: template-1
+    period: '{"every": "1s"}'
+    frequency: '{"every": "1s"}'
+    trigger: '{"from": 1486678000, "to": 1486679000}'
+    placement: popup
+    metadata: '{}'
+    product_id: com.tfg.sample
+    contents: '{"gems": 5, "gold": 100}'
+    enabled: true
 -
-    id: 35df52e7-3161-446f-975b-92f32871e37c
-    game_id: offers-game
-    player_id: player-2
-    offer_template_id: a411fbcf-dddc-4153-b42b-3f9b2684c965
-    offer_template_key: a158bcf0-c527-4bff-975e-5327fbdb5696
-    created_at: 2016-01-01 12:30:12
--
-    id: fe528bb0-dab6-4f5a-b6cd-347422fd9817
-    game_id: offers-game-max-freq
-    player_id: player-1
-    offer_template_id: 9456f6c4-f9f1-4dd9-8841-9e5770c8e62c
-    offer_template_key: b82f520e-5031-45c7-a88a-ec8258801be3
-    created_at: 2016-01-01 12:30:12
-    seen_counter: 1
--
-    id: e716af67-42a3-47e9-b862-f3582e59ddf6
-    game_id: offers-game-max-period
-    player_id: player-1
-    offer_template_id: ed6147c1-1714-4da1-a072-bea600c8a6a2
-    offer_template_key: 6c32540b-8fa1-4ed0-9b89-f6d7d0a0e184
-    created_at: 2016-01-01 12:30:12
-    bought_counter: 1
--
-    id: 51689ae5-eac4-4cb6-82bc-f91806305e99
-    game_id: offers-game-invalid-every-freq
-    player_id: player-1
-    offer_template_id: 5a2d15bc-8e4d-481e-a717-fcd2b67ea7e5
-    offer_template_key: 104608e2-f264-401e-b0a3-2339e8eb0402
-    created_at: 2016-01-01 12:30:12
-    seen_counter: 1
--
-    id: a16c2615-ea2f-47a3-9981-aae82df21c1e
-    game_id: offers-game-invalid-every-period
-    player_id: player-1
-    offer_template_id: cb06428b-71e1-47c5-a0e2-05e7c322f6fd
-    offer_template_key: 28193d2b-314a-4d28-abd1-54178cee5d0d
-    created_at: 2016-01-01 12:30:12
-    bought_counter: 1
--
-    id: 5ba8848f-1df0-45b3-b8b1-27a7d5eedd6a
+    id: aa65a3f2-7cf8-4d76-957f-0a23a1bbbd32
+    name: limited-template
+    product_id: com.tfg.sample
     game_id: limited-offers-game
-    player_id: player-1
-    offer_template_id: aa65a3f2-7cf8-4d76-957f-0a23a1bbbd32
-    offer_template_key: 51cd5234-bcbd-42ae-872a-1dc842ea2f51
-    created_at: 2016-01-01 12:30:12
+    contents: '{"gems": 5, "gold": 100}'
+    metadata: '{}'
+    period: '{"max": 1}'
+    frequency: '{"max": 1}'
+    trigger: '{"from": 1486678000, "to": 1486679000}'
+    placement: store
+    enabled: true
 -
-    id: 6c4a79f2-24b8-4be9-93d4-12413b789823
+    id: d5114990-77d7-45c4-ba5f-462fc86b213f
+    name: template-2
+    product_id: com.tfg.sample.2
     game_id: offers-game
-    player_id: player-1
-    offer_template_id: a411fbcf-dddc-4153-b42b-3f9b2684c965
-    offer_template_key: a158bcf0-c527-4bff-975e-5327fbdb5696
-    created_at: 2016-01-01 12:30:12
-    seen_counter: 1
+    contents: '{"gems": 100, "gold": 5}'
+    metadata: '{"meta": "data"}'
+    period: '{"every": "1s"}'
+    frequency: '{"every": "1s"}'
+    trigger: '{"from": 1486678000, "to": 1486679200}'
+    placement: store
+    enabled: true
 -
-    id: 4407b770-5b24-4ffa-8563-0694d1a10156
+    id: a411fbcf-dddc-4153-b42b-3f9b2684c965
+    name: template-3
+    product_id: com.tfg.sample.3
     game_id: offers-game
-    player_id: player-11
-    offer_template_id: 5fed76ab-1fd7-4a91-972d-bca228ce80c4
-    offer_template_key: 471c730b-b8ed-4caa-a245-f46822914c8c
-    created_at: 2016-01-01 12:30:12
+    contents: '{"gems": 5, "gold": 100}'
+    metadata: '{}'
+    period: '{"max": 1}'
+    frequency: '{"every": "1s", "max": 2}'
+    trigger: '{"from": 1486678000, "to": 1486679100}'
+    placement: store
+    enabled: true
 -
-    id: 29593e1d-792a-4849-8236-9d7b80fc6f6c
-    game_id: another-game
-    player_id: player-11
-    offer_template_id: a2539a8c-55f2-4539-a8c0-929b240d8c80
-    offer_template_key: df539b5f-f7fb-480b-86b2-c598eb392b5d
-    created_at: 2016-01-01 12:30:12
+    id: 14da46bc-9ad1-4d30-88da-d0ba7a1cbf62
+    name: template-4
+    product_id: com.tfg.sample
+    game_id: offers-game-empty-trigger
+    contents: '{"gems": 5, "gold": 100}'
+    metadata: '{}'
+    period: '{"max": 1}'
+    frequency: '{"every": 12, "unit": "hour"}'
+    trigger: '{}'
+    placement: store
+    enabled: true
 -
-    id: 0a90073e-a798-46a8-a4f2-6b32182672ff
+    id: 9456f6c4-f9f1-4dd9-8841-9e5770c8e62c
+    name: template-5
+    product_id: com.tfg.sample
+    game_id: offers-game-max-freq
+    contents: '{"gems": 5, "gold": 100}'
+    metadata: '{}'
+    period: '{"max": 1}'
+    frequency: '{"every": "12h", "max": 1}'
+    trigger: '{"from": 1486678000, "to": 1486679000}'
+    placement: store
+    enabled: true
+-
+    id: 5a2d15bc-8e4d-481e-a717-fcd2b67ea7e5
+    name: template-6
+    product_id: com.tfg.sample
+    game_id: offers-game-invalid-every-freq
+    contents: '{"gems": 5, "gold": 100}'
+    metadata: '{}'
+    period: '{"max": 1}'
+    frequency: '{"every": "invalid"}'
+    trigger: '{"from": 1486678000, "to": 1486679000}'
+    placement: store
+    enabled: true
+-
+    id: ed6147c1-1714-4da1-a072-bea600c8a6a2
+    name: template-7
+    product_id: com.tfg.sample
+    game_id: offers-game-max-period
+    contents: '{"gems": 5, "gold": 100}'
+    metadata: '{}'
+    period: '{"every": "12h", "max": 1}'
+    frequency: '{}'
+    trigger: '{"from": 1486678000, "to": 1486679000}'
+    placement: store
+    enabled: true
+-
+    id: cb06428b-71e1-47c5-a0e2-05e7c322f6fd
+    name: template-8
+    product_id: com.tfg.sample
+    game_id: offers-game-invalid-every-period
+    contents: '{"gems": 5, "gold": 100}'
+    metadata: '{}'
+    period: '{"every": "invalid"}'
+    frequency: '{}'
+    trigger: '{"from": 1486678000, "to": 1486679000}'
+    placement: store
+    enabled: true
+-
+    id: 27b0370f-bd61-4346-a10d-50ec052ae125
+    name: template-9
+    product_id: com.tfg.sample
+    game_id: offers-game
+    contents: '{"gems": 5, "gold": 100}'
+    metadata: '{}'
+    period: '{"every": "invalid"}'
+    frequency: '{}'
+    trigger: '{"from": 1486678000, "to": 1486679000}'
+    placement: store
+    enabled: false
+-
+    id: 5fed76ab-1fd7-4a91-972d-bca228ce80c4
+    name: template-10
+    product_id: com.tfg.sample
+    game_id: offers-game
+    contents: '{"gems": 5, "gold": 100}'
+    metadata: '{}'
+    period: '{"every": "12h", "max": 2}'
+    frequency: '{"max": 2}'
+    trigger: '{"from": 1486678000, "to": 1486679000}'
+    placement: unique-place
+    enabled: true
+-
+    id: a2539a8c-55f2-4539-a8c0-929b240d8c80
+    name: template-10
+    product_id: com.tfg.sample
     game_id: another-game
-    player_id: player-11
-    offer_template_id: 17e42a40-da28-44dc-abd1-0cef8c2dff42
-    offer_template_key: a493fe6a-861e-4788-b544-91b0ae51c425
-    created_at: 2016-01-01 12:30:12
+    contents: '{"gems": 5, "gold": 100}'
+    metadata: '{}'
+    period: '{"every": "1s"}'
+    frequency: '{"every": "30s"}'
+    trigger: '{"from": 1486678000, "to": 1486679000}'
+    placement: unique-place
+    enabled: true
+-
+    id: 17e42a40-da28-44dc-abd1-0cef8c2dff42
+    name: template-11
+    product_id: com.tfg.sample
+    game_id: another-game
+    contents: '{"gems": 5, "gold": 100}'
+    metadata: '{}'
+    period: '{"max": 20}'
+    frequency: '{"max": 20}'
+    trigger: '{"from": 1486678000, "to": 1486679000}'
+    placement: unique-place
+    enabled: false

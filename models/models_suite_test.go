@@ -15,10 +15,12 @@ import (
 	"testing"
 
 	oTesting "github.com/topfreegames/offers/testing"
+	"github.com/topfreegames/offers/util"
 )
 
 var conn runner.Connection
 var db *runner.Tx
+var redisClient *util.RedisClient
 
 func TestApi(t *testing.T) {
 	RegisterFailHandler(Fail)
@@ -33,6 +35,8 @@ var _ = BeforeSuite(func() {
 	err = oTesting.LoadFixtures(conn)
 	Expect(err).NotTo(HaveOccurred())
 
+	redisClient, err = oTesting.GetTestRedis()
+	Expect(err).NotTo(HaveOccurred())
 })
 
 var _ = BeforeEach(func() {
@@ -45,6 +49,8 @@ var _ = AfterEach(func() {
 	err := db.Rollback()
 	Expect(err).NotTo(HaveOccurred())
 	db = nil
+	status := redisClient.Client.FlushAll()
+	Expect(status.Err()).NotTo(HaveOccurred())
 })
 
 var _ = AfterSuite(func() {

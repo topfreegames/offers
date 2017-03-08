@@ -143,6 +143,9 @@ var _ = Describe("Game Handler", func() {
 			})
 
 			oldDB := app.DB
+			defer func() {
+				app.DB = oldDB // avoid errors in after each
+			}()
 			db, err := GetTestDB()
 			Expect(err).NotTo(HaveOccurred())
 			app.DB = db
@@ -158,7 +161,6 @@ var _ = Describe("Game Handler", func() {
 			Expect(obj["code"]).To(Equal("OFF-004"))
 			Expect(obj["error"]).To(Equal("Upserting game failed"))
 			Expect(obj["description"]).To(Equal("sql: database is closed"))
-			app.DB = oldDB // avoid errors in after each
 		})
 	})
 
@@ -181,9 +183,9 @@ var _ = Describe("Game Handler", func() {
 		})
 
 		It("should return empty list if no games", func() {
-			_, err := app.DB.DeleteFrom("offers").Exec()
+			_, err := app.DB.DeleteFrom("offer_instances").Exec()
 			Expect(err).NotTo(HaveOccurred())
-			_, err = app.DB.DeleteFrom("offer_templates").Exec()
+			_, err = app.DB.DeleteFrom("offers").Exec()
 			Expect(err).NotTo(HaveOccurred())
 			_, err = app.DB.DeleteFrom("games").Exec()
 			Expect(err).NotTo(HaveOccurred())
@@ -197,6 +199,9 @@ var _ = Describe("Game Handler", func() {
 
 		It("should return status code of 500 if some error occurred", func() {
 			oldDB := app.DB
+			defer func() {
+				app.DB = oldDB // avoid errors in after each
+			}()
 			db, err := GetTestDB()
 			Expect(err).NotTo(HaveOccurred())
 			app.DB = db
@@ -212,7 +217,6 @@ var _ = Describe("Game Handler", func() {
 			Expect(obj["code"]).To(Equal("OFF-004"))
 			Expect(obj["error"]).To(Equal("List games failed."))
 			Expect(obj["description"]).To(Equal("sql: database is closed"))
-			app.DB = oldDB // avoid errors in after each
 		})
 	})
 })

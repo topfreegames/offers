@@ -9,3 +9,9 @@ postgres:
 newrelic:
   app: offers
   key: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+redis:
+  host: localhost
+  port: 6333
+  password: ""
+  db: 0
+  maxPoolSize: 20

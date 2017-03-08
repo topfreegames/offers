@@ -21,20 +21,22 @@ import (
 	"github.com/topfreegames/offers/errors"
 	"github.com/topfreegames/offers/metadata"
 	"github.com/topfreegames/offers/models"
+	"github.com/topfreegames/offers/util"
 	runner "gopkg.in/mgutz/dat.v2/sqlx-runner"
 )
 
 //App is our API application
 type App struct {
-	Address  string
-	Debug    bool
-	Router   *mux.Router
-	Server   *http.Server
-	Config   *viper.Viper
-	DB       runner.Connection
-	Logger   logrus.FieldLogger
-	NewRelic newrelic.Application
-	Clock    models.Clock
+	Address     string
+	Clock       models.Clock
+	Config      *viper.Viper
+	DB          runner.Connection
+	Debug       bool
+	Logger      logrus.FieldLogger
+	NewRelic    newrelic.Application
+	RedisClient *util.RedisClient
+	Router      *mux.Router
+	Server      *http.Server
 }
 
 //NewApp ctor
@@ -89,58 +91,67 @@ func (a *App) getRouter() *mux.Router {
 		NewValidationMiddleware(func() interface{} { return &models.Game{} }),
 	).ServeHTTP).Methods("PUT").Name("game")
 
-	r.Handle("/templates", Chain(
-		&OfferTemplateHandler{App: a, Method: "list"},
-		&NewRelicMiddleware{App: a},
-		&AuthMiddleware{App: a},
-		&LoggingMiddleware{App: a},
-		&VersionMiddleware{},
-	)).Methods("GET").Name("offer_templates")
-
-	r.Handle("/templates", Chain(
-		&OfferTemplateHandler{App: a, Method: "insert"},
-		&NewRelicMiddleware{App: a},
-		&AuthMiddleware{App: a},
-		&LoggingMiddleware{App: a},
-		&VersionMiddleware{},
-		NewValidationMiddleware(func() interface{} { return &models.OfferTemplate{} }),
-	)).Methods("POST").Name("offer_templates")
-
-	r.Handle("/templates/{id}/enable", Chain(
-		&OfferTemplateHandler{App: a, Method: "enable"},
-		&NewRelicMiddleware{App: a},
-		&AuthMiddleware{App: a},
-		&LoggingMiddleware{App: a},
-		&VersionMiddleware{},
-		NewParamKeyMiddleware(a, govalidator.IsUUIDv4),
-	)).Methods("PUT").Name("offer_templates")
-
-	r.Handle("/templates/{id}/disable", Chain(
-		&OfferTemplateHandler{App: a, Method: "disable"},
-		&NewRelicMiddleware{App: a},
-		&AuthMiddleware{App: a},
-		&LoggingMiddleware{App: a},
-		&VersionMiddleware{},
-		NewParamKeyMiddleware(a, govalidator.IsUUIDv4),
-	)).Methods("PUT").Name("offer_templates")
-
 	r.Handle("/offers", Chain(
-		&OfferRequestHandler{App: a, Method: "get-offers"},
+		&OfferHandler{App: a, Method: "list"},
 		&NewRelicMiddleware{App: a},
 		&AuthMiddleware{App: a},
 		&LoggingMiddleware{App: a},
 		&VersionMiddleware{},
 	)).Methods("GET").Name("offers")
 
-	r.Handle("/offers/{id}/claim", Chain(
+	r.Handle("/offers", Chain(
+		&OfferHandler{App: a, Method: "insert"},
+		&NewRelicMiddleware{App: a},
+		&AuthMiddleware{App: a},
+		&LoggingMiddleware{App: a},
+		&VersionMiddleware{},
+		NewValidationMiddleware(func() interface{} { return &models.Offer{} }),
+	)).Methods("POST").Name("offers")
+
+	r.Handle("/offers/claim", Chain(
 		&OfferRequestHandler{App: a, Method: "claim"},
 		&NewRelicMiddleware{App: a},
 		&AuthMiddleware{App: a},
 		&LoggingMiddleware{App: a},
 		&VersionMiddleware{},
+		NewValidationMiddleware(func() interface{} { return &models.ClaimOfferPayload{} }),
+	)).Methods("PUT").Name("offer-requests")
+
+	r.Handle("/offers/{id}", Chain(
+		&OfferHandler{App: a, Method: "update"},
+		&NewRelicMiddleware{App: a},
+		&AuthMiddleware{App: a},
+		&LoggingMiddleware{App: a},
+		&VersionMiddleware{},
 		NewParamKeyMiddleware(a, govalidator.IsUUIDv4),
-		NewValidationMiddleware(func() interface{} { return &models.OfferToUpdate{} }),
+		NewValidationMiddleware(func() interface{} { return &models.Offer{} }),
 	)).Methods("PUT").Name("offers")
+
+	r.Handle("/offers/{id}/enable", Chain(
+		&OfferHandler{App: a, Method: "enable"},
+		&NewRelicMiddleware{App: a},
+		&AuthMiddleware{App: a},
+		&LoggingMiddleware{App: a},
+		&VersionMiddleware{},
+		NewParamKeyMiddleware(a, govalidator.IsUUIDv4),
+	)).Methods("PUT").Name("offers")
+
+	r.Handle("/offers/{id}/disable", Chain(
+		&OfferHandler{App: a, Method: "disable"},
+		&NewRelicMiddleware{App: a},
+		&AuthMiddleware{App: a},
+		&LoggingMiddleware{App: a},
+		&VersionMiddleware{},
+		NewParamKeyMiddleware(a, govalidator.IsUUIDv4),
+	)).Methods("PUT").Name("offers")
+
+	r.Handle("/available-offers", Chain(
+		&OfferRequestHandler{App: a, Method: "get-offers"},
+		&NewRelicMiddleware{App: a},
+		&AuthMiddleware{App: a},
+		&LoggingMiddleware{App: a},
+		&VersionMiddleware{},
+	)).Methods("GET").Name("offer-requests")
 
 	r.HandleFunc("/offers/{id}/impressions", Chain(
 		&OfferRequestHandler{App: a, Method: "impressions"},
@@ -149,8 +160,8 @@ func (a *App) getRouter() *mux.Router {
 		&LoggingMiddleware{App: a},
 		&VersionMiddleware{},
 		NewParamKeyMiddleware(a, govalidator.IsUUIDv4),
-		NewValidationMiddleware(func() interface{} { return &models.OfferToUpdate{} }),
-	).ServeHTTP).Methods("POST").Name("offers")
+		NewValidationMiddleware(func() interface{} { return &models.OfferImpressionPayload{} }),
+	).ServeHTTP).Methods("PUT").Name("offer-requests")
 
 	return r
 }
@@ -163,12 +174,42 @@ func (a *App) configureApp() error {
 		return err
 	}
 
+	err = a.configureRedisClient()
+	if err != nil {
+		return err
+	}
+
 	err = a.configureNewRelic()
 	if err != nil {
 		return err
 	}
 
 	a.configureServer()
+	return nil
+}
+
+func (a *App) configureRedisClient() error {
+	redisHost := a.Config.GetString("redis.host")
+	redisPort := a.Config.GetInt("redis.port")
+	redisPass := a.Config.GetString("redis.password")
+	redisDB := a.Config.GetInt("redis.db")
+	redisMaxPoolSize := a.Config.GetInt("redis.maxPoolSize")
+
+	l := a.Logger.WithFields(logrus.Fields{
+		"redis.host":             redisHost,
+		"redis.port":             redisPort,
+		"redis.redisDB":          redisDB,
+		"redis.redisMaxPoolSize": redisMaxPoolSize,
+	})
+	l.Debug("Connecting to Redis...")
+	cli, err := util.GetRedisClient(redisHost, redisPort, redisPass, redisDB, redisMaxPoolSize, a.Logger)
+	if err != nil {
+		l.WithError(err).Error("Connection to redis failed.")
+		return err
+	}
+	l.Debug("Successful connection to redis.")
+	a.RedisClient = cli
+
 	return nil
 }
 

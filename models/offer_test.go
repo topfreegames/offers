@@ -1,791 +1,430 @@
 // offers api
-// https://github.com/topfreeoffers/offers
+// https://github.com/topfreegames/offers
 //
 // Licensed under the MIT license:
 // http://www.opensource.org/licenses/mit-license
-// Copyright © 2017 Top Free Offers <backend@tfgco.com>
+// Copyright © 2017 Top Free Games <backend@tfgco.com>
 
 package models_test
 
 import (
-	"time"
-
-	"gopkg.in/mgutz/dat.v2/dat"
-	runner "gopkg.in/mgutz/dat.v2/sqlx-runner"
-
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	uuid "github.com/satori/go.uuid"
-	"github.com/topfreegames/offers/errors"
+	"github.com/satori/go.uuid"
 	"github.com/topfreegames/offers/models"
 	. "github.com/topfreegames/offers/testing"
+	"gopkg.in/mgutz/dat.v2/dat"
+	runner "gopkg.in/mgutz/dat.v2/sqlx-runner"
 )
 
-var _ = Describe("Offers Model", func() {
-	defaultOfferTemplateID := "dd21ec96-2890-4ba0-b8e2-40ea67196990"
-	defaultOfferTemplateKey := "da700673-0415-43c3-a8e0-18331b794482"
-	defaultOfferID := "56fc0477-39f1-485c-898e-4909e9155eb1"
+const defaultOfferID string = "dd21ec96-2890-4ba0-b8e2-40ea67196990"
+const defaultGameID string = "offers-game"
 
-	Describe("Offer Instance", func() {
-		It("Should load a offer", func() {
-			//Given
+var _ = Describe("Offer Models", func() {
+	Describe("Get offer id", func() {
+		It("should load an offer from existent id", func() {
+			id := defaultOfferID
+			gameID := defaultGameID
 
-			//When
-			var offer models.Offer
-			err := db.
-				Select("*").
-				From("offers").
-				Where("id = $1", defaultOfferID).
-				QueryStruct(&offer)
+			offer, err := models.GetOfferByID(db, gameID, id, nil)
 
-			//Then
 			Expect(err).NotTo(HaveOccurred())
-			Expect(offer.ID).To(Equal(defaultOfferID))
-			Expect(offer.GameID).To(Equal("offers-game"))
-			Expect(offer.PlayerID).To(Equal("player-1"))
-			Expect(offer.OfferTemplateID).To(Equal(defaultOfferTemplateID))
-			Expect(offer.OfferTemplateKey).To(Equal(defaultOfferTemplateKey))
-			Expect(offer.CreatedAt.Valid).To(BeTrue())
+			Expect(offer.ID).To(Equal(id))
+			Expect(offer.Period).To(Equal(dat.JSON([]byte(`{"every": "1s"}`))))
+			Expect(offer.Frequency).To(BeEquivalentTo(dat.JSON([]byte(`{"every": "1s"}`))))
+			Expect(offer.Version).To(Equal(1))
 		})
 
-		It("Should create offer", func() {
-			//Given
+		It("should not load an offer from nonexistent ID", func() {
+			id := uuid.NewV4().String()
+			gameID := defaultGameID
+
+			_, err := models.GetOfferByID(db, gameID, id, nil)
+
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(Equal("Offer was not found with specified filters."))
+		})
+
+		It("should not load an offer from nonexistent GameID", func() {
+			id := uuid.NewV4().String()
+			gameID := defaultGameID
+
+			_, err := models.GetOfferByID(db, gameID, id, nil)
+
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(Equal("Offer was not found with specified filters."))
+		})
+	})
+
+	Describe("Insert Offer", func() {
+		It("should create an offer with valid parameters", func() {
 			offer := &models.Offer{
-				GameID:           "offers-game",
-				OfferTemplateID:  defaultOfferTemplateID,
-				OfferTemplateKey: defaultOfferTemplateKey,
-				PlayerID:         "player-3",
+				Name:      "offer-1",
+				ProductID: "com.tfg.example",
+				GameID:    "game-id",
+				Contents:  dat.JSON([]byte(`{"gems": 5, "gold": 100}`)),
+				Period:    dat.JSON([]byte(`{"every": "10m"}`)),
+				Frequency: dat.JSON([]byte(`{"every": "24h"}`)),
+				Trigger:   dat.JSON([]byte(`{"from": 1487280506875}`)),
+				Placement: "popup",
 			}
 
-			//When
-			err := db.
-				InsertInto("offers").
-				Columns("game_id", "offer_template_id", "offer_template_key", "player_id").
-				Record(offer).
-				Returning("id", "claimed_at", "created_at", "updated_at").
-				QueryStruct(offer)
+			offer, err := models.InsertOffer(db, offer, nil)
 
-			//Then
 			Expect(err).NotTo(HaveOccurred())
 			Expect(offer.ID).NotTo(Equal(""))
+			Expect(offer.Enabled).To(BeTrue())
+			Expect(offer.Version).To(Equal(1))
+		})
 
-			var offer2 models.Offer
-			err = db.
-				Select("*").
+		It("should return error if game with given id does not exist", func() {
+			offer := &models.Offer{
+				Name:      "offer-1",
+				ProductID: "com.tfg.example",
+				GameID:    "non-existing-game-id",
+				Contents:  dat.JSON([]byte(`{"gems": 5, "gold": 100}`)),
+				Period:    dat.JSON([]byte(`{"every": "10m"}`)),
+				Frequency: dat.JSON([]byte(`{"every": "24h"}`)),
+				Trigger:   dat.JSON([]byte(`{"from": 1487280506875}`)),
+				Placement: "popup",
+			}
+
+			offer, err := models.InsertOffer(db, offer, nil)
+
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(Equal(`Offer could not be saved due to: insert or update on table "offers" violates foreign key constraint "offers_game_id_fkey"`))
+
+			err = conn.
+				Select("id").
 				From("offers").
-				Where("id = $1", offer.ID).
-				QueryStruct(&offer2)
+				Where("game_id = $1", "non-existing-game-id").
+				QueryStruct(&offer)
+			Expect(offer.ID).To(BeEmpty())
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(Equal("sql: no rows in result set"))
+		})
+
+		It("should return error if inserting offer template with missing parameters", func() {
+			//Given
+			offer := &models.Offer{
+				Name:      "offer-1",
+				ProductID: "com.tfg.example",
+				GameID:    "game-id",
+			}
+
+			//When
+			_, err := models.InsertOffer(db, offer, nil)
+
+			//Then
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(Equal(`pq: null value in column "period" violates not-null constraint`))
+		})
+
+		It("should return error if DB is closed", func() {
+			oldDB := db
+			defer func() {
+				db = oldDB // avoid errors in after each
+			}()
+			db, err := GetTestDB()
 			Expect(err).NotTo(HaveOccurred())
-			Expect(offer2.ID).To(Equal(offer.ID))
+			db.(*runner.DB).DB.Close() // make DB connection unavailable
+			offer := &models.Offer{
+				Name:      "offer-1",
+				ProductID: "com.tfg.example",
+				GameID:    "game-id",
+				Contents:  dat.JSON([]byte(`{"gems": 5, "gold": 100}`)),
+				Period:    dat.JSON([]byte(`{"every": "10m"}`)),
+				Frequency: dat.JSON([]byte(`{"every": "24h"}`)),
+				Trigger:   dat.JSON([]byte(`{"from": 1487280506875}`)),
+				Placement: "popup",
+			}
+
+			_, err = models.InsertOffer(db, offer, nil)
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(Equal("sql: database is closed"))
 		})
 	})
 
-	Describe("Get offer by id", func() {
-		It("Should load offer by id", func() {
-			//Given
-
-			//When
-			offer, err := models.GetOfferByID(db, "offers-game", defaultOfferID, nil)
-
-			//Then
+	Describe("List offers", func() {
+		It("Should return the full list of offers for a game", func() {
+			games, err := models.ListOffers(db, "offers-game", nil)
 			Expect(err).NotTo(HaveOccurred())
-			Expect(offer.ID).To(Equal(defaultOfferID))
-			Expect(offer.GameID).To(Equal("offers-game"))
-			Expect(offer.PlayerID).To(Equal("player-1"))
-			Expect(offer.OfferTemplateID).To(Equal(defaultOfferTemplateID))
-			Expect(offer.OfferTemplateKey).To(Equal(defaultOfferTemplateKey))
-			Expect(offer.CreatedAt.Valid).To(BeTrue())
+			Expect(games).To(HaveLen(5))
 		})
 
-		It("Should return error if offer not found", func() {
+		It("should return empty list if non-existing game id", func() {
+			games, err := models.ListOffers(db, "non-existing-game", nil)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(games).To(HaveLen(0))
+		})
+	})
+
+	Describe("Get enabled offers", func() {
+		It("should get the enabled offers for the given game", func() {
+			expectedIDs := []string{
+				"dd21ec96-2890-4ba0-b8e2-40ea67196990",
+				"d5114990-77d7-45c4-ba5f-462fc86b213f",
+				"a411fbcf-dddc-4153-b42b-3f9b2684c965",
+				"5fed76ab-1fd7-4a91-972d-bca228ce80c4",
+			}
+			gameID := defaultGameID
+			offers, err := models.GetEnabledOffers(db, gameID, nil)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(offers).To(HaveLen(4))
+			for i := 0; i < len(offers); i++ {
+				Expect(expectedIDs).To(ContainElement(offers[i].ID))
+			}
+		})
+
+		It("should return an empty list if there are no enabled offers", func() {
+			gameID := uuid.NewV4().String()
+			offers, err := models.GetEnabledOffers(db, gameID, nil)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(offers).To(HaveLen(0))
+		})
+	})
+
+	Describe("Set enabled offer template", func() {
+		It("should disable an enabled offer", func() {
+			//Given
+			offerID := defaultOfferID
+			gameID := defaultGameID
+			enabled := false
+			var offer models.Offer
+
+			//When
+			err := models.SetEnabledOffer(db, gameID, offerID, enabled, nil)
+			Expect(err).NotTo(HaveOccurred())
+			err = db.SQL("SELECT enabled FROM offers WHERE game_id=$1 AND id=$2", gameID, offerID).QueryStruct(&offer)
+			Expect(err).NotTo(HaveOccurred())
+
+			//Then
+			Expect(offer.Enabled).To(BeFalse())
+		})
+
+		It("should enable an enabled offer", func() {
+			//Given
+			offerID := defaultOfferID
+			gameID := defaultGameID
+			enabled := true
+			var offer models.Offer
+
+			//When
+			err := models.SetEnabledOffer(db, gameID, offerID, enabled, nil)
+			Expect(err).NotTo(HaveOccurred())
+			err = db.SQL("SELECT enabled FROM offers WHERE game_id=$1 AND id=$2", gameID, offerID).QueryStruct(&offer)
+			Expect(err).NotTo(HaveOccurred())
+
+			//Then
+			Expect(offer.Enabled).To(BeTrue())
+		})
+
+		It("should enable a disabled offer", func() {
+			//Given
+			offerID := "27b0370f-bd61-4346-a10d-50ec052ae125"
+			gameID := defaultGameID
+			enabled := true
+			var offer models.Offer
+
+			//When
+			err := models.SetEnabledOffer(db, gameID, offerID, enabled, nil)
+			Expect(err).NotTo(HaveOccurred())
+			err = db.SQL("SELECT enabled FROM offers WHERE game_id=$1 AND id=$2", gameID, offerID).QueryStruct(&offer)
+			Expect(err).NotTo(HaveOccurred())
+
+			//Then
+			Expect(offer.Enabled).To(BeTrue())
+		})
+
+		It("should return error if id doesn't exist", func() {
 			//Given
 			offerID := uuid.NewV4().String()
-			expectedError := errors.NewModelNotFoundError("Offer", map[string]interface{}{
-				"GameID": "offers-game",
-				"ID":     offerID,
-			})
+			gameID := defaultGameID
+			enabled := true
 
 			//When
-			offer, err := models.GetOfferByID(db, "offers-game", offerID, nil)
+			err := models.SetEnabledOffer(db, gameID, offerID, enabled, nil)
 
 			//Then
-			Expect(offer.ID).To(Equal(""))
 			Expect(err).To(HaveOccurred())
-			Expect(err).To(MatchError(expectedError))
+		})
+
+		It("should return error if game id doesn't exist", func() {
+			//Given
+			offerID := defaultOfferID
+			gameID := "non-existing-game-id"
+			enabled := true
+
+			//When
+			err := models.SetEnabledOffer(db, gameID, offerID, enabled, nil)
+
+			//Then
+			Expect(err).To(HaveOccurred())
 		})
 	})
 
-	Describe("Insert offer", func() {
-		It("should insert offer with new id", func() {
-			//Given
-			gameID := "offers-game"
+	Describe("Update Offer", func() {
+		It("should update the offer and increment the version with valid parameters", func() {
 			offer := &models.Offer{
-				GameID:           gameID,
-				OfferTemplateID:  defaultOfferTemplateID,
-				OfferTemplateKey: defaultOfferTemplateKey,
-				PlayerID:         "player-3",
+				Name:      "offer-1",
+				ProductID: "com.tfg.example",
+				GameID:    "game-id",
+				Contents:  dat.JSON([]byte(`{"gems": 5, "gold": 100}`)),
+				Period:    dat.JSON([]byte(`{"every": "10m"}`)),
+				Frequency: dat.JSON([]byte(`{"every": "24h"}`)),
+				Trigger:   dat.JSON([]byte(`{"from": 1487280506875}`)),
+				Placement: "popup",
+			}
+			createdOffer, err := models.InsertOffer(db, offer, nil)
+			Expect(err).NotTo(HaveOccurred())
+
+			offerUpdate := &models.Offer{
+				ID:        createdOffer.ID,
+				GameID:    "game-id",
+				Name:      "offer-2",
+				ProductID: "com.tfg.example2",
+				Contents:  dat.JSON([]byte(`{"gems": 5}`)),
+				Period:    dat.JSON([]byte(`{"every": "1m"}`)),
+				Frequency: dat.JSON([]byte(`{"every": "2h"}`)),
+				Trigger:   dat.JSON([]byte(`{"from": 1111111111111}`)),
+				Placement: "store",
 			}
 
-			//When
-			err := models.InsertOffer(db, offer, time.Now(), nil)
-
-			//Then
+			updatedOffer, err := models.UpdateOffer(db, offerUpdate, nil)
 			Expect(err).NotTo(HaveOccurred())
-			Expect(offer.ID).NotTo(BeEmpty())
+			Expect(updatedOffer.ID).To(Equal(offerUpdate.ID))
+			Expect(updatedOffer.Version).To(Equal(createdOffer.Version + 1))
+
+			var dbOffer models.Offer
+			err = db.Select("*").From("offers").Where("id=$1", offerUpdate.ID).QueryStruct(&dbOffer)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(dbOffer.GameID).To(Equal(offerUpdate.GameID))
+			Expect(dbOffer.Name).To(Equal(offerUpdate.Name))
+			Expect(dbOffer.ProductID).To(Equal(offerUpdate.ProductID))
+			Expect(dbOffer.Contents).To(Equal(offerUpdate.Contents))
+			Expect(dbOffer.Period).To(Equal(offerUpdate.Period))
+			Expect(dbOffer.Frequency).To(Equal(offerUpdate.Frequency))
+			Expect(dbOffer.Trigger).To(Equal(offerUpdate.Trigger))
+			Expect(dbOffer.Placement).To(Equal(offerUpdate.Placement))
+			Expect(dbOffer.Version).To(Equal(createdOffer.Version + 1))
 		})
 
-		It("should fail if game does not exist", func() {
-			//Given
+		It("should return error if game with given id does not exist", func() {
 			offer := &models.Offer{
-				GameID:           "non-existing-game",
-				OfferTemplateID:  defaultOfferTemplateID,
-				OfferTemplateKey: defaultOfferTemplateKey,
-				PlayerID:         "player-3",
+				Name:      "offer-1",
+				ProductID: "com.tfg.example",
+				GameID:    "game-id",
+				Contents:  dat.JSON([]byte(`{"gems": 5, "gold": 100}`)),
+				Period:    dat.JSON([]byte(`{"every": "10m"}`)),
+				Frequency: dat.JSON([]byte(`{"every": "24h"}`)),
+				Trigger:   dat.JSON([]byte(`{"from": 1487280506875}`)),
+				Placement: "popup",
 			}
-			expectedError := errors.NewInvalidModelError(
-				"Offer",
-				"insert on table \"offers\" violates constraint \"offer_templates_key\" \"offer_templates_id\" \"offer_templated_game_id\"",
-			)
+			createdOffer, err := models.InsertOffer(db, offer, nil)
+			Expect(err).NotTo(HaveOccurred())
 
-			//When
-			err := models.InsertOffer(db, offer, time.Now(), nil)
+			offerUpdate := &models.Offer{
+				ID:        createdOffer.ID,
+				GameID:    "non-existing-game-id",
+				Name:      "offer-2",
+				ProductID: "com.tfg.example2",
+				Contents:  dat.JSON([]byte(`{"gems": 5}`)),
+				Period:    dat.JSON([]byte(`{"every": "1m"}`)),
+				Frequency: dat.JSON([]byte(`{"every": "2h"}`)),
+				Trigger:   dat.JSON([]byte(`{"from": 1111111111111}`)),
+				Placement: "store",
+			}
 
-			//Then
+			_, err = models.UpdateOffer(db, offerUpdate, nil)
 			Expect(err).To(HaveOccurred())
-			Expect(err).To(MatchError(expectedError))
+			Expect(err.Error()).To(Equal("Offer was not found with specified filters."))
 
-			//Test that after error our connection is still usable
-			//Must use CONN and not db here to skip transaction
-			dbOffer, err := models.GetOfferByID(conn, "offers-game", defaultOfferID, nil)
-
+			var dbOffer models.Offer
+			err = db.Select("*").From("offers").Where("id=$1", offerUpdate.ID).QueryStruct(&dbOffer)
 			Expect(err).NotTo(HaveOccurred())
-			Expect(dbOffer.ID).To(Equal(defaultOfferID))
+			Expect(dbOffer.Version).To(Equal(createdOffer.Version))
 		})
 
-		It("should fail if some error in the database", func() {
-			gameID := "offers-game"
-			offer := &models.Offer{
-				GameID:          gameID,
-				OfferTemplateID: defaultOfferTemplateID,
-				PlayerID:        "player-3",
-			}
-			oldDB := db
-			db, err := GetTestDB()
-			Expect(err).NotTo(HaveOccurred())
-			db.(*runner.DB).DB.Close() // make DB connection unavailable
-			err = models.InsertOffer(db, offer, time.Now(), nil)
-			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(Equal("sql: database is closed"))
-			db = oldDB // avoid errors in after each
-		})
-
-		It("should fail if no offer template has specified id", func() {
-			//Given
-			offer := &models.Offer{
-				GameID:           "offers-game",
-				OfferTemplateID:  uuid.NewV4().String(),
-				OfferTemplateKey: defaultOfferTemplateKey,
-				PlayerID:         "player-3",
-			}
-			expectedError := errors.NewInvalidModelError(
-				"Offer",
-				"insert on table \"offers\" violates constraint \"offer_templates_key\" \"offer_templates_id\" \"offer_templated_game_id\"",
-			)
-
-			//When
-			err := models.InsertOffer(db, offer, time.Now(), nil)
-
-			//Then
-			Expect(err).To(HaveOccurred())
-			Expect(err).To(MatchError(expectedError))
-		})
-
-		It("should fail if no offer template has specified key", func() {
-			//Given
-			offer := &models.Offer{
-				GameID:           "offers-game-2",
-				OfferTemplateID:  defaultOfferTemplateID,
-				OfferTemplateKey: uuid.NewV4().String(),
-				PlayerID:         "player-3",
-			}
-			expectedError := errors.NewInvalidModelError(
-				"Offer",
-				"insert on table \"offers\" violates constraint \"offer_templates_key\" \"offer_templates_id\" \"offer_templated_game_id\"",
-			)
-
-			//When
-			err := models.InsertOffer(db, offer, time.Now(), nil)
-
-			//Then
-			Expect(err).To(HaveOccurred())
-			Expect(err).To(MatchError(expectedError))
-		})
-	})
-
-	Describe("Claim offer", func() {
-		var from, to int64 = 1486678000, 148669000
-		It("should claim valid offer", func() {
-			//Given
-			id := "56fc0477-39f1-485c-898e-4909e9155eb1"
-			playerID := "player-1"
-			gameID := "offers-game"
-			currentTime := time.Unix(from+500, 0)
-
-			//When
-			contents, alreadyClaimed, nextAt, err := models.ClaimOffer(db, id, playerID, gameID, currentTime, nil)
-
-			//Then
-			Expect(contents).NotTo(BeNil())
-			Expect(alreadyClaimed).To(BeFalse())
-			Expect(err).NotTo(HaveOccurred())
-
-			claimedOffer, err := models.GetOfferByID(db, "offers-game", defaultOfferID, nil)
-			Expect(err).NotTo(HaveOccurred())
-			Expect(claimedOffer.ClaimedAt.Valid).To(BeTrue())
-			Expect(claimedOffer.ClaimedAt.Time.Unix()).To(Equal(currentTime.Unix()))
-			Expect(nextAt).To(Equal(currentTime.Unix() + 1))
-		})
-
-		It("should claim valid offer before trigger begins", func() {
-			//Given
-			id := "56fc0477-39f1-485c-898e-4909e9155eb1"
-			currentTime := time.Unix(from-500, 0)
-			playerID := "player-1"
-			gameID := "offers-game"
-
-			//When
-			contents, alreadyClaimed, nextAt, err := models.ClaimOffer(db, id, playerID, gameID, currentTime, nil)
-
-			//Then
-			Expect(contents).NotTo(BeNil())
-			Expect(alreadyClaimed).To(BeFalse())
-			Expect(err).NotTo(HaveOccurred())
-			Expect(nextAt).To(Equal(currentTime.Unix() + 1))
-		})
-
-		It("should claim valid offer after trigger begins", func() {
-			//Given
-			id := "56fc0477-39f1-485c-898e-4909e9155eb1"
-			currentTime := time.Unix(to+500, 0)
-			playerID := "player-1"
-			gameID := "offers-game"
-
-			//When
-			contents, alreadyClaimed, nextAt, err := models.ClaimOffer(db, id, playerID, gameID, currentTime, nil)
-
-			//Then
-			Expect(contents).NotTo(BeNil())
-			Expect(alreadyClaimed).To(BeFalse())
-			Expect(err).NotTo(HaveOccurred())
-			Expect(nextAt).To(Equal(currentTime.Unix() + 1))
-		})
-
-		It("should claim and receive 0 nextAt if reached max purchases", func() {
-			//Given
-			id := "5ba8848f-1df0-45b3-b8b1-27a7d5eedd6a"
-			playerID := "player-1"
-			gameID := "limited-offers-game"
-			currentTime := time.Unix(from+500, 0)
-
-			//When
-			contents, alreadyClaimed, nextAt, err := models.ClaimOffer(db, id, playerID, gameID, currentTime, nil)
-
-			//Then
-			Expect(contents).NotTo(BeNil())
-			Expect(alreadyClaimed).To(BeFalse())
-			Expect(err).NotTo(HaveOccurred())
-
-			claimedOffer, err := models.GetOfferByID(db, gameID, id, nil)
-			Expect(err).NotTo(HaveOccurred())
-			Expect(claimedOffer.ClaimedAt.Valid).To(BeTrue())
-			Expect(claimedOffer.ClaimedAt.Time.Unix()).To(Equal(currentTime.Unix()))
-			Expect(nextAt).To(Equal(int64(0)))
-		})
-
-		It("should claim and receive nextAt equal to currentTime if no every frequency or period", func() {
-			//Given
-			id := "0a90073e-a798-46a8-a4f2-6b32182672ff"
-			playerID := "player-11"
-			gameID := "another-game"
-			currentTime := time.Unix(from+500, 0)
-
-			//When
-			contents, alreadyClaimed, nextAt, err := models.ClaimOffer(db, id, playerID, gameID, currentTime, nil)
-
-			//Then
-			Expect(contents).NotTo(BeNil())
-			Expect(alreadyClaimed).To(BeFalse())
-			Expect(err).NotTo(HaveOccurred())
-
-			claimedOffer, err := models.GetOfferByID(db, gameID, id, nil)
-			Expect(err).NotTo(HaveOccurred())
-			Expect(claimedOffer.ClaimedAt.Valid).To(BeTrue())
-			Expect(claimedOffer.ClaimedAt.Time.Unix()).To(Equal(currentTime.Unix()))
-			Expect(nextAt).To(Equal(currentTime.Unix()))
-		})
-
-		It("should claim and receive biggest nextAt considering period and freq", func() {
-			//Given
-			id := "29593e1d-792a-4849-8236-9d7b80fc6f6c"
-			playerID := "player-11"
-			gameID := "another-game"
-			currentTime := time.Unix(from+500, 0)
-
-			//When
-			contents, alreadyClaimed, nextAt, err := models.ClaimOffer(db, id, playerID, gameID, currentTime, nil)
-
-			//Then
-			Expect(contents).NotTo(BeNil())
-			Expect(alreadyClaimed).To(BeFalse())
-			Expect(err).NotTo(HaveOccurred())
-
-			claimedOffer, err := models.GetOfferByID(db, gameID, id, nil)
-			Expect(err).NotTo(HaveOccurred())
-			Expect(claimedOffer.ClaimedAt.Valid).To(BeTrue())
-			Expect(claimedOffer.ClaimedAt.Time.Unix()).To(Equal(currentTime.Unix()))
-			Expect(nextAt).To(Equal(currentTime.Unix() + 30))
-		})
-
-		It("should not claim twice the same offer", func() {
-			//Given
-			id := "56fc0477-39f1-485c-898e-4909e9155eb1"
-			playerID := "player-1"
-			gameID := "offers-game"
-			firstTime := time.Unix(to+500, 0)
-			secondTime := time.Unix(to+1000, 0)
-
-			//When
-			contents1, alreadyClaimed1, nextAt1, err1 := models.ClaimOffer(db, id, playerID, gameID, firstTime, nil)
-			contents2, alreadyClaimed2, nextAt2, err2 := models.ClaimOffer(db, id, playerID, gameID, secondTime, nil)
-
-			//Then
-			Expect(contents1).NotTo(BeNil())
-			Expect(alreadyClaimed1).To(BeFalse())
-			Expect(err1).NotTo(HaveOccurred())
-			Expect(nextAt1).To(Equal(firstTime.Unix() + 1))
-
-			Expect(contents2).NotTo(BeNil())
-			Expect(alreadyClaimed2).To(BeTrue())
-			Expect(err2).NotTo(HaveOccurred())
-			Expect(nextAt2).To(Equal(int64(0)))
-		})
-
-		It("should not claim an offer that doesn't exist", func() {
-			//Given
+		It("should return error if offer with given id does not exist", func() {
 			id := uuid.NewV4().String()
-			playerID := "player-1"
-			gameID := "offers-game"
-			currentTime := time.Unix(to+500, 0)
+			offerUpdate := &models.Offer{
+				ID:        id,
+				GameID:    "game-id",
+				Name:      "offer-2",
+				ProductID: "com.tfg.example2",
+				Contents:  dat.JSON([]byte(`{"gems": 5}`)),
+				Period:    dat.JSON([]byte(`{"every": "1m"}`)),
+				Frequency: dat.JSON([]byte(`{"every": "2h"}`)),
+				Trigger:   dat.JSON([]byte(`{"from": 1111111111111}`)),
+				Placement: "store",
+			}
 
-			//When
-			_, _, _, err := models.ClaimOffer(db, id, playerID, gameID, currentTime, nil)
-
-			//Then
+			_, err := models.UpdateOffer(db, offerUpdate, nil)
 			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(Equal("Offer was not found with specified filters."))
 		})
 
-		It("should fail if some error in the database", func() {
-			id := "56fc0477-39f1-485c-898e-4909e9155eb1"
-			playerID := "player-1"
-			gameID := "offers-game"
-			currentTime := time.Unix(from+500, 0)
+		It("should return error if inserting offer template with missing parameters", func() {
+			offer := &models.Offer{
+				Name:      "offer-1",
+				ProductID: "com.tfg.example",
+				GameID:    "game-id",
+				Contents:  dat.JSON([]byte(`{"gems": 5, "gold": 100}`)),
+				Period:    dat.JSON([]byte(`{"every": "10m"}`)),
+				Frequency: dat.JSON([]byte(`{"every": "24h"}`)),
+				Trigger:   dat.JSON([]byte(`{"from": 1487280506875}`)),
+				Placement: "popup",
+			}
+			createdOffer, err := models.InsertOffer(db, offer, nil)
+			Expect(err).NotTo(HaveOccurred())
 
+			offerUpdate := &models.Offer{
+				ID:        createdOffer.ID,
+				Name:      "offer-1",
+				ProductID: "com.tfg.example",
+				GameID:    "game-id",
+			}
+
+			_, err = models.UpdateOffer(db, offerUpdate, nil)
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(Equal(`pq: null value in column "period" violates not-null constraint`))
+		})
+
+		It("should return error if DB is closed", func() {
 			oldDB := db
+			defer func() {
+				db = oldDB // avoid errors in after each
+			}()
+			offer := &models.Offer{
+				Name:      "offer-1",
+				ProductID: "com.tfg.example",
+				GameID:    "game-id",
+				Contents:  dat.JSON([]byte(`{"gems": 5, "gold": 100}`)),
+				Period:    dat.JSON([]byte(`{"every": "10m"}`)),
+				Frequency: dat.JSON([]byte(`{"every": "24h"}`)),
+				Trigger:   dat.JSON([]byte(`{"from": 1487280506875}`)),
+				Placement: "popup",
+			}
+			createdOffer, err := models.InsertOffer(db, offer, nil)
+			Expect(err).NotTo(HaveOccurred())
 			db, err := GetTestDB()
 			Expect(err).NotTo(HaveOccurred())
 			db.(*runner.DB).DB.Close() // make DB connection unavailable
+			offerUpdate := &models.Offer{
+				ID:        createdOffer.ID,
+				GameID:    "game-id",
+				Name:      "offer-2",
+				ProductID: "com.tfg.example2",
+				Contents:  dat.JSON([]byte(`{"gems": 5}`)),
+				Period:    dat.JSON([]byte(`{"every": "1m"}`)),
+				Frequency: dat.JSON([]byte(`{"every": "2h"}`)),
+				Trigger:   dat.JSON([]byte(`{"from": 1111111111111}`)),
+				Placement: "store",
+			}
 
-			_, _, _, err = models.ClaimOffer(db, id, playerID, gameID, currentTime, nil)
+			_, err = models.UpdateOffer(db, offerUpdate, nil)
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(Equal("sql: database is closed"))
-			db = oldDB // avoid errors in after each
-		})
-	})
-
-	Describe("Update offer last seen at", func() {
-		It("should update last seen offer at now and increment seen counter", func() {
-			//Given
-			playerID := "player-1"
-			gameID := "offers-game"
-			currentTime := time.Now()
-
-			//When
-			offerBefore, err1 := models.GetOfferByID(db, "offers-game", defaultOfferID, nil)
-			nextAt, err2 := models.UpdateOfferLastSeenAt(db, defaultOfferID, playerID, gameID, currentTime, nil)
-			offerAfter, err3 := models.GetOfferByID(db, "offers-game", defaultOfferID, nil)
-
-			//Then
-			Expect(err1).NotTo(HaveOccurred())
-			Expect(err2).NotTo(HaveOccurred())
-			Expect(err3).NotTo(HaveOccurred())
-			Expect(offerAfter.LastSeenAt.Time.Unix()).To(Equal(currentTime.Unix()))
-			Expect(offerAfter.LastSeenAt.Valid).To(BeTrue())
-			Expect(offerBefore.SeenCounter).To(Equal(0))
-			Expect(offerAfter.SeenCounter).To(Equal(1))
-			Expect(nextAt).To(Equal(currentTime.Unix() + 1))
-		})
-
-		It("should return 0 nextAt if offer reached max period", func() {
-			//Given
-			playerID := "player-1"
-			gameID := "limited-offers-game"
-			currentTime := time.Now()
-			limitedOfferID := "5ba8848f-1df0-45b3-b8b1-27a7d5eedd6a"
-
-			//When
-			nextAt, err1 := models.UpdateOfferLastSeenAt(db, limitedOfferID, playerID, gameID, currentTime, nil)
-			offerAfter, err2 := models.GetOfferByID(db, gameID, limitedOfferID, nil)
-
-			//Then
-			Expect(err1).NotTo(HaveOccurred())
-			Expect(err2).NotTo(HaveOccurred())
-			Expect(offerAfter.LastSeenAt.Time.Unix()).To(Equal(currentTime.Unix()))
-			Expect(offerAfter.LastSeenAt.Valid).To(BeTrue())
-			Expect(nextAt).To(Equal(int64(0)))
-		})
-
-		It("should return nextAt equal to now if offer has no every in frequency", func() {
-			//Given
-			playerID := "player-11"
-			gameID := "offers-game"
-			currentTime := time.Now()
-			limitedOfferID := "4407b770-5b24-4ffa-8563-0694d1a10156"
-
-			//When
-			nextAt, err1 := models.UpdateOfferLastSeenAt(db, limitedOfferID, playerID, gameID, currentTime, nil)
-			offerAfter, err2 := models.GetOfferByID(db, gameID, limitedOfferID, nil)
-
-			//Then
-			Expect(err1).NotTo(HaveOccurred())
-			Expect(err2).NotTo(HaveOccurred())
-			Expect(offerAfter.LastSeenAt.Time.Unix()).To(Equal(currentTime.Unix()))
-			Expect(offerAfter.LastSeenAt.Valid).To(BeTrue())
-			Expect(nextAt).To(Equal(currentTime.Unix()))
-		})
-
-		It("should return status code 422 if invalid id", func() {
-			//Given
-			id := uuid.NewV4().String()
-			playerID := "player-1"
-			gameID := "offers-game"
-
-			//When
-			nextAt, err := models.UpdateOfferLastSeenAt(db, id, playerID, gameID, time.Now(), nil)
-
-			//Then
-			Expect(err).To(HaveOccurred())
-			Expect(nextAt).To(Equal(int64(0)))
-		})
-	})
-
-	Describe("Get available offers", func() {
-		It("should return a list of offer templates for each available placement", func() {
-			//Given
-			playerID := "player-1"
-			gameID := "offers-game"
-			currentTime := time.Unix(1486678000, 0)
-
-			//When
-			templates, err := models.GetAvailableOffers(db, playerID, gameID, currentTime, nil)
-
-			//Then
-			Expect(err).NotTo(HaveOccurred())
-			Expect(templates).To(HaveLen(3))
-			Expect(templates).To(HaveKey("popup"))
-			Expect(templates["popup"]).To(HaveLen(1))
-			Expect(templates["popup"][0].ID).To(Equal("56fc0477-39f1-485c-898e-4909e9155eb1"))
-			Expect(templates["popup"][0].ProductID).To(Equal("com.tfg.sample"))
-			Expect(templates["popup"][0].Contents).To(Equal(dat.JSON([]byte(`{"gems": 5, "gold": 100}`))))
-			Expect(templates["popup"][0].Metadata).To(Equal(dat.JSON([]byte(`{}`))))
-			Expect(templates["popup"][0].ExpireAt).To(Equal(int64(1486679000)))
-
-			Expect(templates).To(HaveKey("store"))
-			Expect(templates["store"]).To(HaveLen(2))
-			Expect(templates["store"][0].ID).NotTo(BeNil())
-			Expect(templates["store"][0].ProductID).To(Equal("com.tfg.sample.2"))
-			Expect(templates["store"][0].Contents).To(Equal(dat.JSON([]byte(`{"gems": 100, "gold": 5}`))))
-			Expect(templates["store"][0].Metadata).To(Equal(dat.JSON([]byte(`{"meta": "data"}`))))
-			Expect(templates["store"][0].ExpireAt).To(Equal(int64(1486679200)))
-
-			Expect(templates["store"][1].ID).To(Equal("6c4a79f2-24b8-4be9-93d4-12413b789823"))
-			Expect(templates["store"][1].ProductID).To(Equal("com.tfg.sample.3"))
-			Expect(templates["store"][1].Contents).To(Equal(dat.JSON([]byte(`{"gems": 5, "gold": 100}`))))
-			Expect(templates["store"][1].Metadata).To(Equal(dat.JSON([]byte(`{}`))))
-			Expect(templates["store"][1].ExpireAt).To(Equal(int64(1486679100)))
-		})
-
-		It("should return offers for two different players of game offers-game", func() {
-			//Given
-			playerID1 := "player-1"
-			playerID2 := "player-2"
-			gameID := "offers-game"
-			currentTime := time.Unix(1486678000, 0)
-
-			//When
-			templates1, err1 := models.GetAvailableOffers(db, playerID1, gameID, currentTime, nil)
-			templates2, err2 := models.GetAvailableOffers(db, playerID2, gameID, currentTime, nil)
-
-			//Then
-			Expect(err1).NotTo(HaveOccurred())
-			Expect(err2).NotTo(HaveOccurred())
-			Expect(templates1).To(HaveLen(3))
-			Expect(templates2).To(HaveLen(3))
-		})
-
-		It("should return empty offer template list if gameID doesn't exist", func() {
-			//Given
-			playerID := "player-1"
-			gameID := "non-existing-game"
-			currentTime := time.Unix(1486678000, 0)
-
-			//When
-			templates, err := models.GetAvailableOffers(db, playerID, gameID, currentTime, nil)
-
-			//Then
-			Expect(templates).To(BeEmpty())
-			Expect(err).NotTo(HaveOccurred())
-		})
-
-		It("should not return offer-template-1 if last_seen_at is not long ago", func() {
-			playerID := "player-1"
-			gameID := "offers-game"
-			currentTime := time.Unix(1486678000, 0)
-
-			//When
-			_, err1 := models.UpdateOfferLastSeenAt(db, defaultOfferID, playerID, gameID, currentTime, nil)
-			templates, err2 := models.GetAvailableOffers(db, playerID, gameID, currentTime, nil)
-
-			//Then
-			Expect(err1).NotTo(HaveOccurred())
-			Expect(err2).NotTo(HaveOccurred())
-			Expect(templates).To(HaveLen(2))
-			Expect(templates).To(HaveKey("store"))
-		})
-
-		It("should not return limited-template more than once", func() {
-			//Given
-			playerID := "player-1"
-			gameID := "limited-offers-game"
-			offerID := "5ba8848f-1df0-45b3-b8b1-27a7d5eedd6a"
-			currentTime := time.Unix(1486678000, 0)
-
-			//When
-			templatesBefore, err1 := models.GetAvailableOffers(db, playerID, gameID, currentTime, nil)
-			_, err2 := models.UpdateOfferLastSeenAt(db, offerID, playerID, gameID, currentTime, nil)
-			templatesAfter, err3 := models.GetAvailableOffers(db, playerID, gameID, currentTime, nil)
-
-			//Then
-			Expect(err1).NotTo(HaveOccurred())
-			Expect(err2).NotTo(HaveOccurred())
-			Expect(err3).NotTo(HaveOccurred())
-			Expect(templatesBefore).To(HaveLen(1))
-			Expect(templatesAfter).To(HaveLen(0))
-		})
-
-		It("should not return limited-template after claim", func() {
-			//Given
-			playerID := "player-1"
-			gameID := "limited-offers-game"
-			offerID := "5ba8848f-1df0-45b3-b8b1-27a7d5eedd6a"
-			currentTime := time.Unix(1486678000, 0)
-
-			//When
-			templatesBefore, err1 := models.GetAvailableOffers(db, playerID, gameID, currentTime, nil)
-			_, alreadyClaimed, _, err2 := models.ClaimOffer(db, offerID, playerID, gameID, currentTime, nil)
-			templatesAfter, err3 := models.GetAvailableOffers(db, playerID, gameID, currentTime, nil)
-
-			//Then
-			Expect(err1).NotTo(HaveOccurred())
-			Expect(err2).NotTo(HaveOccurred())
-			Expect(err3).NotTo(HaveOccurred())
-			Expect(alreadyClaimed).To(BeFalse())
-			Expect(templatesBefore).To(HaveLen(1))
-			Expect(templatesAfter).To(HaveLen(0))
-		})
-
-		It("should not return offer-template-1 if last_seen_at is not long ago", func() {
-			//Given
-			playerID := "player-1"
-			gameID := "offers-game"
-			offerID := "56fc0477-39f1-485c-898e-4909e9155eb1"
-			currentTime := time.Unix(1486678000, 0)
-
-			//When
-			templatesBefore, err1 := models.GetAvailableOffers(db, playerID, gameID, currentTime, nil)
-			_, alreadyClaimed, _, err2 := models.ClaimOffer(db, offerID, playerID, gameID, currentTime, nil)
-			templatesAfter, err3 := models.GetAvailableOffers(db, playerID, gameID, currentTime, nil)
-
-			//Then
-			Expect(err1).NotTo(HaveOccurred())
-			Expect(err2).NotTo(HaveOccurred())
-			Expect(err3).NotTo(HaveOccurred())
-			Expect(alreadyClaimed).To(BeFalse())
-			Expect(templatesBefore).To(HaveLen(3))
-			Expect(templatesAfter).To(HaveLen(2))
-		})
-
-		It("should not return template if it has empty trigger", func() {
-			//Given
-			playerID := "player-1"
-			gameID := "offers-game-empty-trigger"
-			currentTime := time.Unix(1486678000, 0)
-
-			//When
-			templates, err := models.GetAvailableOffers(db, playerID, gameID, currentTime, nil)
-
-			//Then
-			Expect(err).NotTo(HaveOccurred())
-			Expect(templates).To(BeEmpty())
-		})
-
-		It("should not return template if it reached max frequency", func() {
-			//Given
-			playerID := "player-1"
-			gameID := "offers-game-max-freq"
-			currentTime := time.Unix(1486678000, 0)
-
-			//When
-			templates, err := models.GetAvailableOffers(db, playerID, gameID, currentTime, nil)
-
-			//Then
-			Expect(err).NotTo(HaveOccurred())
-			Expect(templates).To(BeEmpty())
-		})
-
-		It("should not return template if it reached max period", func() {
-			//Given
-			playerID := "player-1"
-			gameID := "offers-game-max-period"
-			currentTime := time.Unix(1486678000, 0)
-
-			//When
-			templates, err := models.GetAvailableOffers(db, playerID, gameID, currentTime, nil)
-
-			//Then
-			Expect(err).NotTo(HaveOccurred())
-			Expect(templates).To(BeEmpty())
-		})
-
-		It("should fail if template has invalid frequency", func() {
-			//Given
-			playerID := "player-1"
-			gameID := "offers-game-invalid-every-freq"
-			currentTime := time.Unix(1486678000, 0)
-
-			//When
-			_, err := models.GetAvailableOffers(db, playerID, gameID, currentTime, nil)
-
-			//Then
-			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(Equal("time: invalid duration invalid"))
-		})
-
-		It("should fail if some error in the database", func() {
-			playerID := "player-1"
-			gameID := "offers-game"
-			currentTime := time.Unix(1486678000, 0)
-
-			oldDB := db
-			db, err := GetTestDB()
-			Expect(err).NotTo(HaveOccurred())
-			db.(*runner.DB).DB.Close() // make DB connection unavailable
-
-			_, err = models.GetAvailableOffers(db, playerID, gameID, currentTime, nil)
-			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(Equal("sql: database is closed"))
-			db = oldDB // avoid errors in after each
-		})
-
-		It("should fail if template has invalid frequency", func() {
-			//Given
-			playerID := "player-1"
-			gameID := "offers-game-invalid-every-period"
-			currentTime := time.Unix(1486678000, 0)
-
-			//When
-			_, err := models.GetAvailableOffers(db, playerID, gameID, currentTime, nil)
-
-			//Then
-			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(Equal("time: invalid duration invalid"))
-		})
-	})
-
-	Describe("Claim and GetAvailableOffers integrated", func() {
-		It("should not return consumed offer after it has been updated", func() {
-			offerTemplateID := "dd21ec96-2890-4ba0-b8e2-40ea67196990"
-			playerID := "player-1"
-			gameID := "offers-game"
-			currentTime := time.Unix(1486678000, 0)
-
-			// Get fot the first time
-			offers, err := models.GetAvailableOffers(db, playerID, gameID, currentTime, nil)
-			Expect(err).NotTo(HaveOccurred())
-
-			// Disable offer template
-			err = models.SetEnabledOfferTemplate(db, offerTemplateID, false, nil)
-			Expect(err).NotTo(HaveOccurred())
-
-			// Claim the offer
-			_, alreadyClaimed, _, err := models.ClaimOffer(db, offers["popup"][0].ID, playerID, gameID, currentTime, nil)
-			Expect(alreadyClaimed).To(BeFalse())
-			Expect(err).NotTo(HaveOccurred())
-
-			// Get offer template to update it
-			offerTemplate, err := models.GetOfferTemplateByID(db, offerTemplateID, nil)
-			Expect(err).NotTo(HaveOccurred())
-
-			// Update its contents and insert with same key
-			offerTemplate.Contents = dat.JSON([]byte(`{ "somethingNew": 100 }`))
-			offerTemplate, err = models.InsertOfferTemplate(db, offerTemplate, nil)
-			Expect(err).NotTo(HaveOccurred())
-
-			// Should not return the popup offer, since it was claimed for the first time
-			offers, err = models.GetAvailableOffers(db, playerID, gameID, currentTime, nil)
-			Expect(err).NotTo(HaveOccurred())
-			Expect(offers).NotTo(HaveKey("popup"))
-		})
-
-		It("should return updated offer with one remaining view", func() {
-			playerID := "player-1"
-			gameID := "offers-game"
-			place := "unique-place"
-			offerTemplateID := "5fed76ab-1fd7-4a91-972d-bca228ce80c4"
-			currentTime := time.Unix(1486678000, 0)
-
-			// Get offer
-			offers, err := models.GetAvailableOffers(db, playerID, gameID, currentTime, nil)
-			Expect(err).NotTo(HaveOccurred())
-			offerID := offers[place][0].ID
-
-			// Sees once
-			_, err = models.UpdateOfferLastSeenAt(db, offerID, playerID, gameID, currentTime, nil)
-			Expect(err).NotTo(HaveOccurred())
-
-			// Disable offer template
-			err = models.SetEnabledOfferTemplate(db, offerTemplateID, false, nil)
-			Expect(err).NotTo(HaveOccurred())
-
-			// Update Offer template
-			ot, err := models.GetOfferTemplateByID(db, offerTemplateID, nil)
-			Expect(err).NotTo(HaveOccurred())
-			ot.Contents = dat.JSON([]byte(`{ "somethingNew": 100 }`))
-			ot, err = models.InsertOfferTemplate(db, ot, nil)
-			Expect(err).NotTo(HaveOccurred())
-
-			// Get offer
-			offers, err = models.GetAvailableOffers(db, playerID, gameID, currentTime, nil)
-			Expect(err).NotTo(HaveOccurred())
-			offerID = offers[place][0].ID
-
-			// Sees twice
-			_, err = models.UpdateOfferLastSeenAt(db, offerID, playerID, gameID, currentTime, nil)
-			Expect(err).NotTo(HaveOccurred())
-
-			// Get offer, expect unique-place to not be returned
-			offers, err = models.GetAvailableOffers(db, playerID, gameID, currentTime, nil)
-			Expect(err).NotTo(HaveOccurred())
-			Expect(offers).NotTo(HaveKey(place))
 		})
 	})
 })

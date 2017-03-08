@@ -53,20 +53,28 @@ func gameFromCtx(ctx context.Context) *models.Game {
 	return gameWithID
 }
 
-func offerTemplateFromCtx(ctx context.Context) *models.OfferTemplate {
-	offerTemplate := ctx.Value(payloadString)
-	if offerTemplate == nil {
-		return nil
-	}
-	return offerTemplate.(*models.OfferTemplate)
-}
-
-func offerToUpdateFromCtx(ctx context.Context) *models.OfferToUpdate {
+func offerFromCtx(ctx context.Context) *models.Offer {
 	offer := ctx.Value(payloadString)
 	if offer == nil {
 		return nil
 	}
-	return offer.(*models.OfferToUpdate)
+	return offer.(*models.Offer)
+}
+
+func offerImpressionPayloadFromCtx(ctx context.Context) *models.OfferImpressionPayload {
+	payload := ctx.Value(payloadString)
+	if payload == nil {
+		return nil
+	}
+	return payload.(*models.OfferImpressionPayload)
+}
+
+func claimOfferPayloadFromCtx(ctx context.Context) *models.ClaimOfferPayload {
+	payload := ctx.Value(payloadString)
+	if payload == nil {
+		return nil
+	}
+	return payload.(*models.ClaimOfferPayload)
 }
 
 func (m *ValidationMiddleware) configureCustomValidators() {

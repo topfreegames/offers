@@ -113,18 +113,17 @@ Offers API
         }
       ```
 
-## Offer Template Routes
+## Offer Routes
 
-  ### Insert Offer Template
-  `POST /templates`
+  ### Create Offer
+  `POST /offers`
 
-  Insert a new Offer Template into database.
+  Insert a new Offer into the database.
 
   * Payload
     ```
       {
         "name":      [string], // required, 255 characters max
-        "key":       [uuidv4], // required
         "productId": [string], // required, 255 characters max
         "gameId":    [string], // required, matches ^[^-][a-z0-9-]*$
         "contents":  [json],   // required
@@ -147,7 +146,6 @@ Offers API
 
     * Field Descriptions
        - **name**:         Prettier game identifier to show on UI.  
-       - **key**:          Identifies an offer template. It is common between the templates versions, meaning it keeps the same when an offer is updated.
        - **productId**:    Identifier of the item to be bought on PlayStore or AppStore.  
        - **gameId**:       ID of the game this template was made for (must exist on Games table on DB).  
        - **contents**:     What the offer provides (ex.: { "gem": 5, "gold": 100 }).  
@@ -157,14 +155,14 @@ Offers API
        - **trigger**:      Time when the offer is available.  
        - **enabled**:      True if the offer is enabled.  
        - **placement**:    Where the offer is shown in the UI.  
+       - **version**:      Offer current version.
 
   * Success Response
     * Code: `200`
     * Content:
       ```
         {
-          "id":        [uuidv4],   // offer template unique identifier
-          "key":       [uuidv4],
+          "id":        [uuidv4],   // offer unique identifier
           "name":      [string],
           "productId": [string],
           "gameId":    [string],
@@ -183,7 +181,8 @@ Offers API
             "from":  [int],     
             "to":    [int]      
           },
-          "enabled": true     // created templates are enabled by default
+          "enabled": true,       // created offer are enabled by default
+          "version": 1           // created offer version is 1 by default
         }
       ```
 
@@ -213,23 +212,112 @@ Offers API
         }
       ```
 
-  ### Enable offer template
-  `PUT /templates/:id/enable`
+  ### Update Offer
+  `PUT /offers/:id`
 
-  Enable an offer template. `:id` must be an `uuidv4`.
+  Updated the offer with given id in the database.
+
+  * Payload
+    ```
+      {
+        "name":      [string], // required, 255 characters max
+        "productId": [string], // required, 255 characters max
+        "gameId":    [string], // required, matches ^[^-][a-z0-9-]*$
+        "contents":  [json],   // required
+        "placement": [string], // required, 255 characters max
+        "period":    {         // required
+          "every": [string],   // required
+          "max":   [int]       // required
+        },   
+        "frequency": {         // required
+          "every": [string],   // required
+          "max":   [int]       // required
+        },   
+        "trigger":   {         // required
+          "from":  [int],      // required
+          "to":    [int]       // required
+        },
+        "metadata":  [json]    // optional
+      }
+    ```
+
+    * Field Descriptions
+       - **name**:         Prettier game identifier to show on UI.  
+       - **productId**:    Identifier of the item to be bought on PlayStore or AppStore.  
+       - **gameId**:       ID of the game this template was made for (must exist on Games table on DB).  
+       - **contents**:     What the offer provides (ex.: { "gem": 5, "gold": 100 }).  
+       - **metadata**:     Any information the Front wants to access later.  
+       - **period**:       Enable player to buy offer every x times, at most y times. <ul><li>every: decimal number with unit suffix, such as "300ms", "-1.5h" or "2h45m". Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h"</li><li>max: maximum number of times this offer can be bought by the player</li></ul>If "every" is an empty string, then the offer can be bought max times with no time restriction.  If "max" is 0, then the offer can be bought infinite times with time restriction.  They can't be "" and 0 at the same time.
+       - **frequency**:    Enable player to see offer on UI x/unit of time, at most y times. <ul><li>every: decimal number with unit suffix, such as "300ms", "-1.5h" or "2h45m". Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h"</li><li>max: maximum number of times this offer can be seen by the player</li></ul>If "every" is an empty string, then the offer can be seen max times with no time restriction.  If "max" is 0, then the offer can be seen infinite times with time restriction.  They can't be "" and 0 at the same time.  
+       - **trigger**:      Time when the offer is available.  
+       - **enabled**:      True if the offer is enabled.  
+       - **placement**:    Where the offer is shown in the UI.  
+       - **version**:      Offer current version.
 
   * Success Response
     * Code: `200`
     * Content:
       ```
         {
-          "id": [uuidv4]
+          "id":      [uuidv4],   // offer unique identifier
+          "version": [int]       // updated offer version
         }
+      ```
+
+  * Error response
+
+    It will return an error if the offer with given id does not exist in the database
+
+    * Code: `404`
+    * Content:
+      ```
+        {
+          "error": [string],       // error
+          "code":  [string],       // error code
+          "description": [string]  // error description
+        }
+      ```
+
+    It will return an error if the request has missing or invalid arguments
+
+    * Code: `422`
+    * Content:
+      ```
+        {
+          "error": [string],       // error
+          "code":  [string],       // error code
+          "description": [string]  // error description
+        }
+      ```
+
+    It will return an error if the query on db (insert) failed
+
+    * Code: `500`
+    * Content:
+      ```
+        {
+          "error": [string],       // error
+          "code":  [string],       // error code
+          "description": [string]  // error description
+        }
+      ```
+
+
+  ### Enable offer
+  `PUT /offers/:id/enable?game-id=<required-game-id>`
+
+  Enable an offer. `:id` must be an `uuidv4`.
+
+  * Success Response
+    * Code: `200`
+    * Content:
+      ```
+        {}
       ```
 
   * Error Response
 
-    It will return status code 404 not found if the ID doesn't exist
+    It will return status code 404 if the offer with given ID does not exist
 
     * Code: `404`
     * Content:
@@ -254,7 +342,7 @@ Offers API
       ```
 
   ### Disable offer template
-  `PUT /templates/:id/disable`
+  `PUT /offers/:id/disable?game-id=<required-game-id>`
 
   Disable an offer template. `:id` must be an `uuidv4`.
 
@@ -262,14 +350,12 @@ Offers API
     * Code: `200`
     * Content:
       ```
-        {
-          "id": [uuidv4]
-        }
+        {}
       ```
 
   * Error Response
 
-    It will return status code 404 not found if the ID doesn't exist
+    It will return status code 404 if the offer with given ID does not exist
 
     * Code: `404`
     * Content:
@@ -293,10 +379,10 @@ Offers API
         }
       ```
 
-  ### List Offer Templates
-  `GET /templates?game-id=<required-game-id>`
+  ### List Offers
+  `GET /offers?game-id=<required-game-id>`
 
-  List all game's offer templates.
+  List all game's offers.
 
   * Success Response
     * Code: `200`
@@ -325,7 +411,8 @@ Offers API
           "from":  [int],     
           "to":    [int]      
         },
-        "enabled": [bool]
+        "enabled": [bool],
+        "version": [int]
       },
       ...
     ]
@@ -345,10 +432,12 @@ Offers API
         }
       ```
 
-## Offer Routes
+## Offer Request Routes
+
+  There are the routes accessed by the offers lib.
 
   ### Get Available Offers
-  `GET /offers?player-id=<required-player-id>&game-id=<required-game-id>`
+  `GET /available-offers?player-id=<required-player-id>&game-id=<required-game-id>`
 
   Get the available offers for a player of a game. An offer is available if it respects the frequency (last time player saw the offer), respects the period (last time player claimed the offer), is triggered (current time is between "from" and "to") and is enabled. The success response is a JSON where each key is a placement on the UI and the value is a list of available offers.
 
@@ -388,46 +477,59 @@ Offers API
       ```
 
   ### Claim Offer
-  `PUT /offers/:id/claim`
+  `PUT /offers/claim`
 
   Claim a player's offer. Should only be called after payment confirmation. `:id` must be an `uuidv4`.
 
   * Payload
     ```
       {
-        "gameId":   [string], // required, matches ^[^-][a-z0-9-]*$
-        "playerId": [string]  // required, 255 characters max
+        "gameId":   [string],      // required, matches ^[^-][a-z0-9-]*$
+        "playerId": [string],      // required, 255 characters max
+        "productId": [string],     // required, 255 characters max
+        "timestamp": [int64],      // required, unix timestamp of the purchase
+        "transactionId": [string], // required, unique identifier of the purchase
+        "id": [uuidv4]             // optional, the id of the offer being claimed
       }
     ```
 
-  * Success Response (if the player can still see the offer)
+    If the id of the offer being claimed is sent it will be used to find the offer, increment the claim counter and the timestamp of the last time this offer was claimed. If not, the other information present in the payload will be used to try to identify the offer that is being claimed.
+
+  * Success Response
     * Code: `200`
     * Content:
+      if the player can still see the offer:
       ```
         {
-          "contents": [json],
+          "contents": [json]
           "nextAt": [int64]  // unix timestamp of the next time the offer can be shown
         }
       ```
 
-  * Success Response (if the player can no longer see the offer)
-    * Code: `200`
-    * Content:
+      if the player can still see the offer
       ```
         {
           "contents": [json]
         }
       ```
+
 
   * If the player claimed an offer that he already claimed its contents are returned but with another status code, so the caller can decide whether to give the player the offer contents or not.
     * Code: `409`
     * Content:
+      if the player can still see the offer:
       ```
         {
           "contents": [json]
           "nextAt": [int64]  // unix timestamp of the next time the offer can be shown
         }
       ```
+
+      if the player can still see the offer
+      ```
+        {
+          "contents": [json]
+        }
 
   * Error Response
     * If a offer with id, gameId and playerId was not found in database.
@@ -453,30 +555,47 @@ Offers API
         ```
 
   ### Offer Impressions
-  `POST /offers/:id/impressions`
+  `PUT /offers/:id/impressions`
 
-  Updates the time when the offer was last seen by the player. `:id` must be an `uuidv4`.
+  Updates the time when the offer was last seen by the player and increments an impressions counter. `:id` must be an `uuidv4`.
 
   * Payload
     ```
       {
-        "gameId":   [string], // required, matches ^[^-][a-z0-9-]*$
-        "playerId": [string]  // required, 255 characters max
+        "gameId":   [string],   // required, matches ^[^-][a-z0-9-]*$
+        "playerId": [string],   // required, 255 characters max
+        "impressionId" [uuidv4] // required, unique identifier for this impression
       }
     ```
 
-  * Success Response (if the player can still see the offer)
+    The `impressionId` field is used so this request can be idempotent. If more than one request is sent with the same `impressionId` the counter and the last impression timestamp will not be updated.
+
+  * Success Response
     * Code: `200`
     * Content:
+      if the player can still see the offer:
       ```
         {
           "nextAt": [int64]  // unix timestamp of the next time the offer can be shown
         }
       ```
 
-  * Success Response (if the player can no longer see the offer)
+      if the player can still see the offer
+      ```
+        {}
+      ```
+
+  * Conflict Response (if the `impressionId` was already sent in a previous request):
     * Code: `200`
     * Content:
+      if the player can still see the offer:
+      ```
+        {
+          "nextAt": [int64]  // unix timestamp of the next time the offer can be shown
+        }
+      ```
+
+      if the player can no longer see the offer:
       ```
         {}
       ```

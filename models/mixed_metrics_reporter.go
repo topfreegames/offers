@@ -48,6 +48,20 @@ func (m *MixedMetricsReporter) WithDatastoreSegment(table, operation string, f f
 	return f()
 }
 
+//WithRedisSegment with redis segment
+func (m *MixedMetricsReporter) WithRedisSegment(operation string, f func() error) error {
+	if m == nil {
+		return f()
+	}
+
+	for _, mr := range m.MetricsReporters {
+		data := mr.StartDatastoreSegment("Redis", "redis", operation)
+		defer mr.EndDatastoreSegment(data)
+	}
+
+	return f()
+}
+
 //WithExternalSegment that calls all the other metrics reporters
 func (m *MixedMetricsReporter) WithExternalSegment(url string, f func() error) error {
 	if m == nil {

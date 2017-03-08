@@ -92,6 +92,32 @@ var _ = Describe("Mixed Metrics Reporter Model", func() {
 		})
 	})
 
+	Describe("WithRedisSegment", func() {
+		It("Should execute the given function if mr is nil", func() {
+			var mixedMetricsReporter *models.MixedMetricsReporter
+			f := func() error {
+				sendToChan(testChan)
+				return nil
+			}
+			err := mixedMetricsReporter.WithRedisSegment("op", f)
+			Expect(err).NotTo(HaveOccurred())
+			Eventually(testChan).Should(Receive())
+		})
+
+		It("Should execute StartSegment and EndSegment and the given function if mr is not nil", func() {
+			mr := testing.FakeMetricsReporter{}
+			mixedMetricsReporter := models.NewMixedMetricsReporter()
+			mixedMetricsReporter.AddReporter(mr)
+			f := func() error {
+				sendToChan(testChan)
+				return nil
+			}
+			err := mixedMetricsReporter.WithRedisSegment("op", f)
+			Expect(err).NotTo(HaveOccurred())
+			Eventually(testChan).Should(Receive())
+		})
+	})
+
 	Describe("WithExternalSegment", func() {
 		It("Should execute the given function if mr is nil", func() {
 			var mixedMetricsReporter *models.MixedMetricsReporter

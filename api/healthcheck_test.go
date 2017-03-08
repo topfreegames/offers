@@ -51,6 +51,9 @@ var _ = Describe("Healthcheck Handler", func() {
 
 			It("returns status code of 500 if database is unavailable", func() {
 				oldDB := app.DB
+				defer func() {
+					app.DB = oldDB // avoid errors in after each
+				}()
 				db, err := GetTestDB()
 				Expect(err).NotTo(HaveOccurred())
 				app.DB = db
@@ -64,7 +67,6 @@ var _ = Describe("Healthcheck Handler", func() {
 				Expect(obj["code"]).To(Equal("OFF-000"))
 				Expect(obj["error"]).To(Equal("DatabaseError"))
 				Expect(obj["description"]).To(Equal("sql: database is closed"))
-				app.DB = oldDB // avoid errors in after each
 			})
 		})
 	})

@@ -13,142 +13,203 @@ import (
 	"net/http"
 
 	"github.com/Sirupsen/logrus"
-	e "github.com/topfreegames/offers/errors"
+	"github.com/topfreegames/offers/errors"
 	"github.com/topfreegames/offers/models"
 )
 
-//OfferRequestHandler handler
-type OfferRequestHandler struct {
+//OfferHandler handler
+type OfferHandler struct {
 	App    *App
 	Method string
 }
 
 //ServeHTTP method
-func (h *OfferRequestHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	switch h.Method {
-	case "get-offers":
-		h.getOffers(w, r)
-	case "claim":
-		h.claimOffer(w, r)
-	case "impressions":
-		h.updateOfferLastSeenAt(w, r)
+func (g *OfferHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	switch g.Method {
+	case "insert":
+		g.insertOffer(w, r)
+		return
+	case "update":
+		g.updateOffer(w, r)
+		return
+	case "enable":
+		g.setEnabledOffer(w, r, true)
+		return
+	case "disable":
+		g.setEnabledOffer(w, r, false)
+		return
+	case "list":
+		g.list(w, r)
+		return
 	}
 }
 
-func (h *OfferRequestHandler) getOffers(w http.ResponseWriter, r *http.Request) {
+func (g *OfferHandler) insertOffer(w http.ResponseWriter, r *http.Request) {
 	mr := metricsReporterFromCtx(r.Context())
-	playerID := r.URL.Query().Get("player-id")
+	offer := offerFromCtx(r.Context())
+	userEmail := userEmailFromContext(r.Context())
+
+	logger := g.App.Logger.WithFields(logrus.Fields{
+		"source":    "offerHandler",
+		"operation": "insertOffer",
+		"userEmail": userEmail,
+		"offer":     offer,
+	})
+
+	var err error
+	err = mr.WithSegment(models.SegmentModel, func() error {
+		offer, err = models.InsertOffer(g.App.DB, offer, mr)
+		return err
+	})
+
+	if err != nil {
+		logger.WithError(err).Error("Insert offer failed.")
+		if foreignKeyError, ok := err.(*errors.InvalidModelError); ok {
+			g.App.HandleError(w, http.StatusUnprocessableEntity, foreignKeyError.Error(), foreignKeyError)
+			return
+		}
+
+		if conflictedKeyError, ok := err.(*errors.ConflictedModelError); ok {
+			g.App.HandleError(w, http.StatusConflict, conflictedKeyError.Error(), conflictedKeyError)
+			return
+		}
+
+		g.App.HandleError(w, http.StatusInternalServerError, "Insert offer failed", err)
+		return
+	}
+
+	bytesRes, err := json.Marshal(offer)
+	if err != nil {
+		logger.WithError(err).Error("Failed to build offer response.")
+		g.App.HandleError(w, http.StatusInternalServerError, "Failed to build offer response", err)
+		return
+	}
+
+	logger.Info("Inserted offer successfuly.")
+	WriteBytes(w, http.StatusCreated, bytesRes)
+}
+
+func (g *OfferHandler) setEnabledOffer(w http.ResponseWriter, r *http.Request, enable bool) {
+	mr := metricsReporterFromCtx(r.Context())
+	offerID := paramKeyFromContext(r.Context())
+	userEmail := userEmailFromContext(r.Context())
 	gameID := r.URL.Query().Get("game-id")
-	logger := h.App.Logger.WithFields(logrus.Fields{
+
+	logger := g.App.Logger.WithFields(logrus.Fields{
 		"source":    "offerHandler",
-		"operation": "getOffers",
+		"operation": "setEnabledOffer",
+		"userEmail": userEmail,
+		"offerID":   offerID,
 		"gameID":    gameID,
-		"playerID":  playerID,
 	})
 
-	if playerID == "" {
-		err := fmt.Errorf("The player-id parameter cannot be empty")
-		logger.WithError(err).Error("Failed to retrieve offer for player.")
-		h.App.HandleError(w, http.StatusBadRequest, "The player-id parameter cannot be empty.", err)
+	var err error
+	err = mr.WithSegment(models.SegmentModel, func() error {
+		return models.SetEnabledOffer(g.App.DB, gameID, offerID, enable, mr)
+	})
+
+	if err != nil {
+		logger.WithError(err).Error("Update offer failed.")
+		if modelNotFound, ok := err.(*errors.ModelNotFoundError); ok {
+			g.App.HandleError(w, http.StatusNotFound, "Offer not found for this ID", modelNotFound)
+			return
+		}
+		g.App.HandleError(w, http.StatusInternalServerError, "Update offer failed", err)
 		return
-	} else if gameID == "" {
+	}
+
+	logger.Info("Updated offer successfuly.")
+	bytesRes, _ := json.Marshal(map[string]interface{}{"id": offerID})
+	WriteBytes(w, http.StatusOK, bytesRes)
+}
+
+func (g *OfferHandler) updateOffer(w http.ResponseWriter, r *http.Request) {
+	mr := metricsReporterFromCtx(r.Context())
+	offer := offerFromCtx(r.Context())
+	userEmail := userEmailFromContext(r.Context())
+	offerID := paramKeyFromContext(r.Context())
+	offer.ID = offerID
+	logger := g.App.Logger.WithFields(logrus.Fields{
+		"source":    "offerHandler",
+		"operation": "updateOffer",
+		"userEmail": userEmail,
+		"offer":     offer,
+	})
+
+	var err error
+	err = mr.WithSegment(models.SegmentModel, func() error {
+		offer, err = models.UpdateOffer(g.App.DB, offer, mr)
+		return err
+	})
+	if err != nil {
+		logger.WithError(err).Error("Update offer failed.")
+		if notFoundError, ok := err.(*errors.ModelNotFoundError); ok {
+			g.App.HandleError(w, http.StatusNotFound, notFoundError.Error(), notFoundError)
+			return
+		}
+
+		if foreignKeyError, ok := err.(*errors.InvalidModelError); ok {
+			g.App.HandleError(w, http.StatusUnprocessableEntity, foreignKeyError.Error(), foreignKeyError)
+			return
+		}
+
+		if conflictedKeyError, ok := err.(*errors.ConflictedModelError); ok {
+			g.App.HandleError(w, http.StatusConflict, conflictedKeyError.Error(), conflictedKeyError)
+			return
+		}
+
+		g.App.HandleError(w, http.StatusInternalServerError, "Update offer failed", err)
+		return
+	}
+
+	bytesRes, err := json.Marshal(offer)
+	if err != nil {
+		logger.WithError(err).Error("Failed to build offer response.")
+		g.App.HandleError(w, http.StatusInternalServerError, "Failed to build offer response", err)
+		return
+	}
+
+	logger.Info("Updated offer successfuly.")
+	WriteBytes(w, http.StatusOK, bytesRes)
+}
+
+func (g *OfferHandler) list(w http.ResponseWriter, r *http.Request) {
+	mr := metricsReporterFromCtx(r.Context())
+	gameID := r.URL.Query().Get("game-id")
+	userEmail := userEmailFromContext(r.Context())
+
+	logger := g.App.Logger.WithFields(logrus.Fields{
+		"source":    "offerHandler",
+		"operation": "list",
+		"userEmail": userEmail,
+		"gameID":    gameID,
+	})
+
+	if gameID == "" {
 		err := fmt.Errorf("The game-id parameter cannot be empty")
-		logger.WithError(err).Error("Failed to retrieve offer for player.")
-		h.App.HandleError(w, http.StatusBadRequest, "The game-id parameter cannot be empty.", err)
+		logger.WithError(err).Error("List game offers failed.")
+		g.App.HandleError(w, http.StatusBadRequest, "The game-id parameter cannot be empty.", err)
 		return
 	}
-	currentTime := h.App.Clock.GetTime()
 
-	ots, err := models.GetAvailableOffers(h.App.DB, playerID, gameID, currentTime, mr)
+	var err error
+	var offers []*models.Offer
+	err = mr.WithSegment(models.SegmentModel, func() error {
+		offers, err = models.ListOffers(g.App.DB, gameID, mr)
+		return err
+	})
 
 	if err != nil {
-		logger.WithError(err).Error("Failed to retrieve offer for player.")
-		h.App.HandleError(w, http.StatusInternalServerError, "Failed to retrieve offer for player", err)
+		logger.WithError(err).Error("List game offers failed.")
+		g.App.HandleError(w, http.StatusInternalServerError, "List game offers failed.", err)
 		return
 	}
 
-	bytes, err := json.Marshal(ots)
-
-	if err != nil {
-		logger.WithError(err).Error("Failed to parse structs to JSON.")
-		h.App.HandleError(w, http.StatusInternalServerError, "Failed to parse structs to JSON", err)
+	logger.Info("Listed game offers successfully.")
+	if len(offers) == 0 {
+		Write(w, http.StatusOK, "[]")
 		return
 	}
-
-	logger.Info("Retrieved player offers successfully")
+	bytes, _ := json.Marshal(offers)
 	WriteBytes(w, http.StatusOK, bytes)
-}
-
-func (h *OfferRequestHandler) claimOffer(w http.ResponseWriter, r *http.Request) {
-	mr := metricsReporterFromCtx(r.Context())
-	offer := offerToUpdateFromCtx(r.Context())
-	offerID := paramKeyFromContext(r.Context())
-	currentTime := h.App.Clock.GetTime()
-	logger := h.App.Logger.WithFields(logrus.Fields{
-		"source":    "offerHandler",
-		"operation": "claimOffer",
-		"offer":     offer,
-		"offerID":   offerID,
-	})
-
-	contents, alreadyClaimed, nextAt, err := models.ClaimOffer(h.App.DB, offerID, offer.PlayerID, offer.GameID, currentTime, mr)
-	if err != nil {
-		logger.WithError(err).Error("Failed to claim offer.")
-		if modelNotFound, ok := err.(*e.ModelNotFoundError); ok {
-			h.App.HandleError(w, http.StatusNotFound, modelNotFound.Error(), modelNotFound)
-			return
-		}
-
-		h.App.HandleError(w, http.StatusInternalServerError, err.Error(), err)
-		return
-	}
-
-	logger.WithField("alreadyClaimed", alreadyClaimed).Info("Claimed offer successfully")
-	res := map[string]interface{}{
-		"contents": contents,
-	}
-	if nextAt != 0 {
-		res["nextAt"] = nextAt
-	}
-	bytesRes, _ := json.Marshal(res)
-	if alreadyClaimed {
-		WriteBytes(w, http.StatusConflict, bytesRes)
-		return
-	}
-
-	WriteBytes(w, http.StatusOK, bytesRes)
-}
-
-//UpdateOfferLastSeenAt updates the offer last seen at
-func (h *OfferRequestHandler) updateOfferLastSeenAt(w http.ResponseWriter, r *http.Request) {
-	mr := metricsReporterFromCtx(r.Context())
-	offer := offerToUpdateFromCtx(r.Context())
-	offerID := paramKeyFromContext(r.Context())
-	currentTime := h.App.Clock.GetTime()
-	logger := h.App.Logger.WithFields(logrus.Fields{
-		"source":    "offerHandler",
-		"operation": "updateOfferLastSeenAt",
-		"offer":     offer,
-		"offerID":   offerID,
-	})
-
-	nextAt, err := models.UpdateOfferLastSeenAt(h.App.DB, offerID, offer.PlayerID, offer.GameID, currentTime, mr)
-	if err != nil {
-		logger.WithError(err).Error("Failed to updated offer impressions.")
-		if modelNotFound, ok := err.(*e.ModelNotFoundError); ok {
-			h.App.HandleError(w, http.StatusNotFound, modelNotFound.Error(), modelNotFound)
-			return
-		}
-
-		h.App.HandleError(w, http.StatusInternalServerError, err.Error(), err)
-		return
-	}
-
-	logger.Info("Upated offer impressions successfully")
-	if nextAt == 0 {
-		Write(w, http.StatusOK, "{}")
-		return
-	}
-	bytesRes, _ := json.Marshal(map[string]interface{}{"nextAt": nextAt})
-	WriteBytes(w, http.StatusOK, bytesRes)
 }
