@@ -497,8 +497,6 @@ var _ = Describe("Offers Model", func() {
 			Expect(templates["popup"][0].ProductID).To(Equal("com.tfg.sample"))
 			Expect(templates["popup"][0].Contents).To(Equal(dat.JSON([]byte(`{"gems": 5, "gold": 100}`))))
 			Expect(templates["popup"][0].Metadata).To(Equal(dat.JSON([]byte(`{}`))))
-			Expect(templates["popup"][0].RemainingPurchases).To(Equal(0))
-			Expect(templates["popup"][0].RemainingImpressions).To(Equal(0))
 			Expect(templates["popup"][0].ExpireAt).To(Equal(int64(1486679000)))
 
 			Expect(templates).To(HaveKey("store"))
@@ -507,16 +505,12 @@ var _ = Describe("Offers Model", func() {
 			Expect(templates["store"][0].ProductID).To(Equal("com.tfg.sample.2"))
 			Expect(templates["store"][0].Contents).To(Equal(dat.JSON([]byte(`{"gems": 100, "gold": 5}`))))
 			Expect(templates["store"][0].Metadata).To(Equal(dat.JSON([]byte(`{"meta": "data"}`))))
-			Expect(templates["store"][0].RemainingPurchases).To(Equal(0))
-			Expect(templates["store"][0].RemainingImpressions).To(Equal(0))
 			Expect(templates["store"][0].ExpireAt).To(Equal(int64(1486679200)))
 
 			Expect(templates["store"][1].ID).To(Equal("6c4a79f2-24b8-4be9-93d4-12413b789823"))
 			Expect(templates["store"][1].ProductID).To(Equal("com.tfg.sample.3"))
 			Expect(templates["store"][1].Contents).To(Equal(dat.JSON([]byte(`{"gems": 5, "gold": 100}`))))
 			Expect(templates["store"][1].Metadata).To(Equal(dat.JSON([]byte(`{}`))))
-			Expect(templates["store"][1].RemainingPurchases).To(Equal(1))
-			Expect(templates["store"][1].RemainingImpressions).To(Equal(1))
 			Expect(templates["store"][1].ExpireAt).To(Equal(int64(1486679100)))
 		})
 

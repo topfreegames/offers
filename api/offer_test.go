@@ -73,8 +73,6 @@ var _ = Describe("Offer Handler", func() {
 			Expect(store[1]).To(HaveKey("productId"))
 			Expect(store[1]).To(HaveKey("contents"))
 			Expect(store[1]).To(HaveKey("metadata"))
-			Expect(store[1]).To(HaveKey("remainingPurchases"))
-			Expect(store[1]).To(HaveKey("remainingImpressions"))
 			Expect(store[1]).To(HaveKey("expireAt"))
 		})
 

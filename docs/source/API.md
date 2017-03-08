@@ -363,8 +363,6 @@ Offers API
                 "productId":            [string], // required, 255 characters max
                 "contents":             [json],   // offer contents as registered in the offer template
                 "metadata":             [json],   // offer metadata as registered in the offer template
-                "remainingPurchases":   [int],    // if the template has a max period, how many purchases are still available for this offer
-                "remainingImpressions": [int],    // if the template has a max frequency, how many purchases are still available for this offer
                 "expireAt":             [int64]   // timestamp (seconds since epoch) until when the offer is valid
             },
             ...

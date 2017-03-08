@@ -39,13 +39,11 @@ type OfferToUpdate struct {
 
 //OfferToReturn has the fields for the returned offer
 type OfferToReturn struct {
-	ID                   string   `json:"id"`
-	ProductID            string   `json:"productId"`
-	Contents             dat.JSON `json:"contents"`
-	Metadata             dat.JSON `json:"metadata"`
-	RemainingPurchases   int      `json:"remainingPurchases,omitempty"`
-	RemainingImpressions int      `json:"remainingImpressions,omitempty"`
-	ExpireAt             int64    `json:"expireAt"`
+	ID        string   `json:"id"`
+	ProductID string   `json:"productId"`
+	Contents  dat.JSON `json:"contents"`
+	Metadata  dat.JSON `json:"metadata"`
+	ExpireAt  int64    `json:"expireAt"`
 }
 
 //FrequencyOrPeriod is the struct for basic Frequecy and Period types
@@ -299,16 +297,6 @@ func GetAvailableOffers(db runner.Connection, playerID, gameID string, t time.Ti
 			Metadata:  ot.Metadata,
 			ExpireAt:  trigger.To,
 		}
-		var f FrequencyOrPeriod
-		var p FrequencyOrPeriod
-		json.Unmarshal(ot.Frequency, &f)
-		json.Unmarshal(ot.Period, &p)
-		if f.Max > 0 {
-			offerToReturn.RemainingImpressions = f.Max
-		}
-		if p.Max > 0 {
-			offerToReturn.RemainingPurchases = p.Max
-		}
 		o := &Offer{
 			GameID:           ot.GameID,
 			OfferTemplateID:  ot.ID,
@@ -318,12 +306,6 @@ func GetAvailableOffers(db runner.Connection, playerID, gameID string, t time.Ti
 		playerOffer, playerHasOffer := playerOffersByOfferTemplateID[ot.ID]
 		if playerHasOffer {
 			offerToReturn.ID = playerOffer.ID
-			if offerToReturn.RemainingImpressions > 0 {
-				offerToReturn.RemainingImpressions = offerToReturn.RemainingImpressions - playerOffer.SeenCounter
-			}
-			if offerToReturn.RemainingPurchases > 0 {
-				offerToReturn.RemainingPurchases = offerToReturn.RemainingPurchases - playerOffer.BoughtCounter
-			}
 		} else {
 			err := InsertOffer(db, o, t, mr)
 			if err != nil {
