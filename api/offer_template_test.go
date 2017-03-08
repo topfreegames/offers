@@ -30,7 +30,7 @@ var _ = Describe("Offer Template Handler", func() {
 		recorder = httptest.NewRecorder()
 	})
 
-	Describe("POST /templates", func() {
+	Describe("POST /templates/{key}/insert", func() {
 		It("should return status code 201 for valid parameters", func() {
 			name := "New Awesome Game"
 			key := uuid.NewV4().String()
@@ -53,7 +53,7 @@ var _ = Describe("Offer Template Handler", func() {
 				"placement": placement,
 			})
 
-			request, _ := http.NewRequest("POST", "/templates", offerTemplateReader)
+			request, _ := http.NewRequest("POST", fmt.Sprintf("/templates/%s/insert", key), offerTemplateReader)
 			app.Router.ServeHTTP(recorder, request)
 			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
 			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
@@ -79,7 +79,7 @@ var _ = Describe("Offer Template Handler", func() {
 		It("should return status code 422 if missing arguments", func() {
 			offerTemplateReader := JSONFor(JSON{})
 
-			request, _ := http.NewRequest("POST", "/templates", offerTemplateReader)
+			request, _ := http.NewRequest("POST", fmt.Sprintf("/templates/%s/insert", uuid.NewV4().String()), offerTemplateReader)
 			app.Router.ServeHTTP(recorder, request)
 			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
 			Expect(recorder.Code).To(Equal(http.StatusUnprocessableEntity))
@@ -88,7 +88,7 @@ var _ = Describe("Offer Template Handler", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(obj["code"]).To(Equal("OFF-002"))
 			Expect(obj["error"]).To(Equal("ValidationFailedError"))
-			Expect(obj["description"]).To(Equal("Key: non zero value required;Name: non zero value required;ProductID: non zero value required;GameID: non zero value required;Contents: [] does not validate as RequiredJSONObject;;Period: [] does not validate as RequiredJSONObject;;Frequency: [] does not validate as RequiredJSONObject;;Trigger: [] does not validate as RequiredJSONObject;;Placement: non zero value required;"))
+			Expect(obj["description"]).To(Equal("Name: non zero value required;ProductID: non zero value required;GameID: non zero value required;Contents: [] does not validate as RequiredJSONObject;;Period: [] does not validate as RequiredJSONObject;;Frequency: [] does not validate as RequiredJSONObject;;Trigger: [] does not validate as RequiredJSONObject;;Placement: non zero value required;"))
 		})
 
 		It("should return status code 422 if invalid arguments", func() {
@@ -103,7 +103,7 @@ var _ = Describe("Offer Template Handler", func() {
 				"placement": "",
 			})
 
-			request, _ := http.NewRequest("POST", "/templates", offerTemplateReader)
+			request, _ := http.NewRequest("POST", fmt.Sprintf("/templates/%s/insert", uuid.NewV4().String()), offerTemplateReader)
 			app.Router.ServeHTTP(recorder, request)
 			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
 			Expect(recorder.Code).To(Equal(http.StatusUnprocessableEntity))
@@ -112,13 +112,13 @@ var _ = Describe("Offer Template Handler", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(obj["code"]).To(Equal("OFF-002"))
 			Expect(obj["error"]).To(Equal("ValidationFailedError"))
-			Expect(obj["description"]).To(Equal("Key: non zero value required;Name: non zero value required;ProductID: non zero value required;GameID: ___ does not validate as matches(^[^-][a-z0-9-]*$);Contents: [34 123 110 111 116 45 97 45 106 115 111 110 125 34] does not validate as RequiredJSONObject;;Period: [34 123 110 111 116 45 97 45 106 115 111 110 125 34] does not validate as RequiredJSONObject;;Frequency: [34 123 110 111 116 45 97 45 106 115 111 110 125 34] does not validate as RequiredJSONObject;;Trigger: [34 123 110 111 116 45 97 45 106 115 111 110 125 34] does not validate as RequiredJSONObject;;Placement: non zero value required;"))
+			Expect(obj["description"]).To(Equal("Name: non zero value required;ProductID: non zero value required;GameID: ___ does not validate as matches(^[^-][a-z0-9-]*$);Contents: [34 123 110 111 116 45 97 45 106 115 111 110 125 34] does not validate as RequiredJSONObject;;Period: [34 123 110 111 116 45 97 45 106 115 111 110 125 34] does not validate as RequiredJSONObject;;Frequency: [34 123 110 111 116 45 97 45 106 115 111 110 125 34] does not validate as RequiredJSONObject;;Trigger: [34 123 110 111 116 45 97 45 106 115 111 110 125 34] does not validate as RequiredJSONObject;;Placement: non zero value required;"))
 		})
 
 		It("should return status code 422 if game-id doesn`t exist", func() {
+			key := uuid.NewV4().String()
 			offerTemplateReader := JSONFor(JSON{
 				"name":      "New Awesome Game",
-				"key":       uuid.NewV4().String(),
 				"productId": "com.tfg.example",
 				"gameId":    "not-existing-game-id",
 				"contents":  dat.JSON([]byte("{\"gems\": 5, \"gold\": 100}")),
@@ -128,7 +128,7 @@ var _ = Describe("Offer Template Handler", func() {
 				"placement": "popup",
 			})
 
-			request, _ := http.NewRequest("POST", "/templates", offerTemplateReader)
+			request, _ := http.NewRequest("POST", fmt.Sprintf("/templates/%s/insert", key), offerTemplateReader)
 			app.Router.ServeHTTP(recorder, request)
 			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
 			Expect(recorder.Code).To(Equal(http.StatusUnprocessableEntity), recorder.Body.String())
@@ -141,9 +141,9 @@ var _ = Describe("Offer Template Handler", func() {
 		})
 
 		It("should return status code 422 if contents is empty", func() {
+			key := uuid.NewV4().String()
 			offerTemplateReader := JSONFor(JSON{
 				"name":      "New Awesome Game",
-				"key":       uuid.NewV4().String(),
 				"productId": "com.tfg.example",
 				"gameId":    "game-id",
 				"contents":  "",
@@ -153,7 +153,7 @@ var _ = Describe("Offer Template Handler", func() {
 				"placement": "popup",
 			})
 
-			request, _ := http.NewRequest("POST", "/templates", offerTemplateReader)
+			request, _ := http.NewRequest("POST", fmt.Sprintf("/templates/%s/insert", key), offerTemplateReader)
 			app.Router.ServeHTTP(recorder, request)
 			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
 			Expect(recorder.Code).To(Equal(http.StatusUnprocessableEntity), recorder.Body.String())
@@ -165,37 +165,7 @@ var _ = Describe("Offer Template Handler", func() {
 			Expect(obj["description"]).To(Equal("Contents: [34 34] does not validate as RequiredJSONObject;;"))
 		})
 
-		It("should return status code 422 if key is empty", func() {
-			name := "Unique Game Name"
-			offerTemplateReader := JSONFor(JSON{
-				"name":      name,
-				"key":       "",
-				"productId": "com.tfg.example",
-				"gameId":    "game-id",
-				"contents":  dat.JSON([]byte("{\"gems\": 5, \"gold\": 100}")),
-				"period":    dat.JSON([]byte("{\"type\": \"once\"}")),
-				"frequency": dat.JSON([]byte("{\"every\": 24, \"unit\": \"hour\"}")),
-				"trigger":   dat.JSON([]byte("{\"from\": 1487280506875, \"to\": 1487366964730}")),
-				"placement": "popup",
-			})
-
-			request, _ := http.NewRequest("POST", "/templates", offerTemplateReader)
-			app.Router.ServeHTTP(recorder, request)
-			Expect(recorder.Code).To(Equal(http.StatusUnprocessableEntity), recorder.Body.String())
-			var obj map[string]interface{}
-			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
-			Expect(err).NotTo(HaveOccurred())
-			Expect(obj["code"]).To(Equal("OFF-002"))
-			Expect(obj["error"]).To(Equal("ValidationFailedError"))
-			Expect(obj["description"]).To(Equal("Key: non zero value required;"))
-
-			var offer models.Offer
-			err = app.DB.SQL("SELECT id FROM offer_templates WHERE name = $1", name).QueryStruct(&offer)
-			Expect(offer.ID).To(BeEmpty())
-			Expect(err).To(HaveOccurred())
-		})
-
-		It("should return status code 422 if key is not sent", func() {
+		It("should return status code 301 if key is not sent", func() {
 			offerTemplateReader := JSONFor(JSON{
 				"name":      "New Awesome Game",
 				"productId": "com.tfg.example",
@@ -207,21 +177,15 @@ var _ = Describe("Offer Template Handler", func() {
 				"placement": "popup",
 			})
 
-			request, _ := http.NewRequest("POST", "/templates", offerTemplateReader)
+			request, _ := http.NewRequest("POST", "/templates//insert", offerTemplateReader)
 			app.Router.ServeHTTP(recorder, request)
-			Expect(recorder.Code).To(Equal(http.StatusUnprocessableEntity), recorder.Body.String())
-			var obj map[string]interface{}
-			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
-			Expect(err).NotTo(HaveOccurred())
-			Expect(obj["code"]).To(Equal("OFF-002"))
-			Expect(obj["error"]).To(Equal("ValidationFailedError"))
-			Expect(obj["description"]).To(Equal("Key: non zero value required;"))
+			Expect(recorder.Code).To(Equal(http.StatusMovedPermanently), recorder.Body.String())
 		})
 
 		It("returns status code of 500 if database is unavailable", func() {
+			key := uuid.NewV4().String()
 			offerTemplateReader := JSONFor(JSON{
 				"name":      "New Awesome Game",
-				"key":       uuid.NewV4().String(),
 				"productId": "com.tfg.example",
 				"gameId":    "game-id",
 				"contents":  dat.JSON([]byte("{\"gems\": 5, \"gold\": 100}")),
@@ -231,7 +195,7 @@ var _ = Describe("Offer Template Handler", func() {
 				"placement": "popup",
 			})
 
-			request, _ := http.NewRequest("POST", "/templates", offerTemplateReader)
+			request, _ := http.NewRequest("POST", fmt.Sprintf("/templates/%s/insert", key), offerTemplateReader)
 
 			oldDB := app.DB
 			db, err := GetTestDB()
@@ -265,7 +229,6 @@ var _ = Describe("Offer Template Handler", func() {
 			placement := "popup"
 			offerTemplateReader := JSONFor(JSON{
 				"name":      name,
-				"key":       key,
 				"productId": productID,
 				"gameId":    gameID,
 				"contents":  dat.JSON([]byte(contents)),
@@ -276,7 +239,7 @@ var _ = Describe("Offer Template Handler", func() {
 			})
 
 			request1, _ := http.NewRequest("PUT", fmt.Sprintf("/templates/%s/disable", templateID), offerTemplateReaderEnable)
-			request2, _ := http.NewRequest("POST", "/templates", offerTemplateReader)
+			request2, _ := http.NewRequest("POST", fmt.Sprintf("/templates/%s/insert", key), offerTemplateReader)
 
 			app.Router.ServeHTTP(recorder, request1)
 			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
@@ -289,9 +252,9 @@ var _ = Describe("Offer Template Handler", func() {
 		})
 
 		It("should return status code 409 for invalid key", func() {
+			key := "this-is-an-invalid-uuid"
 			offerTemplateReader := JSONFor(JSON{
 				"name":      "New Awesome Game",
-				"key":       "this-is-an-invalid-uuid",
 				"productId": "com.tfg.example",
 				"gameId":    "game-id",
 				"contents":  dat.JSON([]byte(`{"gems": 5, "gold": 100}`)),
@@ -300,12 +263,139 @@ var _ = Describe("Offer Template Handler", func() {
 				"trigger":   dat.JSON([]byte(`{"from": 1487280506875, "to": 1487366964730}`)),
 				"placement": "popup",
 			})
-			request, _ := http.NewRequest("POST", "/templates", offerTemplateReader)
+			request, _ := http.NewRequest("POST", fmt.Sprintf("/templates/%s/insert", key), offerTemplateReader)
 
 			app.Router.ServeHTTP(recorder, request)
 
 			Expect(recorder.Code).To(Equal(http.StatusUnprocessableEntity), recorder.Body.String())
-			Expect(recorder.Body.String()).To(Equal(`{"code":"OFF-002","description":"Key: this-is-an-invalid-uuid does not validate as uuidv4;","error":"ValidationFailedError"}`))
+			var obj map[string]interface{}
+			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(obj["code"]).To(Equal("OFF-002"))
+			Expect(obj["error"]).To(Equal("ValidationFailedError"))
+			Expect(obj["description"]).To(Equal("ID: this-is-an-invalid-uuid does not validate;"))
+		})
+
+		It("should return 409 if offer template is enabled and trying to insert new one with same key", func() {
+			offerTemplateKey := "f8f8c92a-fb88-4a7d-8a5b-b8de66d7b5ac"
+			offerTemplateReader := JSONFor(JSON{
+				"name":      "template-to-update",
+				"key":       offerTemplateKey,
+				"productId": "com.tfg.example",
+				"gameId":    "offers-game-to-update",
+				"contents":  dat.JSON([]byte(`{"gems": 5, "gold": 100}`)),
+				"period":    dat.JSON([]byte(`{"max": 1}`)),
+				"frequency": dat.JSON([]byte(`{"every": "24h"}`)),
+				"trigger":   dat.JSON([]byte(`{"from": 1487280506875, "to": 1487366964730}`)),
+				"placement": "popup",
+			})
+			request, _ := http.NewRequest("POST", fmt.Sprintf("/templates/%s/insert", offerTemplateKey), offerTemplateReader)
+
+			app.Router.ServeHTTP(recorder, request)
+
+			Expect(recorder.Code).To(Equal(http.StatusConflict))
+			var obj map[string]interface{}
+			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(obj["code"]).To(Equal("OFF-003"))
+			Expect(obj["error"]).To(Equal("ConflictedOfferTemplateError"))
+			Expect(obj["description"]).To(Equal("OfferTemplate could not be saved due to: There is another enabled offer template with key f8f8c92a-fb88-4a7d-8a5b-b8de66d7b5ac"))
+		})
+	})
+
+	Describe("POST /templates/{key}/update", func() {
+		It("should return 201 if offer template with key is enabled and a new version is created", func() {
+			offerTemplateID := "3479fa18-6739-4ea8-a011-24ae40ce1c02"
+			offerTemplateKey := "f8f8c92a-fb88-4a7d-8a5b-b8de66d7b5ac"
+			offerTemplateReader := JSONFor(JSON{
+				"name":      "template-to-update",
+				"key":       offerTemplateKey,
+				"productId": "com.tfg.example",
+				"gameId":    "offers-game-to-update",
+				"contents":  dat.JSON([]byte(`{"gems": 5, "gold": 100}`)),
+				"period":    dat.JSON([]byte(`{"max": 1}`)),
+				"frequency": dat.JSON([]byte(`{"every": "24h"}`)),
+				"trigger":   dat.JSON([]byte(`{"from": 1487280506875, "to": 1487366964730}`)),
+				"placement": "popup",
+			})
+			request, _ := http.NewRequest("POST", fmt.Sprintf("/templates/%s/update", offerTemplateKey), offerTemplateReader)
+			var newOfferTemplate models.OfferTemplate
+
+			app.Router.ServeHTTP(recorder, request)
+
+			oldOt, err := models.GetOfferTemplateByID(app.DB, offerTemplateID, nil)
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(recorder.Code).To(Equal(http.StatusCreated))
+			Expect(oldOt.Enabled).To(BeFalse())
+
+			json.Unmarshal(recorder.Body.Bytes(), &newOfferTemplate)
+			Expect(newOfferTemplate.Enabled).To(BeTrue())
+		})
+
+		It("should insert offer template if trying to update inexistent key", func() {
+			offerTemplateKey := uuid.NewV4().String()
+			offerTemplateReader := JSONFor(JSON{
+				"name":      "template-to-update",
+				"key":       offerTemplateKey,
+				"productId": "com.tfg.example",
+				"gameId":    "offers-game-to-update",
+				"metadata":  dat.JSON([]byte(`{"meta": "data"}`)),
+				"contents":  dat.JSON([]byte(`{"gems": 5, "gold": 100}`)),
+				"period":    dat.JSON([]byte(`{"max": 1}`)),
+				"frequency": dat.JSON([]byte(`{"every": "24h"}`)),
+				"trigger":   dat.JSON([]byte(`{"from": 1487280506875, "to": 1487366964730}`)),
+				"placement": "popup",
+			})
+			request, _ := http.NewRequest("POST", fmt.Sprintf("/templates/%s/update", offerTemplateKey), offerTemplateReader)
+			var newOfferTemplate models.OfferTemplate
+
+			app.Router.ServeHTTP(recorder, request)
+
+			Expect(recorder.Code).To(Equal(http.StatusCreated))
+			json.Unmarshal(recorder.Body.Bytes(), &newOfferTemplate)
+			Expect(newOfferTemplate.Enabled).To(BeTrue())
+		})
+
+		It("should return status code 422 if contents isn't a JSON", func() {
+			offerTemplateKey := uuid.NewV4().String()
+			offerTemplateReader := JSONFor(JSON{
+				"name":      "template-to-update",
+				"key":       offerTemplateKey,
+				"productId": "com.tfg.example",
+				"gameId":    "offers-game-to-update",
+				"contents":  5,
+				"period":    dat.JSON([]byte(`{"max": 1}`)),
+				"frequency": dat.JSON([]byte(`{"every": "24h"}`)),
+				"trigger":   dat.JSON([]byte(`{"from": 1487280506875, "to": 1487366964730}`)),
+				"placement": "popup",
+			})
+			request, _ := http.NewRequest("POST", fmt.Sprintf("/templates/%s/update", offerTemplateKey), offerTemplateReader)
+
+			app.Router.ServeHTTP(recorder, request)
+
+			Expect(recorder.Code).To(Equal(http.StatusUnprocessableEntity))
+		})
+
+		It("should return status code 422 if metadata isn't a JSON", func() {
+			offerTemplateKey := uuid.NewV4().String()
+			offerTemplateReader := JSONFor(JSON{
+				"name":      "template-to-update",
+				"key":       offerTemplateKey,
+				"productId": "com.tfg.example",
+				"gameId":    "offers-game-to-update",
+				"metadata":  "5",
+				"contents":  dat.JSON([]byte(`{"gems": 5, "gold": 100}`)),
+				"period":    dat.JSON([]byte(`{"max": 1}`)),
+				"frequency": dat.JSON([]byte(`{"every": "24h"}`)),
+				"trigger":   dat.JSON([]byte(`{"from": 1487280506875, "to": 1487366964730}`)),
+				"placement": "popup",
+			})
+			request, _ := http.NewRequest("POST", fmt.Sprintf("/templates/%s/update", offerTemplateKey), offerTemplateReader)
+
+			app.Router.ServeHTTP(recorder, request)
+
+			Expect(recorder.Code).To(Equal(http.StatusUnprocessableEntity))
 		})
 	})
 
@@ -530,7 +620,7 @@ var _ = Describe("Offer Template Handler", func() {
 			var obj []map[string]interface{}
 			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
 			Expect(err).NotTo(HaveOccurred())
-			Expect(obj).To(HaveLen(5))
+			Expect(obj).To(HaveLen(4))
 			for i := 0; i < len(obj); i++ {
 				Expect(obj[i]).To(HaveKey("id"))
 				Expect(obj[i]).To(HaveKey("name"))

@@ -33,7 +33,6 @@ Feature: Create an offer template
     Examples:
       | name | key                                  | pid            | contents   | metadata   | period       | frequency          | trigger                                 | placement | error                                                      |
       |      | 05f69798-7720-43d2-acd4-92fe0c11e2b1 | com.tfg.sample | { 'x': 1 } | { 'y': 2 } | { 'max': 1 } | { 'every': '50s' } | { 'from': 1486678078, 'to': 1486678079} | popup     | The name is required to create a new offer template.       |
-      | oc3  |                                      | com.tfg.sample | { 'x': 1 } | { 'y': 2 } | { 'max': 1 } | { 'every': '50s' } | { 'from': 1486678078, 'to': 1486678079} | popup     | The key is required to create a new offer template.        |
       | oc3  | 05f69798-7720-43d2-acd4-92fe0c11e2b1 |                | { 'x': 1 } | { 'y': 2 } | { 'max': 1 } | { 'every': '50s' } | { 'from': 1486678078, 'to': 1486678079} | popup     | The product id is required to create a new offer template. |
       | oc3  | 05f69798-7720-43d2-acd4-92fe0c11e2b1 | com.tfg.sample |            | { 'y': 2 } | { 'max': 1 } | { 'every': '50s' } | { 'from': 1486678078, 'to': 1486678079} | popup     | The contents are required to create a new offer template.  |
       | oc3  | 05f69798-7720-43d2-acd4-92fe0c11e2b1 | com.tfg.sample | { 'x': 1 } | { 'y': 2 } |              | { 'every': '50s' } | { 'from': 1486678078, 'to': 1486678079} | popup     | The period is required to create a new offer template.     |

@@ -240,7 +240,7 @@ func theFollowingOfferTemplatesExistInTheGame(gameID string, otArgs *gherkin.Dat
 		}
 
 		if _, err := models.GetEnabledOfferTemplateByKeyAndGame(app.DB, ot.Key, ot.GameID, nil); err != nil {
-			if _, err = models.InsertOfferTemplate(app.DB, ot, nil); err != nil {
+			if _, err = models.InsertOfferTemplate(app.DB, ot, true, nil); err != nil {
 				return err
 			}
 		}
@@ -336,7 +336,6 @@ func toJSON(str string) dat.JSON {
 func anOfferTemplateIsCreatedInTheGameWithNameKeyPidContentsMetadataPeriodFreqTriggerPlace(gameID, name, key, pid, contents, metadata, period, freq, trigger, place string) error {
 	payload := map[string]interface{}{
 		"gameId":    gameID,
-		"key":       key,
 		"name":      name,
 		"productId": pid,
 		"contents":  toJSON(contents),
@@ -347,7 +346,7 @@ func anOfferTemplateIsCreatedInTheGameWithNameKeyPidContentsMetadataPeriodFreqTr
 		"placement": place,
 	}
 	var err error
-	lastStatus, lastBody, err = performRequest(app, "POST", "/templates", payload)
+	lastStatus, lastBody, err = performRequest(app, "POST", fmt.Sprintf("/templates/%s/insert", key), payload)
 
 	return err
 }

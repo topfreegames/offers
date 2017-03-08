@@ -32,7 +32,6 @@ var _ = BeforeSuite(func() {
 
 	err = oTesting.LoadFixtures(conn)
 	Expect(err).NotTo(HaveOccurred())
-
 })
 
 var _ = BeforeEach(func() {
@@ -42,7 +41,7 @@ var _ = BeforeEach(func() {
 })
 
 var _ = AfterEach(func() {
-	err := db.Rollback()
+	err := db.AutoRollback()
 	Expect(err).NotTo(HaveOccurred())
 	db = nil
 })

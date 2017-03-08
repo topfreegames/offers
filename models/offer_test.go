@@ -419,7 +419,7 @@ var _ = Describe("Offers Model", func() {
 
 			//Then
 			Expect(err).NotTo(HaveOccurred())
-			Expect(templates).To(HaveLen(3))
+			Expect(templates).To(HaveLen(2))
 			Expect(templates).To(HaveKey("popup"))
 			Expect(templates["popup"]).To(HaveLen(1))
 			Expect(templates["popup"][0].ID).To(Equal("56fc0477-39f1-485c-898e-4909e9155eb1"))
@@ -463,8 +463,8 @@ var _ = Describe("Offers Model", func() {
 			//Then
 			Expect(err1).NotTo(HaveOccurred())
 			Expect(err2).NotTo(HaveOccurred())
-			Expect(templates1).To(HaveLen(3))
-			Expect(templates2).To(HaveLen(3))
+			Expect(templates1).To(HaveLen(2))
+			Expect(templates2).To(HaveLen(2))
 		})
 
 		It("should return empty offer template list if gameID doesn't exist", func() {
@@ -493,7 +493,7 @@ var _ = Describe("Offers Model", func() {
 			//Then
 			Expect(err1).NotTo(HaveOccurred())
 			Expect(err2).NotTo(HaveOccurred())
-			Expect(templates).To(HaveLen(2))
+			Expect(templates).To(HaveLen(1))
 			Expect(templates).To(HaveKey("store"))
 		})
 
@@ -555,8 +555,8 @@ var _ = Describe("Offers Model", func() {
 			Expect(err2).NotTo(HaveOccurred())
 			Expect(err3).NotTo(HaveOccurred())
 			Expect(alreadyClaimed).To(BeFalse())
-			Expect(templatesBefore).To(HaveLen(3))
-			Expect(templatesAfter).To(HaveLen(2))
+			Expect(templatesBefore).To(HaveLen(2))
+			Expect(templatesAfter).To(HaveLen(1))
 		})
 
 		It("should not return template if it has empty trigger", func() {
@@ -648,17 +648,13 @@ var _ = Describe("Offers Model", func() {
 
 	Describe("Claim and GetAvailableOffers integrated", func() {
 		It("should not return consumed offer after it has been updated", func() {
-			offerTemplateID := "dd21ec96-2890-4ba0-b8e2-40ea67196990"
+			offerTemplateID := "8080cd21-6ed7-44d2-b243-8e8161d27c9c"
 			playerID := "player-1"
-			gameID := "offers-game"
+			gameID := "offers-game-to-update"
 			currentTime := time.Unix(1486678000, 0)
 
 			// Get fot the first time
 			offers, err := models.GetAvailableOffers(db, playerID, gameID, currentTime, nil)
-			Expect(err).NotTo(HaveOccurred())
-
-			// Disable offer template
-			err = models.SetEnabledOfferTemplate(db, offerTemplateID, false, nil)
 			Expect(err).NotTo(HaveOccurred())
 
 			// Claim the offer
@@ -672,7 +668,7 @@ var _ = Describe("Offers Model", func() {
 
 			// Update its contents and insert with same key
 			offerTemplate.Contents = dat.JSON([]byte(`{ "somethingNew": 100 }`))
-			offerTemplate, err = models.InsertOfferTemplate(db, offerTemplate, nil)
+			offerTemplate, err = models.InsertOfferTemplate(db, offerTemplate, false, nil)
 			Expect(err).NotTo(HaveOccurred())
 
 			// Should not return the popup offer, since it was claimed for the first time
@@ -683,7 +679,7 @@ var _ = Describe("Offers Model", func() {
 
 		It("should return updated offer with one remaining view", func() {
 			playerID := "player-1"
-			gameID := "offers-game"
+			gameID := "unique-offers-game"
 			place := "unique-place"
 			offerTemplateID := "5fed76ab-1fd7-4a91-972d-bca228ce80c4"
 			currentTime := time.Unix(1486678000, 0)
@@ -697,15 +693,11 @@ var _ = Describe("Offers Model", func() {
 			_, err = models.UpdateOfferLastSeenAt(db, offerID, playerID, gameID, currentTime, nil)
 			Expect(err).NotTo(HaveOccurred())
 
-			// Disable offer template
-			err = models.SetEnabledOfferTemplate(db, offerTemplateID, false, nil)
-			Expect(err).NotTo(HaveOccurred())
-
 			// Update Offer template
 			ot, err := models.GetOfferTemplateByID(db, offerTemplateID, nil)
 			Expect(err).NotTo(HaveOccurred())
 			ot.Contents = dat.JSON([]byte(`{ "somethingNew": 100 }`))
-			ot, err = models.InsertOfferTemplate(db, ot, nil)
+			ot, err = models.InsertOfferTemplate(db, ot, false, nil)
 			Expect(err).NotTo(HaveOccurred())
 
 			// Get offer
