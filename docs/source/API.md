@@ -34,7 +34,7 @@ Offers API
   ### Upsert Game
   `PUT /games/:id`
 
-  Update an existing Game or insert a new Game into database. `:id` must match `^[^-][a-z0-9-]*$`.
+  Update an existing Game or insert a new Game into database. `:id` must match `^[^-][a-zA-Z0-9-_]*$`.
 
   * Payload
     ```
@@ -125,7 +125,7 @@ Offers API
       {
         "name":      [string], // required, 255 characters max
         "productId": [string], // required, 255 characters max
-        "gameId":    [string], // required, matches ^[^-][a-z0-9-]*$
+        "gameId":    [string], // required, matches ^[^-][a-zA-Z0-9-_]*$
         "contents":  [json],   // required
         "placement": [string], // required, 255 characters max
         "period":    {         // required
@@ -222,7 +222,7 @@ Offers API
       {
         "name":      [string], // required, 255 characters max
         "productId": [string], // required, 255 characters max
-        "gameId":    [string], // required, matches ^[^-][a-z0-9-]*$
+        "gameId":    [string], // required, matches ^[^-][a-zA-Z0-9-_]*$
         "contents":  [json],   // required
         "placement": [string], // required, 255 characters max
         "period":    {         // required
@@ -489,7 +489,7 @@ Offers API
   * Payload
     ```
       {
-        "gameId":   [string],      // required, matches ^[^-][a-z0-9-]*$
+        "gameId":   [string],      // required, matches ^[^-][a-zA-Z0-9-_]*$
         "playerId": [string],      // required, 255 characters max
         "productId": [string],     // required, 255 characters max
         "timestamp": [int64],      // required, unix timestamp of the purchase
@@ -567,7 +567,7 @@ Offers API
   * Payload
     ```
       {
-        "gameId":   [string],   // required, matches ^[^-][a-z0-9-]*$
+        "gameId":   [string],   // required, matches ^[^-][a-zA-Z0-9-_]*$
         "playerId": [string],   // required, 255 characters max
         "impressionId" [uuidv4] // required, unique identifier for this impression
       }

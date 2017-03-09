@@ -87,7 +87,7 @@ func (a *App) getRouter() *mux.Router {
 		&LoggingMiddleware{App: a},
 		&VersionMiddleware{},
 		NewParamKeyMiddleware(a, func(id string) bool {
-			return govalidator.Matches(id, "^[^-][a-z0-9-]*$") && govalidator.StringLength(id, "1", "255")
+			return govalidator.Matches(id, "^[^-][a-zA-Z0-9-_]*$") && govalidator.StringLength(id, "1", "255")
 		}),
 		NewValidationMiddleware(func() interface{} { return &models.Game{} }),
 	).ServeHTTP).Methods("PUT").Name("game")

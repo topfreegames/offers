@@ -19,7 +19,7 @@ import (
 //OfferInstance represents a tenant in offers API it cannot be updated, only inserted
 type OfferInstance struct {
 	ID           string       `db:"id" json:"id" valid:"uuidv4,required"`
-	GameID       string       `db:"game_id" json:"gameId" valid:"matches(^[^-][a-z0-9-]*$),stringlength(1|255),required"`
+	GameID       string       `db:"game_id" json:"gameId" valid:"matches(^[^-][a-zA-Z0-9-_]*$),stringlength(1|255),required"`
 	PlayerID     string       `db:"player_id" json:"playerId" valid:"ascii,stringlength(1|1000),required"`
 	OfferID      string       `db:"offer_id" json:"offerId" valid:"uuidv4,required"`
 	OfferVersion int          `db:"offer_version" json:"offerVersion" valid:"int,required"`

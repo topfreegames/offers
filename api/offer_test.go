@@ -93,7 +93,7 @@ var _ = Describe("Offer Template Handler", func() {
 			offerReader := JSONFor(JSON{
 				"name":      "",
 				"productId": "",
-				"gameId":    "___",
+				"gameId":    "###",
 				"contents":  "{not-a-json}",
 				"period":    "{not-a-json}",
 				"frequency": "{not-a-json}",
@@ -110,7 +110,7 @@ var _ = Describe("Offer Template Handler", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(obj["code"]).To(Equal("OFF-002"))
 			Expect(obj["error"]).To(Equal("ValidationFailedError"))
-			Expect(obj["description"]).To(Equal("GameID: ___ does not validate as matches(^[^-][a-z0-9-]*$);Name: non zero value required;Period: [34 123 110 111 116 45 97 45 106 115 111 110 125 34] does not validate as RequiredJSONObject;;Frequency: [34 123 110 111 116 45 97 45 106 115 111 110 125 34] does not validate as RequiredJSONObject;;Trigger: [34 123 110 111 116 45 97 45 106 115 111 110 125 34] does not validate as RequiredJSONObject;;Placement: non zero value required;ProductID: non zero value required;Contents: [34 123 110 111 116 45 97 45 106 115 111 110 125 34] does not validate as RequiredJSONObject;;"))
+			Expect(obj["description"]).To(Equal("GameID: ### does not validate as matches(^[^-][a-zA-Z0-9-_]*$);Name: non zero value required;Period: [34 123 110 111 116 45 97 45 106 115 111 110 125 34] does not validate as RequiredJSONObject;;Frequency: [34 123 110 111 116 45 97 45 106 115 111 110 125 34] does not validate as RequiredJSONObject;;Trigger: [34 123 110 111 116 45 97 45 106 115 111 110 125 34] does not validate as RequiredJSONObject;;Placement: non zero value required;ProductID: non zero value required;Contents: [34 123 110 111 116 45 97 45 106 115 111 110 125 34] does not validate as RequiredJSONObject;;"))
 		})
 
 		It("should return status code 422 if game-id doesn`t exist", func() {

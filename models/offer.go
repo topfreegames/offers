@@ -17,7 +17,7 @@ import (
 //Offer contains the parameters of an offer
 type Offer struct {
 	ID        string    `db:"id" json:"id" valid:"uuidv4"`
-	GameID    string    `db:"game_id" json:"gameId" valid:"matches(^[^-][a-z0-9-]*$),stringlength(1|255),required"`
+	GameID    string    `db:"game_id" json:"gameId" valid:"matches(^[^-][a-zA-Z0-9-_]*$),stringlength(1|255),required"`
 	Name      string    `db:"name" json:"name" valid:"ascii,stringlength(1|255),required"`
 	Period    dat.JSON  `db:"period" json:"period" valid:"RequiredJSONObject"`
 	Frequency dat.JSON  `db:"frequency" json:"frequency" valid:"RequiredJSONObject"`

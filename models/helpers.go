@@ -23,7 +23,7 @@ import (
 
 //ClaimOfferPayload has required fields for claiming an offer
 type ClaimOfferPayload struct {
-	GameID          string `json:"gameId" valid:"matches(^[^-][a-z0-9-]*$),stringlength(1|255),required"`
+	GameID          string `json:"gameId" valid:"matches(^[^-][a-zA-Z0-9-_]*$),stringlength(1|255),required"`
 	PlayerID        string `json:"playerId" valid:"ascii,stringlength(1|1000),required"`
 	ProductID       string `json:"productId" valid:"ascii,stringlength(1|255),required"`
 	Timestamp       int64  `json:"timestamp" valid:"int64,required"`
@@ -33,7 +33,7 @@ type ClaimOfferPayload struct {
 
 //OfferImpressionPayload has required fields for an offer impression
 type OfferImpressionPayload struct {
-	GameID       string `json:"gameId" valid:"matches(^[^-][a-z0-9-]*$),stringlength(1|255),required"`
+	GameID       string `json:"gameId" valid:"matches(^[^-][a-zA-Z0-9-_]*$),stringlength(1|255),required"`
 	PlayerID     string `json:"playerId" valid:"ascii,stringlength(1|1000),required"`
 	ImpressionID string `json:"impressionId" valid:"uuidv4,required"`
 }
