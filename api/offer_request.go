@@ -59,7 +59,12 @@ func (h *OfferRequestHandler) getOffers(w http.ResponseWriter, r *http.Request) 
 	}
 	currentTime := h.App.Clock.GetTime()
 
-	ots, err := models.GetAvailableOffers(h.App.DB, h.App.RedisClient, gameID, playerID, currentTime, mr)
+	var err error
+	var offers map[string][]*models.OfferToReturn
+	err = mr.WithSegment(models.SegmentModel, func() error {
+		offers, err = models.GetAvailableOffers(h.App.DB, h.App.RedisClient, gameID, playerID, currentTime, mr)
+		return err
+	})
 
 	if err != nil {
 		logger.WithError(err).Error("Failed to retrieve offer for player.")
@@ -67,13 +72,30 @@ func (h *OfferRequestHandler) getOffers(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	bytes, err := json.Marshal(ots)
-
+	bytes, err := json.Marshal(offers)
 	if err != nil {
 		logger.WithError(err).Error("Failed to parse structs to JSON.")
 		h.App.HandleError(w, http.StatusInternalServerError, "Failed to parse structs to JSON", err)
 		return
 	}
+
+	maxAge := h.App.MaxAge
+	var game *models.Game
+	err = mr.WithSegment(models.SegmentModel, func() error {
+		game, err = models.GetGameByID(h.App.DB, gameID, mr)
+		return err
+	})
+	metadata, err := game.GetMetadata()
+	if err == nil {
+		if val, ok := metadata["cacheMaxAge"]; ok {
+			if maxAgeFromMeta, ok := val.(float64); ok {
+				maxAge = int64(maxAgeFromMeta)
+			}
+		}
+	} else {
+		logger.WithError(err).Warn("Failed to get game metadata.")
+	}
+	w.Header().Set("Cache-Control", fmt.Sprintf("max-age=%d", maxAge))
 
 	logger.Info("Retrieved player offers successfully")
 	WriteBytes(w, http.StatusOK, bytes)

@@ -26,8 +26,8 @@ type Game struct {
 }
 
 //GetMetadata for game
-func (g *Game) GetMetadata() (interface{}, error) {
-	var obj interface{}
+func (g *Game) GetMetadata() (map[string]interface{}, error) {
+	var obj map[string]interface{}
 	err := g.Metadata.Unmarshal(&obj)
 	return obj, err
 }

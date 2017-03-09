@@ -12,3 +12,5 @@ redis:
   password: ""
   db: 0
   maxPoolSize: 20
+cache:
+  maxAgeSeconds: 43200

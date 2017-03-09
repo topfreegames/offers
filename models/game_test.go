@@ -74,7 +74,7 @@ var _ = Describe("Games Model", func() {
 			Expect(game2.CreatedAt).NotTo(Equal(""))
 			Expect(game2.ID).To(Equal(game.ID))
 			Expect(game2.Name).To(Equal(game.Name))
-			Expect(obj.(map[string]interface{})["qwe"]).To(BeEquivalentTo(123))
+			Expect(obj["qwe"]).To(BeEquivalentTo(123))
 		})
 	})
 
@@ -82,7 +82,7 @@ var _ = Describe("Games Model", func() {
 		It("Should return the full list of games", func() {
 			games, err := models.ListGames(db, nil)
 			Expect(err).NotTo(HaveOccurred())
-			Expect(games).To(HaveLen(6))
+			Expect(games).To(HaveLen(7))
 		})
 	})
 
@@ -143,7 +143,7 @@ var _ = Describe("Games Model", func() {
 
 			obj, err := gameFromDB.GetMetadata()
 			Expect(err).NotTo(HaveOccurred())
-			Expect(obj.(map[string]interface{})["qwe"]).To(BeEquivalentTo(123))
+			Expect(obj["qwe"]).To(BeEquivalentTo(123))
 		})
 
 		It("should update game with existing id", func() {

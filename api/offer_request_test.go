@@ -75,6 +75,19 @@ var _ = Describe("Offer Handler", func() {
 			Expect(store[1]).To(HaveKey("contents"))
 			Expect(store[1]).To(HaveKey("metadata"))
 			Expect(store[1]).To(HaveKey("expireAt"))
+			maxAge := app.MaxAge
+			Expect(recorder.Header().Get("Cache-Control")).To(Equal(fmt.Sprintf("max-age=%d", maxAge)))
+		})
+
+		It("should return game cacheMaxAge if available", func() {
+			playerID := "player-1"
+			gameID := "offers-game-maxage"
+			url := fmt.Sprintf("/available-offers?player-id=%s&game-id=%s", playerID, gameID)
+			request, _ := http.NewRequest("GET", url, nil)
+			app.Router.ServeHTTP(recorder, request)
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
+			Expect(recorder.Code).To(Equal(http.StatusOK))
+			Expect(recorder.Header().Get("Cache-Control")).To(Equal("max-age=123"))
 		})
 
 		It("should return empty list of available offers", func() {

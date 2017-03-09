@@ -462,6 +462,11 @@ Offers API
           ...
         }
       ```
+    * Header:
+      A max-age header is sent to indicate how long the response returned by get available offers can be cached.
+      ```
+      Cache-Control: max-age=<seconds>
+      ```
 
   * Error Response
     * Code: `400`, if player-id is not informed

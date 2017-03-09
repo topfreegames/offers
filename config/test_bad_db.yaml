@@ -9,3 +9,5 @@ postgres:
 newrelic:
   app: offers
   key: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+cache:
+  maxAgeSeconds: 43200

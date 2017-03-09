@@ -29,3 +29,8 @@
     id: another-game
     name: another-game
     created_at: 2016-01-01 12:30:12
+-
+    id: offers-game-maxage
+    name: offers-game-maxage
+    created_at: 2016-01-01 12:30:12
+    metadata: {"cacheMaxAge": 123}

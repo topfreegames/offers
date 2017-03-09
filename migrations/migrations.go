@@ -85,7 +85,7 @@ func migrations0001CreategamestableSql() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "migrations/0001-CreateGamesTable.sql", size: 292, mode: os.FileMode(420), modTime: time.Unix(1488938696, 0)}
+	info := bindataFileInfo{name: "migrations/0001-CreateGamesTable.sql", size: 292, mode: os.FileMode(420), modTime: time.Unix(1488915325, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -105,7 +105,7 @@ func migrations0002CreateofferstableSql() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "migrations/0002-CreateOffersTable.sql", size: 645, mode: os.FileMode(420), modTime: time.Unix(1488998448, 0)}
+	info := bindataFileInfo{name: "migrations/0002-CreateOffersTable.sql", size: 645, mode: os.FileMode(420), modTime: time.Unix(1489088632, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -125,7 +125,7 @@ func migrations0003CreateofferintancestableSql() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "migrations/0003-CreateOfferIntancesTable.sql", size: 597, mode: os.FileMode(420), modTime: time.Unix(1488990236, 0)}
+	info := bindataFileInfo{name: "migrations/0003-CreateOfferIntancesTable.sql", size: 597, mode: os.FileMode(420), modTime: time.Unix(1489088632, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }

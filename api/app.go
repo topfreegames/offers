@@ -33,6 +33,7 @@ type App struct {
 	DB          runner.Connection
 	Debug       bool
 	Logger      logrus.FieldLogger
+	MaxAge      int64
 	NewRelic    newrelic.Application
 	RedisClient *util.RedisClient
 	Router      *mux.Router
@@ -184,6 +185,7 @@ func (a *App) configureApp() error {
 		return err
 	}
 
+	a.MaxAge = a.Config.GetInt64("cache.maxAgeSeconds")
 	a.configureServer()
 	return nil
 }
