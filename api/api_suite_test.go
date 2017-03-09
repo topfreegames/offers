@@ -62,6 +62,9 @@ var _ = AfterEach(func() {
 	app.DB = db
 	status := app.RedisClient.Client.FlushAll()
 	Expect(status.Err()).NotTo(HaveOccurred())
+	app.Clock = oTesting.MockClock{
+		CurrentTime: 1486678000,
+	}
 })
 
 var _ = AfterSuite(func() {

@@ -92,6 +92,170 @@ var _ = Describe("Offer Handler", func() {
 			Expect(recorder.Code).To(Equal(http.StatusOK))
 		})
 
+		It("should return empty list if current time is before all triggers", func() {
+			playerID := "player-1"
+			gameID := "offers-game"
+			url := fmt.Sprintf("/available-offers?player-id=%s&game-id=%s", playerID, gameID)
+			request, _ := http.NewRequest("GET", url, nil)
+			var jsonBody map[string][]map[string]interface{}
+
+			app.Clock = MockClock{
+				CurrentTime: 100,
+			}
+			app.Router.ServeHTTP(recorder, request)
+
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
+			err := json.Unmarshal(recorder.Body.Bytes(), &jsonBody)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(recorder.Code).To(Equal(http.StatusOK))
+			Expect(jsonBody).To(BeEmpty())
+			app.Clock = MockClock{
+				CurrentTime: 1486678000,
+			}
+		})
+
+		It("should return empty list if current time is after all triggers", func() {
+			playerID := "player-1"
+			gameID := "offers-game"
+			url := fmt.Sprintf("/available-offers?player-id=%s&game-id=%s", playerID, gameID)
+			request, _ := http.NewRequest("GET", url, nil)
+			var jsonBody map[string][]map[string]interface{}
+
+			app.Clock = MockClock{
+				CurrentTime: 2 * 1000 * 1000 * 1000,
+			}
+			app.Router.ServeHTTP(recorder, request)
+
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
+			err := json.Unmarshal(recorder.Body.Bytes(), &jsonBody)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(recorder.Code).To(Equal(http.StatusOK))
+			Expect(jsonBody).To(BeEmpty())
+		})
+
+		It("should return offer again if currentTime - lastView >= frequency", func() {
+			playerID := "player-1"
+			gameID := "offers-game"
+			url := fmt.Sprintf("/available-offers?player-id=%s&game-id=%s", playerID, gameID)
+			offerInstanceID := "eb7e8d2a-2739-4da3-aa31-7970b63bdad7"
+			request, _ := http.NewRequest("GET", url, nil)
+			var jsonBody map[string]interface{}
+
+			app.Clock = MockClock{CurrentTime: 100}
+			app.Router.ServeHTTP(recorder, request)
+
+			offerReader := JSONFor(JSON{
+				"gameId":          gameID,
+				"playerId":        playerID,
+				"productId":       "com.tfg.sample",
+				"timestamp":       time.Now().Unix(),
+				"transactionId":   uuid.NewV4().String(),
+				"offerInstanceId": offerInstanceID,
+			})
+
+			request, _ = http.NewRequest("PUT", "/offers/claim", offerReader)
+			recorder = httptest.NewRecorder()
+
+			app.Router.ServeHTTP(recorder, request)
+
+			err := json.Unmarshal(recorder.Body.Bytes(), &jsonBody)
+			Expect(err).NotTo(HaveOccurred())
+			contents := jsonBody["contents"].(map[string]interface{})
+
+			Expect(recorder.Code).To(Equal(http.StatusOK))
+			Expect(jsonBody["nextAt"]).To(BeEquivalentTo(101))
+			Expect(contents["gems"]).To(BeEquivalentTo(5))
+			Expect(contents["gold"]).To(BeEquivalentTo(100))
+
+			app.Clock = MockClock{CurrentTime: 101}
+			app.Router.ServeHTTP(recorder, request)
+
+			offerReader = JSONFor(JSON{
+				"gameId":          gameID,
+				"playerId":        playerID,
+				"productId":       "com.tfg.sample",
+				"timestamp":       time.Now().Unix(),
+				"transactionId":   uuid.NewV4().String(),
+				"offerInstanceId": offerInstanceID,
+			})
+
+			request, _ = http.NewRequest("PUT", "/offers/claim", offerReader)
+			recorder = httptest.NewRecorder()
+
+			app.Router.ServeHTTP(recorder, request)
+			err = json.Unmarshal(recorder.Body.Bytes(), &jsonBody)
+			Expect(err).NotTo(HaveOccurred())
+			contents = jsonBody["contents"].(map[string]interface{})
+
+			Expect(recorder.Code).To(Equal(http.StatusOK))
+			Expect(jsonBody["nextAt"]).To(BeEquivalentTo(102))
+			Expect(contents["gems"]).To(BeEquivalentTo(5))
+			Expect(contents["gold"]).To(BeEquivalentTo(100))
+			Expect(recorder.Code).To(Equal(http.StatusOK))
+		})
+
+		It("should not return offer again if currentTime - lastView < frequency", func() {
+			playerID := "player-1"
+			gameID := "offers-game"
+			url := fmt.Sprintf("/available-offers?player-id=%s&game-id=%s", playerID, gameID)
+			offerInstanceID := "4407b770-5b24-4ffa-8563-0694d1a10156"
+			request, _ := http.NewRequest("GET", url, nil)
+			var jsonBody map[string]interface{}
+
+			app.Clock = MockClock{CurrentTime: 100}
+			app.Router.ServeHTTP(recorder, request)
+
+			offerReader := JSONFor(JSON{
+				"gameId":          gameID,
+				"playerId":        playerID,
+				"productId":       "com.tfg.sample",
+				"timestamp":       time.Now().Unix(),
+				"transactionId":   uuid.NewV4().String(),
+				"offerInstanceId": offerInstanceID,
+			})
+
+			request, _ = http.NewRequest("PUT", "/offers/claim", offerReader)
+			recorder = httptest.NewRecorder()
+
+			app.Router.ServeHTTP(recorder, request)
+
+			Expect(recorder.Code).To(Equal(http.StatusOK))
+			err := json.Unmarshal(recorder.Body.Bytes(), &jsonBody)
+			Expect(err).NotTo(HaveOccurred())
+			contents := jsonBody["contents"].(map[string]interface{})
+
+			Expect(recorder.Code).To(Equal(http.StatusOK))
+			Expect(jsonBody["nextAt"]).To(BeEquivalentTo(101))
+			Expect(contents["gems"]).To(BeEquivalentTo(5))
+			Expect(contents["gold"]).To(BeEquivalentTo(100))
+
+			app.Clock = MockClock{CurrentTime: 200}
+			app.Router.ServeHTTP(recorder, request)
+
+			offerReader = JSONFor(JSON{
+				"gameId":          gameID,
+				"playerId":        playerID,
+				"productId":       "com.tfg.sample",
+				"timestamp":       time.Now().Unix(),
+				"transactionId":   uuid.NewV4().String(),
+				"offerInstanceId": offerInstanceID,
+			})
+
+			request, _ = http.NewRequest("PUT", "/offers/claim", offerReader)
+			recorder = httptest.NewRecorder()
+
+			app.Router.ServeHTTP(recorder, request)
+			Expect(recorder.Code).To(Equal(http.StatusOK))
+			err = json.Unmarshal(recorder.Body.Bytes(), &jsonBody)
+			Expect(err).NotTo(HaveOccurred())
+			contents = jsonBody["contents"].(map[string]interface{})
+
+			Expect(recorder.Code).To(Equal(http.StatusOK))
+			Expect(jsonBody["nextAt"]).To(BeEquivalentTo(201))
+			Expect(contents["gems"]).To(BeEquivalentTo(5))
+			Expect(contents["gold"]).To(BeEquivalentTo(100))
+		})
+
 		It("should return status code 400 if player-id is not informed available offers", func() {
 			gameID := "offers-game"
 			url := fmt.Sprintf("/available-offers?game-id=%s", gameID)
