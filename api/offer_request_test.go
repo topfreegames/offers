@@ -821,6 +821,28 @@ var _ = Describe("Offer Handler", func() {
 			Expect(obj["error"]).To(Equal("ValidationFailedError"))
 			Expect(obj["description"]).To(Equal("json: cannot unmarshal string into Go value of type models.ClaimOfferPayload"))
 		})
+
+		It("should return 404 if claim on inexistent offer when offerInstanceID is not passed", func() {
+			gameID := "non-existing-offers-game"
+			playerID := "player-1"
+			offerReader := JSONFor(JSON{
+				"gameId":        gameID,
+				"playerId":      playerID,
+				"productId":     "com.tfg.sample",
+				"timestamp":     app.Clock.GetTime().Unix(),
+				"transactionId": uuid.NewV4().String(),
+			})
+			request, _ := http.NewRequest("PUT", "/offers/claim", offerReader)
+
+			app.Router.ServeHTTP(recorder, request)
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
+			Expect(recorder.Code).To(Equal(http.StatusNotFound))
+			var jsonBody map[string]string
+			json.Unmarshal(recorder.Body.Bytes(), &jsonBody)
+			Expect(jsonBody["code"]).To(Equal("OFF-001"))
+			Expect(jsonBody["description"]).To(Equal("offerInstance was not found with specified filters."))
+			Expect(jsonBody["error"]).To(Equal("offerInstanceNotFoundError"))
+		})
 	})
 
 	Describe("PUT /offers/{id}/impressions", func() {

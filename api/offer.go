@@ -69,11 +69,6 @@ func (g *OfferHandler) insertOffer(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		if conflictedKeyError, ok := err.(*errors.ConflictedModelError); ok {
-			g.App.HandleError(w, http.StatusConflict, conflictedKeyError.Error(), conflictedKeyError)
-			return
-		}
-
 		g.App.HandleError(w, http.StatusInternalServerError, "Insert offer failed", err)
 		return
 	}
@@ -145,16 +140,6 @@ func (g *OfferHandler) updateOffer(w http.ResponseWriter, r *http.Request) {
 		logger.WithError(err).Error("Update offer failed.")
 		if notFoundError, ok := err.(*errors.ModelNotFoundError); ok {
 			g.App.HandleError(w, http.StatusNotFound, notFoundError.Error(), notFoundError)
-			return
-		}
-
-		if foreignKeyError, ok := err.(*errors.InvalidModelError); ok {
-			g.App.HandleError(w, http.StatusUnprocessableEntity, foreignKeyError.Error(), foreignKeyError)
-			return
-		}
-
-		if conflictedKeyError, ok := err.(*errors.ConflictedModelError); ok {
-			g.App.HandleError(w, http.StatusConflict, conflictedKeyError.Error(), conflictedKeyError)
 			return
 		}
 
