@@ -39,8 +39,8 @@ type OfferImpressionPayload struct {
 }
 
 //GetTransactionsKey returns the key of the player's purchase transactions in redis
-func GetTransactionsKey(playerID string) string {
-	return fmt.Sprintf("transactions:%s", playerID)
+func GetTransactionsKey(gameID, playerID string) string {
+	return fmt.Sprintf("transactions:%s:%s", gameID, playerID)
 }
 
 //GetClaimCounterKey returns the key of the player's claim counter
@@ -54,8 +54,8 @@ func GetClaimTimestampKey(playerID, offerID string) string {
 }
 
 //GetImpressionsKey returns the key of the player's impressions in redis
-func GetImpressionsKey(playerID string) string {
-	return fmt.Sprintf("impressions:%s", playerID)
+func GetImpressionsKey(playerID, gameID string) string {
+	return fmt.Sprintf("impressions:%s:%s", gameID, playerID)
 }
 
 //GetViewCounterKey returns the key of the player's impressions counter

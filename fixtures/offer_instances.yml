@@ -122,3 +122,12 @@
     contents: '{"gems": 5, "gold": 100}'
     product_id: com.tfg.sample
     created_at: 2016-01-01 12:30:12
+-
+    id: f0e3ce8c-bf9b-4da2-886b-e1b5a62a18cb
+    game_id: another-game
+    player_id: player-12
+    offer_id: f1f74fcd-17ae-4ccd-a248-f77c60e78c8c
+    offer_version: 1
+    contents: '{"gems": 5, "gold": 100}'
+    product_id: com.tfg.sample
+    created_at: 2016-01-01 12:30:12

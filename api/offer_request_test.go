@@ -16,6 +16,7 @@ import (
 	"time"
 
 	uuid "github.com/satori/go.uuid"
+	"gopkg.in/mgutz/dat.v2/dat"
 	runner "gopkg.in/mgutz/dat.v2/sqlx-runner"
 
 	. "github.com/onsi/ginkgo"
@@ -154,16 +155,15 @@ var _ = Describe("Offer Handler", func() {
 			request, _ := http.NewRequest("GET", url, nil)
 			var jsonBody map[string]interface{}
 
-			app.Clock = MockClock{CurrentTime: 100}
 			app.Router.ServeHTTP(recorder, request)
 
 			offerReader := JSONFor(JSON{
-				"gameId":          gameID,
-				"playerId":        playerID,
-				"productId":       "com.tfg.sample",
-				"timestamp":       time.Now().Unix(),
-				"transactionId":   uuid.NewV4().String(),
-				"offerInstanceId": offerInstanceID,
+				"gameId":        gameID,
+				"playerId":      playerID,
+				"productId":     "com.tfg.sample",
+				"timestamp":     100,
+				"transactionId": uuid.NewV4().String(),
+				"id":            offerInstanceID,
 			})
 
 			request, _ = http.NewRequest("PUT", "/offers/claim", offerReader)
@@ -180,17 +180,15 @@ var _ = Describe("Offer Handler", func() {
 			Expect(contents["gems"]).To(BeEquivalentTo(5))
 			Expect(contents["gold"]).To(BeEquivalentTo(100))
 
-			app.Clock = MockClock{CurrentTime: 101}
 			app.Router.ServeHTTP(recorder, request)
 
 			offerReader = JSONFor(JSON{
-				"gameId":          gameID,
-				"playerId":        playerID,
-				"productId":       "com.tfg.sample",
-				"timestamp":       time.Now().Unix(),
-				"transactionId":   uuid.NewV4().String(),
-				"offerInstanceId": offerInstanceID,
-			})
+				"gameId":        gameID,
+				"playerId":      playerID,
+				"productId":     "com.tfg.sample",
+				"timestamp":     101,
+				"transactionId": uuid.NewV4().String(),
+				"id":            offerInstanceID})
 
 			request, _ = http.NewRequest("PUT", "/offers/claim", offerReader)
 			recorder = httptest.NewRecorder()
@@ -210,26 +208,18 @@ var _ = Describe("Offer Handler", func() {
 		It("should not return offer again if currentTime - lastView < frequency", func() {
 			playerID := "player-1"
 			gameID := "offers-game"
-			url := fmt.Sprintf("/available-offers?player-id=%s&game-id=%s", playerID, gameID)
 			offerInstanceID := "4407b770-5b24-4ffa-8563-0694d1a10156"
-			request, _ := http.NewRequest("GET", url, nil)
 			var jsonBody map[string]interface{}
 
-			app.Clock = MockClock{CurrentTime: 100}
-			app.Router.ServeHTTP(recorder, request)
-
 			offerReader := JSONFor(JSON{
-				"gameId":          gameID,
-				"playerId":        playerID,
-				"productId":       "com.tfg.sample",
-				"timestamp":       time.Now().Unix(),
-				"transactionId":   uuid.NewV4().String(),
-				"offerInstanceId": offerInstanceID,
+				"gameId":        gameID,
+				"playerId":      playerID,
+				"productId":     "com.tfg.sample",
+				"timestamp":     100,
+				"transactionId": uuid.NewV4().String(),
+				"id":            offerInstanceID,
 			})
-
-			request, _ = http.NewRequest("PUT", "/offers/claim", offerReader)
-			recorder = httptest.NewRecorder()
-
+			request, _ := http.NewRequest("PUT", "/offers/claim", offerReader)
 			app.Router.ServeHTTP(recorder, request)
 
 			Expect(recorder.Code).To(Equal(http.StatusOK))
@@ -238,33 +228,30 @@ var _ = Describe("Offer Handler", func() {
 			contents := jsonBody["contents"].(map[string]interface{})
 
 			Expect(recorder.Code).To(Equal(http.StatusOK))
-			Expect(jsonBody["nextAt"]).To(BeEquivalentTo(101))
+			Expect(jsonBody["nextAt"]).To(BeEquivalentTo(43300))
 			Expect(contents["gems"]).To(BeEquivalentTo(5))
 			Expect(contents["gold"]).To(BeEquivalentTo(100))
 
-			app.Clock = MockClock{CurrentTime: 200}
-			app.Router.ServeHTTP(recorder, request)
-
 			offerReader = JSONFor(JSON{
-				"gameId":          gameID,
-				"playerId":        playerID,
-				"productId":       "com.tfg.sample",
-				"timestamp":       time.Now().Unix(),
-				"transactionId":   uuid.NewV4().String(),
-				"offerInstanceId": offerInstanceID,
+				"gameId":        gameID,
+				"playerId":      playerID,
+				"productId":     "com.tfg.sample",
+				"timestamp":     100,
+				"transactionId": uuid.NewV4().String(),
+				"id":            offerInstanceID,
 			})
-
 			request, _ = http.NewRequest("PUT", "/offers/claim", offerReader)
 			recorder = httptest.NewRecorder()
 
 			app.Router.ServeHTTP(recorder, request)
+
 			Expect(recorder.Code).To(Equal(http.StatusOK))
 			err = json.Unmarshal(recorder.Body.Bytes(), &jsonBody)
 			Expect(err).NotTo(HaveOccurred())
 			contents = jsonBody["contents"].(map[string]interface{})
 
 			Expect(recorder.Code).To(Equal(http.StatusOK))
-			Expect(jsonBody["nextAt"]).To(BeEquivalentTo(201))
+			Expect(jsonBody["nextAt"]).To(BeEquivalentTo(43300))
 			Expect(contents["gems"]).To(BeEquivalentTo(5))
 			Expect(contents["gold"]).To(BeEquivalentTo(100))
 		})
@@ -326,7 +313,7 @@ var _ = Describe("Offer Handler", func() {
 			app.DB = oldDB // avoid errors in after each
 		})
 
-		It("should not return offer after claim if offer template period has max 1", func() {
+		It("should not return instance after claim if offer period has max 1", func() {
 			// Create Offer by requesting it
 			gameID := "limited-offers-game"
 			playerID := "player-1"
@@ -343,12 +330,12 @@ var _ = Describe("Offer Handler", func() {
 			// Claim the Offer
 			id := body[place][0].ID
 			offerReader := JSONFor(JSON{
-				"gameId":          gameID,
-				"playerId":        playerID,
-				"productId":       "com.tfg.sample",
-				"timestamp":       time.Now().Unix(),
-				"transactionId":   uuid.NewV4().String(),
-				"offerInstanceId": id,
+				"gameId":        gameID,
+				"playerId":      playerID,
+				"productId":     "com.tfg.sample",
+				"timestamp":     time.Now().Unix(),
+				"transactionId": uuid.NewV4().String(),
+				"id":            id,
 			})
 			request, _ = http.NewRequest("PUT", "/offers/claim", offerReader)
 			recorder = httptest.NewRecorder()
@@ -367,19 +354,198 @@ var _ = Describe("Offer Handler", func() {
 			Expect(err).ToNot(HaveOccurred())
 			Expect(newBody).NotTo(HaveKey(place))
 		})
+
+		It("should return offer again if max is 2 and currentTime - lastClaim >= period", func() {
+			// Create Offer by requesting it
+			gameID := "another-game"
+			playerID := "player-12"
+			place := "unique-place"
+			offerInstanceID := "f0e3ce8c-bf9b-4da2-886b-e1b5a62a18cb"
+
+			// Claim the Offer
+			offerReader := JSONFor(JSON{
+				"gameId":        gameID,
+				"playerId":      playerID,
+				"productId":     "com.tfg.sample",
+				"timestamp":     1486678000,
+				"transactionId": uuid.NewV4().String(),
+				"id":            offerInstanceID,
+			})
+			request, _ := http.NewRequest("PUT", "/offers/claim", offerReader)
+			recorder = httptest.NewRecorder()
+			app.Router.ServeHTTP(recorder, request)
+
+			var jsonBody map[string]interface{}
+			json.Unmarshal(recorder.Body.Bytes(), &jsonBody)
+			contents := jsonBody["contents"]
+			Expect(contents).To(Equal(map[string]interface{}{
+				"gold": float64(100),
+				"gems": float64(5),
+			}))
+			Expect(jsonBody["nextAt"]).To(Equal(float64(1486678010)))
+			Expect(recorder.Code).To(Equal(http.StatusOK))
+
+			// Offer must not be returned again in next Get
+			app.Clock = MockClock{CurrentTime: 1486678010}
+			request, _ = http.NewRequest("GET", fmt.Sprintf("/available-offers?player-id=%s&game-id=%s", playerID, gameID), nil)
+			recorder = httptest.NewRecorder()
+			app.Router.ServeHTTP(recorder, request)
+			Expect(recorder.Code).To(Equal(http.StatusOK))
+			var newBody map[string][]*models.OfferToReturn
+			err := json.Unmarshal(recorder.Body.Bytes(), &newBody)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(newBody).To(HaveKey(place))
+		})
+
+		It("should return offer again if max is 2 and currentTime - lastClaim < period", func() {
+			// Create Offer by requesting it
+			gameID := "another-game"
+			playerID := "player-12"
+			offerInstanceID := "f0e3ce8c-bf9b-4da2-886b-e1b5a62a18cb"
+
+			// Claim the Offer
+			offerReader := JSONFor(JSON{
+				"gameId":        gameID,
+				"playerId":      playerID,
+				"productId":     "com.tfg.sample",
+				"timestamp":     1486678000,
+				"transactionId": uuid.NewV4().String(),
+				"id":            offerInstanceID,
+			})
+			request, _ := http.NewRequest("PUT", "/offers/claim", offerReader)
+			recorder = httptest.NewRecorder()
+			app.Router.ServeHTTP(recorder, request)
+
+			var jsonBody map[string]interface{}
+			json.Unmarshal(recorder.Body.Bytes(), &jsonBody)
+			contents := jsonBody["contents"]
+			Expect(contents).To(Equal(map[string]interface{}{
+				"gold": float64(100),
+				"gems": float64(5),
+			}))
+			Expect(jsonBody["nextAt"]).To(Equal(float64(1486678010)))
+			Expect(recorder.Code).To(Equal(http.StatusOK))
+
+			// Offer must not be returned again in next Get
+			app.Clock = MockClock{CurrentTime: 148667805}
+			request, _ = http.NewRequest("GET", fmt.Sprintf("/available-offers?player-id=%s&game-id=%s", playerID, gameID), nil)
+			recorder = httptest.NewRecorder()
+			app.Router.ServeHTTP(recorder, request)
+			Expect(recorder.Code).To(Equal(http.StatusOK))
+			var newBody map[string][]*models.OfferToReturn
+			err := json.Unmarshal(recorder.Body.Bytes(), &newBody)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(newBody).To(BeEmpty())
+		})
+
+		It("should return instance after one view if offer frequency has max 2", func() {
+			// Create Offer by requesting it
+			gameID := "offers-game"
+			playerID := "player-1"
+			id := "6c4a79f2-24b8-4be9-93d4-12413b789823"
+			var body map[string]int64
+
+			// View the Offer
+			offerReader := JSONFor(JSON{
+				"gameId":       gameID,
+				"playerId":     playerID,
+				"impressionId": uuid.NewV4().String(),
+			})
+			request, _ := http.NewRequest("PUT", fmt.Sprintf("/offers/%s/impressions", id), offerReader)
+			recorder = httptest.NewRecorder()
+			app.Router.ServeHTTP(recorder, request)
+			json.Unmarshal(recorder.Body.Bytes(), &body)
+			Expect(body["nextAt"]).To(Equal(int64(1486678001)))
+			Expect(recorder.Code).To(Equal(http.StatusOK))
+
+			// Offer must be returned again in next Get
+			app.Clock = MockClock{CurrentTime: 1486678002}
+			request, _ = http.NewRequest("GET", fmt.Sprintf("/available-offers?player-id=%s&game-id=%s", playerID, gameID), nil)
+			recorder = httptest.NewRecorder()
+			app.Router.ServeHTTP(recorder, request)
+			Expect(recorder.Code).To(Equal(http.StatusOK))
+
+			var offersToReturn map[string][]models.OfferToReturn
+			json.Unmarshal(recorder.Body.Bytes(), &offersToReturn)
+			offer := models.OfferToReturn{
+				ID:        "6c4a79f2-24b8-4be9-93d4-12413b789823",
+				ProductID: "com.tfg.sample.3",
+				Contents:  dat.JSON([]byte(`{"gems":5,"gold":100}`)),
+				Metadata:  dat.JSON([]byte("{}")),
+				ExpireAt:  1486679100,
+			}
+			Expect(offersToReturn["store"]).To(ContainElement(offer))
+		})
+
+		It("should return instance after one view if offer frequency has max 2", func() {
+			// Create Offer by requesting it
+			gameID := "offers-game"
+			playerID := "player-1"
+			id := "6c4a79f2-24b8-4be9-93d4-12413b789823"
+			var body map[string]int64
+
+			// View the Offer for the first time
+			offerReader := JSONFor(JSON{
+				"gameId":       gameID,
+				"playerId":     playerID,
+				"impressionId": uuid.NewV4().String(),
+			})
+			request, _ := http.NewRequest("PUT", fmt.Sprintf("/offers/%s/impressions", id), offerReader)
+			recorder = httptest.NewRecorder()
+			app.Router.ServeHTTP(recorder, request)
+			json.Unmarshal(recorder.Body.Bytes(), &body)
+			Expect(body["nextAt"]).To(Equal(int64(1486678001)))
+			Expect(recorder.Code).To(Equal(http.StatusOK))
+
+			// View the Offer for the second time
+			app.Clock = MockClock{CurrentTime: 1486678001}
+			offerReader = JSONFor(JSON{
+				"gameId":       gameID,
+				"playerId":     playerID,
+				"impressionId": uuid.NewV4().String(),
+			})
+			request, _ = http.NewRequest("PUT", fmt.Sprintf("/offers/%s/impressions", id), offerReader)
+			recorder = httptest.NewRecorder()
+			app.Router.ServeHTTP(recorder, request)
+			json.Unmarshal(recorder.Body.Bytes(), &body)
+			Expect(body["nextAt"]).To(Equal(int64(1486678001))) // No nextAt, so keeps the same as before
+			Expect(recorder.Code).To(Equal(http.StatusOK))
+
+			// Offer must be returned again in next Get
+			app.Clock = MockClock{CurrentTime: 1486678002}
+			request, _ = http.NewRequest("GET", fmt.Sprintf("/available-offers?player-id=%s&game-id=%s", playerID, gameID), nil)
+			recorder = httptest.NewRecorder()
+			app.Router.ServeHTTP(recorder, request)
+			Expect(recorder.Code).To(Equal(http.StatusOK))
+
+			var offersToReturn map[string][]models.OfferToReturn
+			json.Unmarshal(recorder.Body.Bytes(), &offersToReturn)
+			offer := models.OfferToReturn{
+				ID:        "6c4a79f2-24b8-4be9-93d4-12413b789823",
+				ProductID: "com.tfg.sample.3",
+				Contents:  dat.JSON([]byte(`{"gems":5,"gold":100}`)),
+				Metadata:  dat.JSON([]byte("{}")),
+				ExpireAt:  1486679100,
+			}
+			Expect(offersToReturn["store"]).NotTo(ContainElement(offer))
+		})
 	})
 
 	Describe("PUT /offers/claim", func() {
 		It("should claim valid offer", func() {
-			id := "56fc0477-39f1-485c-898e-4909e9155eb1"
+			offerInstanceID := "56fc0477-39f1-485c-898e-4909e9155eb1"
+			offerID := "dd21ec96-2890-4ba0-b8e2-40ea67196990"
 			gameID := "offers-game"
+			playerID := "player-1"
+			claimCounterKey := models.GetClaimCounterKey(playerID, offerID)
+			claimTimestampKey := models.GetClaimTimestampKey(playerID, offerID)
 			offerReader := JSONFor(JSON{
 				"gameId":        gameID,
-				"playerId":      "player-1",
+				"playerId":      playerID,
 				"productId":     "product-id",
-				"timestamp":     time.Now().Unix(),
+				"timestamp":     app.Clock.GetTime().Unix(),
 				"transactionId": uuid.NewV4().String(),
-				"id":            id,
+				"id":            offerInstanceID,
 			})
 			request, _ := http.NewRequest("PUT", "/offers/claim", offerReader)
 
@@ -387,23 +553,43 @@ var _ = Describe("Offer Handler", func() {
 			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
 			Expect(recorder.Body.String()).To(Equal(fmt.Sprintf(`{"contents":{"gems":5,"gold":100},"nextAt":%v}`, app.Clock.GetTime().Unix()+1)))
 			Expect(recorder.Code).To(Equal(http.StatusOK))
+
+			claimCount, err := app.RedisClient.Client.Get(claimCounterKey).Int64()
+			Expect(err).ToNot(HaveOccurred())
+			Expect(claimCount).To(Equal(int64(1)))
+
+			claimTimestamp, err := app.RedisClient.Client.Get(claimTimestampKey).Int64()
+			Expect(err).ToNot(HaveOccurred())
+			Expect(claimTimestamp).To(Equal(app.Clock.GetTime().Unix()))
 		})
 
 		It("should claim valid offer even if id is not passed", func() {
 			gameID := "offers-game"
+			playerID := "player-1"
 			offerReader := JSONFor(JSON{
 				"gameId":        gameID,
-				"playerId":      "player-1",
+				"playerId":      playerID,
 				"productId":     "com.tfg.sample",
-				"timestamp":     time.Now().Unix(),
+				"timestamp":     app.Clock.GetTime().Unix(),
 				"transactionId": uuid.NewV4().String(),
 			})
 			request, _ := http.NewRequest("PUT", "/offers/claim", offerReader)
+			offerID := "dd21ec96-2890-4ba0-b8e2-40ea67196990"
+			claimCounterKey := models.GetClaimCounterKey(playerID, offerID)
+			claimTimestampKey := models.GetClaimTimestampKey(playerID, offerID)
 
 			app.Router.ServeHTTP(recorder, request)
 			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
 			Expect(recorder.Body.String()).To(Equal(fmt.Sprintf(`{"contents":{"gems":5,"gold":100},"nextAt":%v}`, app.Clock.GetTime().Unix()+1)))
 			Expect(recorder.Code).To(Equal(http.StatusOK))
+
+			claimCount, err := app.RedisClient.Client.Get(claimCounterKey).Int64()
+			Expect(err).ToNot(HaveOccurred())
+			Expect(claimCount).To(Equal(int64(1)))
+
+			claimTimestamp, err := app.RedisClient.Client.Get(claimTimestampKey).Int64()
+			Expect(err).ToNot(HaveOccurred())
+			Expect(claimTimestamp).To(Equal(app.Clock.GetTime().Unix()))
 		})
 
 		It("should not claim a claimed offer", func() {
@@ -413,7 +599,7 @@ var _ = Describe("Offer Handler", func() {
 				"gameId":        gameID,
 				"playerId":      "player-1",
 				"productId":     "product-id",
-				"timestamp":     time.Now().Unix(),
+				"timestamp":     app.Clock.GetTime().Unix(),
 				"transactionId": uuid.NewV4().String(),
 				"id":            id,
 			}
@@ -430,6 +616,84 @@ var _ = Describe("Offer Handler", func() {
 			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
 			Expect(recorder.Body.String()).To(Equal(fmt.Sprintf(`{"contents":{"gems":5,"gold":100},"nextAt":%v}`, app.Clock.GetTime().Unix()+1)))
 			Expect(recorder.Code).To(Equal(http.StatusConflict))
+		})
+
+		It("should return nextAt to lastClaim + every if replay request", func() {
+			offerID := "5fed76ab-1fd7-4a91-972d-bca228ce80c4"
+			offerInstanceID := "4407b770-5b24-4ffa-8563-0694d1a10156"
+			gameID := "offers-game"
+			playerID := "player-1"
+			claimCounterKey := models.GetClaimCounterKey(playerID, offerID)
+			claimTimestampKey := models.GetClaimTimestampKey(playerID, offerID)
+			transactionID := uuid.NewV4().String()
+
+			offerReader := JSONFor(JSON{
+				"gameId":        gameID,
+				"playerId":      playerID,
+				"productId":     "product-id",
+				"timestamp":     app.Clock.GetTime().Unix(),
+				"transactionId": transactionID,
+				"id":            offerInstanceID,
+			})
+			request, _ := http.NewRequest("PUT", "/offers/claim", offerReader)
+			app.Router.ServeHTTP(recorder, request)
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
+			Expect(recorder.Body.String()).To(Equal(fmt.Sprintf(`{"contents":{"gems":5,"gold":100},"nextAt":%v}`, app.Clock.GetTime().Unix()+12*60*60)))
+			Expect(recorder.Code).To(Equal(http.StatusOK))
+
+			offerReader = JSONFor(JSON{
+				"gameId":        gameID,
+				"playerId":      playerID,
+				"productId":     "product-id",
+				"timestamp":     app.Clock.GetTime().Unix() + 100,
+				"transactionId": transactionID,
+				"id":            offerInstanceID,
+			})
+			request, _ = http.NewRequest("PUT", "/offers/claim", offerReader)
+			recorder = httptest.NewRecorder()
+			app.Router.ServeHTTP(recorder, request)
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
+			Expect(recorder.Body.String()).To(Equal(fmt.Sprintf(`{"contents":{"gems":5,"gold":100},"nextAt":%v}`, app.Clock.GetTime().Unix()+12*60*60)))
+			Expect(recorder.Code).To(Equal(http.StatusConflict))
+
+			claimCount, err := app.RedisClient.Client.Get(claimCounterKey).Int64()
+			Expect(err).ToNot(HaveOccurred())
+			Expect(claimCount).To(Equal(int64(1)))
+
+			claimTimestamp, err := app.RedisClient.Client.Get(claimTimestampKey).Int64()
+			Expect(err).ToNot(HaveOccurred())
+			Expect(claimTimestamp).To(Equal(app.Clock.GetTime().Unix()))
+		})
+
+		It("should not return nextAt if max is achieved", func() {
+			offerInstanceID := "fe528bb0-dab6-4f5a-b6cd-347422fd9817"
+			offerID := "9456f6c4-f9f1-4dd9-8841-9e5770c8e62c"
+			gameID := "offers-game-max-freq"
+			playerID := "player-1"
+			claimCounterKey := models.GetClaimCounterKey(playerID, offerID)
+			claimTimestampKey := models.GetClaimTimestampKey(playerID, offerID)
+			offerReader := JSONFor(JSON{
+				"gameId":        gameID,
+				"playerId":      playerID,
+				"productId":     "product-id",
+				"timestamp":     app.Clock.GetTime().Unix(),
+				"transactionId": uuid.NewV4().String(),
+				"id":            offerInstanceID,
+			})
+			request, _ := http.NewRequest("PUT", "/offers/claim", offerReader)
+
+			app.Router.ServeHTTP(recorder, request)
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
+			Expect(recorder.Body.String()).To(Equal(`{"contents":{"gems":5,"gold":100}}`))
+			Expect(recorder.Code).To(Equal(http.StatusOK))
+
+			claimCount, err := app.RedisClient.Client.Get(claimCounterKey).Int64()
+			Expect(err).ToNot(HaveOccurred())
+			Expect(claimCount).To(Equal(int64(1)))
+
+			claimTimestamp, err := app.RedisClient.Client.Get(claimTimestampKey).Int64()
+			Expect(err).ToNot(HaveOccurred())
+			Expect(claimTimestamp).To(Equal(app.Clock.GetTime().Unix()))
 		})
 
 		It("should return 422 if invalid OfferID", func() {
@@ -559,16 +823,20 @@ var _ = Describe("Offer Handler", func() {
 		})
 	})
 
-	Describe("POST /offers/{id}/impressions", func() {
-		It("should update last seen at of valid offer", func() {
-			id := "56fc0477-39f1-485c-898e-4909e9155eb1"
+	Describe("PUT /offers/{id}/impressions", func() {
+		It("should increment view counter and update ", func() {
+			offerInstanceID := "56fc0477-39f1-485c-898e-4909e9155eb1"
+			offerID := "dd21ec96-2890-4ba0-b8e2-40ea67196990"
 			gameID := "offers-game"
+			playerID := "player-1"
+			viewCounterKey := models.GetViewCounterKey(playerID, offerID)
+			viewTimestampKey := models.GetViewTimestampKey(playerID, offerID)
 			offerReader := JSONFor(JSON{
-				"playerId":     "player-1",
+				"playerId":     playerID,
 				"gameId":       gameID,
 				"impressionId": uuid.NewV4().String(),
 			})
-			request, _ := http.NewRequest("PUT", fmt.Sprintf("/offers/%s/impressions", id), offerReader)
+			request, _ := http.NewRequest("PUT", fmt.Sprintf("/offers/%s/impressions", offerInstanceID), offerReader)
 
 			app.Router.ServeHTTP(recorder, request)
 			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
@@ -577,6 +845,14 @@ var _ = Describe("Offer Handler", func() {
 			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(int64(obj["nextAt"].(float64))).To(Equal(app.Clock.GetTime().Unix() + 1))
+
+			viewCount, err := app.RedisClient.Client.Get(viewCounterKey).Int64()
+			Expect(err).NotTo(HaveOccurred())
+			Expect(viewCount).To(Equal(int64(1)))
+
+			viewTimestamp, err := app.RedisClient.Client.Get(viewTimestampKey).Int64()
+			Expect(err).NotTo(HaveOccurred())
+			Expect(viewTimestamp).To(Equal(app.Clock.GetTime().Unix()))
 		})
 
 		It("should return the current timestamp as nextAt if offer reached max period", func() {
@@ -615,6 +891,166 @@ var _ = Describe("Offer Handler", func() {
 			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(int64(obj["nextAt"].(float64))).To(Equal(app.Clock.GetTime().Unix()))
+		})
+
+		It("should increment view counter twice after seeing twice", func() {
+			offerInstanceID := "56fc0477-39f1-485c-898e-4909e9155eb1"
+			offerID := "dd21ec96-2890-4ba0-b8e2-40ea67196990"
+			gameID := "offers-game"
+			playerID := "player-1"
+			viewCounterKey := models.GetViewCounterKey(playerID, offerID)
+			viewTimestampKey := models.GetViewTimestampKey(playerID, offerID)
+
+			// View for the first time
+			offerReader := JSONFor(JSON{
+				"playerId":     playerID,
+				"gameId":       gameID,
+				"impressionId": uuid.NewV4().String(),
+			})
+			request, _ := http.NewRequest("PUT", fmt.Sprintf("/offers/%s/impressions", offerInstanceID), offerReader)
+			app.Router.ServeHTTP(recorder, request)
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
+			Expect(recorder.Code).To(Equal(http.StatusOK))
+			var obj map[string]interface{}
+			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(int64(obj["nextAt"].(float64))).To(Equal(app.Clock.GetTime().Unix() + 1))
+
+			// View for the second time
+			app.Clock = MockClock{CurrentTime: app.Clock.GetTime().Unix() + 1}
+			offerReader = JSONFor(JSON{
+				"playerId":     playerID,
+				"gameId":       gameID,
+				"impressionId": uuid.NewV4().String(),
+			})
+			request, _ = http.NewRequest("PUT", fmt.Sprintf("/offers/%s/impressions", offerInstanceID), offerReader)
+			recorder = httptest.NewRecorder()
+			app.Router.ServeHTTP(recorder, request)
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
+			Expect(recorder.Code).To(Equal(http.StatusOK))
+			err = json.Unmarshal([]byte(recorder.Body.String()), &obj)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(int64(obj["nextAt"].(float64))).To(Equal(app.Clock.GetTime().Unix() + 1))
+
+			viewCount, err := app.RedisClient.Client.Get(viewCounterKey).Int64()
+			Expect(err).NotTo(HaveOccurred())
+			Expect(viewCount).To(Equal(int64(2)))
+
+			viewTimestamp, err := app.RedisClient.Client.Get(viewTimestampKey).Int64()
+			Expect(err).NotTo(HaveOccurred())
+			Expect(viewTimestamp).To(Equal(app.Clock.GetTime().Unix()))
+		})
+
+		It("should return nextAt zero after seeing twice offer with max period 2", func() {
+			offerInstanceID := "5ba8848f-1df0-45b3-b8b1-27a7d5eedd6a"
+			playerID := "player-1"
+			offerID := "aa65a3f2-7cf8-4d76-957f-0a23a1bbbd32"
+			gameID := "limited-offers-game"
+			viewCounterKey := models.GetViewCounterKey(playerID, offerID)
+			err := app.RedisClient.Client.Set(viewCounterKey, 1, 0).Err()
+			Expect(err).ToNot(HaveOccurred())
+
+			offerReader := JSONFor(JSON{
+				"playerId":     playerID,
+				"gameId":       gameID,
+				"impressionId": uuid.NewV4().String(),
+			})
+			request, _ := http.NewRequest("PUT", fmt.Sprintf("/offers/%s/impressions", offerInstanceID), offerReader)
+			app.Router.ServeHTTP(recorder, request)
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
+			Expect(recorder.Code).To(Equal(http.StatusOK))
+			var obj map[string]int64
+			err = json.Unmarshal([]byte(recorder.Body.String()), &obj)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(obj["nextAt"]).To(Equal(int64(0)))
+		})
+
+		It("should not increment view counter if impressionID is the same", func() {
+			offerInstanceID := "56fc0477-39f1-485c-898e-4909e9155eb1"
+			offerID := "dd21ec96-2890-4ba0-b8e2-40ea67196990"
+			gameID := "offers-game"
+			playerID := "player-1"
+			viewCounterKey := models.GetViewCounterKey(playerID, offerID)
+			viewTimestampKey := models.GetViewTimestampKey(playerID, offerID)
+			impressionID := uuid.NewV4().String()
+			timestamp := app.Clock.GetTime().Unix()
+
+			// View for the first time
+			offerReader := JSONFor(JSON{
+				"playerId":     playerID,
+				"gameId":       gameID,
+				"impressionId": impressionID,
+			})
+			request, _ := http.NewRequest("PUT", fmt.Sprintf("/offers/%s/impressions", offerInstanceID), offerReader)
+			app.Router.ServeHTTP(recorder, request)
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
+			Expect(recorder.Code).To(Equal(http.StatusOK))
+			var obj map[string]interface{}
+			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(int64(obj["nextAt"].(float64))).To(Equal(timestamp + 1))
+
+			// View for the second time
+			app.Clock = MockClock{CurrentTime: timestamp + 1}
+			offerReader = JSONFor(JSON{
+				"playerId":     playerID,
+				"gameId":       gameID,
+				"impressionId": impressionID,
+			})
+			request, _ = http.NewRequest("PUT", fmt.Sprintf("/offers/%s/impressions", offerInstanceID), offerReader)
+			recorder = httptest.NewRecorder()
+			app.Router.ServeHTTP(recorder, request)
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
+			Expect(recorder.Code).To(Equal(http.StatusConflict))
+			err = json.Unmarshal([]byte(recorder.Body.String()), &obj)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(int64(obj["nextAt"].(float64))).To(Equal(timestamp + 2))
+
+			viewCount, err := app.RedisClient.Client.Get(viewCounterKey).Int64()
+			Expect(err).NotTo(HaveOccurred())
+			Expect(viewCount).To(Equal(int64(1)))
+
+			viewTimestamp, err := app.RedisClient.Client.Get(viewTimestampKey).Int64()
+			Expect(err).NotTo(HaveOccurred())
+			Expect(viewTimestamp).To(Equal(timestamp))
+		})
+
+		It("should not increment when is a retry request and rechead max view", func() {
+			offerInstanceID := "56fc0477-39f1-485c-898e-4909e9155eb1"
+			offerID := "dd21ec96-2890-4ba0-b8e2-40ea67196990"
+			gameID := "offers-game"
+			playerID := "player-1"
+			viewCounterKey := models.GetViewCounterKey(playerID, offerID)
+			viewTimestampKey := models.GetViewTimestampKey(playerID, offerID)
+			impressionKey := models.GetImpressionsKey(playerID, gameID)
+			impressionID := uuid.NewV4().String()
+			timestamp := app.Clock.GetTime().Unix()
+
+			// already seen once
+			err := app.RedisClient.Client.Set(viewCounterKey, 1, 0).Err()
+			Expect(err).ToNot(HaveOccurred())
+			err = app.RedisClient.Client.Set(viewTimestampKey, timestamp, 0).Err()
+			Expect(err).ToNot(HaveOccurred())
+			err = app.RedisClient.Client.SAdd(impressionKey, impressionID).Err()
+			Expect(err).ToNot(HaveOccurred())
+
+			offerReader := JSONFor(JSON{
+				"playerId":     playerID,
+				"gameId":       gameID,
+				"impressionId": impressionID,
+			})
+			request, _ := http.NewRequest("PUT", fmt.Sprintf("/offers/%s/impressions", offerInstanceID), offerReader)
+			app.Router.ServeHTTP(recorder, request)
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
+			Expect(recorder.Code).To(Equal(http.StatusConflict))
+			var obj map[string]interface{}
+			err = json.Unmarshal([]byte(recorder.Body.String()), &obj)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(int64(obj["nextAt"].(float64))).To(Equal(timestamp + 1))
+
+			viewCount, err := app.RedisClient.Client.Get(viewCounterKey).Int64()
+			Expect(err).NotTo(HaveOccurred())
+			Expect(viewCount).To(Equal(int64(1)))
 		})
 
 		It("should return status code 422 if invalid parameters", func() {

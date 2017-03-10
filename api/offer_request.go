@@ -123,6 +123,7 @@ func (h *OfferRequestHandler) claimOffer(w http.ResponseWriter, r *http.Request)
 		currentTime,
 		mr,
 	)
+
 	if err != nil {
 		logger.WithError(err).Error("Failed to claim offer.")
 		if modelNotFound, ok := err.(*e.ModelNotFoundError); ok {

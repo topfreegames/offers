@@ -161,3 +161,15 @@
     trigger: '{"from": 1486678000, "to": 1486679000}'
     placement: unique-place
     enabled: false
+-
+    id: f1f74fcd-17ae-4ccd-a248-f77c60e78c8c
+    name: template-12
+    product_id: com.tfg.sample
+    game_id: another-game
+    contents: '{"gems": 5, "gold": 100}'
+    metadata: '{}'
+    period: '{"every": "10s", "max": 2}'
+    frequency: '{"max": 2}'
+    trigger: '{"from": 1486678000, "to": 1486679000}'
+    placement: unique-place
+    enabled: true

@@ -116,7 +116,7 @@ func ClaimOffer(
 	var offerInstance *OfferInstance
 	var err error
 	var isReplay bool
-	var claimCount int64
+	var claimCount, claimTimestamp int64
 	var nextAt int64
 
 	if offerInstanceID != "" {
@@ -131,7 +131,7 @@ func ClaimOffer(
 		}
 	}
 
-	transactionsKey := GetTransactionsKey(playerID)
+	transactionsKey := GetTransactionsKey(playerID, gameID)
 	claimCounterKey := GetClaimCounterKey(playerID, offerInstance.OfferID)
 	claimTimestampKey := GetClaimTimestampKey(playerID, offerInstance.OfferID)
 
@@ -151,8 +151,14 @@ func ClaimOffer(
 		if err != nil {
 			return nil, false, 0, err
 		}
-		// TODO: maybe use the timestamp of the last time the player claimed the offer
-		nextAt, err = getClaimedOfferNextAt(db, gameID, offerInstance.OfferID, int(claimCount), t, mr)
+		err = mr.WithRedisSegment(SegmentGet, func() error {
+			claimTimestamp, err = redisClient.Client.Get(claimTimestampKey).Int64()
+			return err
+		})
+		if err != nil {
+			return nil, false, 0, err
+		}
+		nextAt, err = getClaimedOfferNextAt(db, gameID, offerInstance.OfferID, int(claimCount), time.Unix(claimTimestamp, 0), mr)
 		if err != nil {
 			return nil, false, 0, err
 		}
@@ -181,7 +187,7 @@ func ClaimOffer(
 		return nil, false, 0, err
 	}
 
-	nextAt, err = getClaimedOfferNextAt(db, gameID, offerInstance.OfferID, int(claimCount), t, mr)
+	nextAt, err = getClaimedOfferNextAt(db, gameID, offerInstance.OfferID, int(claimCount), time.Unix(timestamp, 0), mr)
 	if err != nil {
 		return nil, false, 0, err
 	}
@@ -249,7 +255,7 @@ func ViewOffer(
 		return false, 0, err
 	}
 
-	impressionsKey := GetImpressionsKey(playerID)
+	impressionsKey := GetImpressionsKey(playerID, gameID)
 	viewCounterKey := GetViewCounterKey(playerID, offerInstance.OfferID)
 	viewTimestampKey := GetViewTimestampKey(playerID, offerInstance.OfferID)
 
@@ -272,7 +278,7 @@ func ViewOffer(
 		if err != nil {
 			return false, 0, err
 		}
-		// TODO: maybe use the timestamp of the last time the player saw the offer
+
 		nextAt, err = getViewedOfferNextAt(db, gameID, offerInstance.OfferID, int(viewCount), t, mr)
 		if err != nil {
 			return false, 0, err

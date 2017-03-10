@@ -309,7 +309,7 @@ var _ = Describe("Offer Instance Model", func() {
 
 			Expect(contents2).NotTo(BeNil())
 			Expect(alreadyClaimed2).To(BeTrue())
-			Expect(nextAt2).To(Equal(int64(secondTime.Unix() + 1)))
+			Expect(nextAt2).To(Equal(int64(to + 501)))
 
 			claimCounter, err := redisClient.Client.Get(claimCounterKey).Int64()
 			Expect(err).NotTo(HaveOccurred())
@@ -826,6 +826,7 @@ var _ = Describe("Offer Instance Model", func() {
 			offerInstances, err := models.GetAvailableOffers(db, redisClient, gameID, playerID, currentTime, nil)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(offerInstances).To(HaveLen(1))
+			Expect(offerInstances[place]).To(HaveLen(2))
 
 			// Claim the offer instance
 			_, alreadyClaimed, _, err := models.ClaimOffer(db, redisClient, gameID, offerInstances[place][0].ID, playerID, "", transactionID, currentTime.Unix(), currentTime, nil)
@@ -845,20 +846,25 @@ var _ = Describe("Offer Instance Model", func() {
 			// Should not return the popup offer, since it was claimed for the first time
 			offerInstances, err = models.GetAvailableOffers(db, redisClient, gameID, playerID, currentTime, nil)
 			Expect(err).NotTo(HaveOccurred())
-			Expect(offerInstances).NotTo(HaveKey(place))
+			Expect(offerInstances).To(HaveKey(place))
+			Expect(offerInstances[place]).To(HaveLen(1))
 		})
 
 		It("should return updated offer with one remaining view", func() {
 			playerID := "player-1"
 			gameID := "another-game"
 			place := "unique-place"
-			offerID := "a2539a8c-55f2-4539-a8c0-929b240d8c80"
+			offerID := "f1f74fcd-17ae-4ccd-a248-f77c60e78c8c"
 			currentTime := time.Unix(1486678000, 0)
+			nextTime := func(currentTime time.Time) time.Time {
+				return time.Unix(currentTime.Unix()+10, 0)
+			}
 
 			// Get offer instances
 			offerInstances, err := models.GetAvailableOffers(db, redisClient, gameID, playerID, currentTime, nil)
 			Expect(err).NotTo(HaveOccurred())
-			offerInstanceID := offerInstances[place][0].ID
+			Expect(offerInstances[place]).To(HaveLen(2))
+			offerInstanceID := offerInstances[place][1].ID
 
 			// View once
 			_, _, err = models.ViewOffer(db, redisClient, gameID, offerInstanceID, playerID, uuid.NewV4().String(), currentTime, nil)
@@ -869,23 +875,27 @@ var _ = Describe("Offer Instance Model", func() {
 			err = db.SQL("SELECT * FROM offers WHERE id = $1 AND game_id = $2", offerID, gameID).QueryStruct(offer)
 			Expect(err).NotTo(HaveOccurred())
 			offer.Contents = dat.JSON([]byte(`{ "somethingNew": 100 }`))
-			offer, err = models.InsertOffer(db, offer, nil)
+			offer, err = models.UpdateOffer(db, offer, nil)
 			Expect(err).NotTo(HaveOccurred())
 
 			// Get offer
+			currentTime = nextTime(currentTime)
 			offerInstances, err = models.GetAvailableOffers(db, redisClient, gameID, playerID, currentTime, nil)
 			Expect(err).NotTo(HaveOccurred())
-			offerInstanceID = offerInstances[place][0].ID
+			Expect(offerInstances).To(HaveKey(place))
+			Expect(offerInstances[place]).To(HaveLen(2))
+			offerInstanceID = offerInstances[place][1].ID
 
 			// Sees twice
 			_, _, err = models.ViewOffer(db, redisClient, gameID, offerInstanceID, playerID, uuid.NewV4().String(), currentTime, nil)
 			Expect(err).NotTo(HaveOccurred())
 
 			// Get offer, expect unique-place to not be returned
+			currentTime = nextTime(currentTime)
 			offerInstances, err = models.GetAvailableOffers(db, redisClient, gameID, playerID, currentTime, nil)
 			Expect(err).NotTo(HaveOccurred())
-			Expect(offerInstances).NotTo(HaveKey(place))
+			Expect(offerInstances).To(HaveKey(place))
+			Expect(offerInstances[place]).To(HaveLen(1))
 		})
 	})
-
 })
