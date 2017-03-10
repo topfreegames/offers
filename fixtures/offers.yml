@@ -61,7 +61,7 @@
     contents: '{"gems": 5, "gold": 100}'
     metadata: '{}'
     period: '{"max": 1}'
-    frequency: '{"every": 12, "unit": "hour"}'
+    frequency: '{"every": "12h"}'
     trigger: '{}'
     placement: store
     enabled: true

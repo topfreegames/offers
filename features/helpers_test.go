@@ -28,7 +28,7 @@ import (
 	"net/http/httptest"
 	"strings"
 
-	"github.com/satori/go.uuid"
+	//"github.com/satori/go.uuid"
 	"github.com/topfreegames/offers/api"
 	"github.com/topfreegames/offers/models"
 	"gopkg.in/mgutz/dat.v2/dat"
@@ -48,10 +48,9 @@ func newGame(db runner.Connection, id string) (*models.Game, error) {
 	return game, nil
 }
 
-func insertOfferTemplate(db runner.Connection, name, gameID string) error {
-	offerTemplate := &models.OfferTemplate{
+func insertOffer(db runner.Connection, name, gameID string) error {
+	offer := &models.Offer{
 		Name:      name,
-		Key:       uuid.NewV4().String(),
 		ProductID: "com.tfg.example",
 		GameID:    gameID,
 		Contents:  dat.JSON([]byte(`{"gems": 5, "gold": 100}`)),
@@ -60,7 +59,7 @@ func insertOfferTemplate(db runner.Connection, name, gameID string) error {
 		Trigger:   dat.JSON([]byte(`{"from": 1487280506875, "to": 1487366964730}`)),
 		Placement: "popup",
 	}
-	_, err := models.InsertOfferTemplate(app.DB, offerTemplate, nil)
+	_, err := models.InsertOffer(app.DB, offer, nil)
 	return err
 }
 
@@ -90,4 +89,28 @@ func replaceString(val string) string {
 		return str
 	}
 	return val
+}
+
+func selectOfferInstanceByOfferNameAndPlayerAndGame(offerName, playerID, gameID string) (*models.OfferInstance, error) {
+	query := `SELECT
+							oi.id, oi.game_id, oi.player_id, oi.offer_id
+						FROM
+							offer_instances AS oi
+						INNER JOIN offers ON oi.offer_id = offers.id
+						WHERE oi.player_id = $1
+							AND oi.game_id = $2
+							AND offers.game_id =$2
+							AND offers.name = $3`
+	var offerInstance models.OfferInstance
+	err := app.DB.SQL(query, playerID, gameID, offerName).QueryStruct(&offerInstance)
+
+	return &offerInstance, err
+}
+
+func toJSON(str string) dat.JSON {
+	if len(str) == 0 {
+		return nil
+	}
+
+	return dat.JSON([]byte(strings.Replace(str, "'", "\"", -1)))
 }
