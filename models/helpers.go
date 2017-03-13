@@ -27,7 +27,7 @@ type ClaimOfferPayload struct {
 	PlayerID        string `json:"playerId" valid:"ascii,stringlength(1|1000),required"`
 	ProductID       string `json:"productId" valid:"ascii,stringlength(1|255),required"`
 	Timestamp       int64  `json:"timestamp" valid:"int64,required"`
-	TransactionID   string `json:"transactionId" valid:"uuidv4,required"`
+	TransactionID   string `json:"transactionId" valid:"ascii,stringlength(1|1000),required"`
 	OfferInstanceID string `json:"id" valid:"uuidv4,optional"`
 }
 
