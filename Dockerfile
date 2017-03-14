@@ -49,4 +49,4 @@ WORKDIR /app
 EXPOSE 8888
 VOLUME /app/config
 
-CMD /app/offers start-api -c /app/config/local.yaml
+CMD /app/offers start -v3 -c /app/config/local.yaml
