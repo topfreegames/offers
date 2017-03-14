@@ -124,7 +124,7 @@ run-full: drop migrate deps run
 build-linux-64: assets
 	@mkdir -p ./bin
 	@echo "Building for linux-x86_64..."
-	@env GOOS=linux GOARCH=amd64 go build -o ./bin/offers-linux-x86_64
+	@env GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o ./bin/offers-linux-x86_64
 	@chmod +x bin/*
 
 cross: assets
