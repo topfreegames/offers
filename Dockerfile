@@ -19,34 +19,25 @@
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
 
-FROM golang:1.8.0-alpine
+FROM alpine
 
 MAINTAINER TFG Co <backend@tfgco.com>
 
-RUN apk update
-RUN apk add make git g++ bash python wget
-
-RUN wget https://github.com/Masterminds/glide/releases/download/v0.12.3/glide-v0.12.3-linux-amd64.tar.gz
-RUN tar -zxvf glide-v0.12.3-linux-amd64.tar.gz
-RUN chmod +x linux-amd64/glide && mv linux-amd64/glide /usr/local/bin/glide
-
-RUN mkdir -p /go/src/github.com/topfreegames/offers
-WORKDIR /go/src/github.com/topfreegames/offers
-
-ADD glide.yaml /go/src/github.com/topfreegames/offers/glide.yaml
-ADD glide.lock /go/src/github.com/topfreegames/offers/glide.lock
-RUN glide install
-
-ADD . /go/src/github.com/topfreegames/offers
-
 RUN mkdir /app
-RUN mv /go/src/github.com/topfreegames/offers/bin/offers /app/offers
-RUN mv /go/src/github.com/topfreegames/offers/config /app/config
-RUN rm -r /go/src/github.com/topfreegames/offers
+ADD ./bin/offers-linux-x86_64 /app/offers
+ADD ./config /app/config
 
 WORKDIR /app
-
 EXPOSE 8888
-VOLUME /app/config
+
+ENV OFFERS_NEWRELIC_APP offers
+ENV OFFERS_POSTGRES_DBNAME offers
+ENV OFFERS_POSTGRES_HOST localhost
+ENV OFFERS_POSTGRES_PASSWORD ""
+ENV OFFERS_POSTGRES_PORT 8585
+ENV OFFERS_POSTGRES_USER offers
+ENV OFFERS_REDIS_HOST localhost
+ENV OFFERS_REDIS_PASSWORD ""
+ENV OFFERS_REDIS_PORT 6333
 
 CMD /app/offers start -v3 -c /app/config/local.yaml

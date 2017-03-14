@@ -120,3 +120,20 @@ rtfd:
 clean: drop-test migrate-test clear-coverage-profiles
 
 run-full: drop migrate deps run
+
+build-linux-64: assets
+	@mkdir -p ./bin
+	@echo "Building for linux-x86_64..."
+	@env GOOS=linux GOARCH=amd64 go build -o ./bin/offers-linux-x86_64
+	@chmod +x bin/*
+
+cross: assets
+	@mkdir -p ./bin
+	@echo "Building for linux-i386..."
+	@env GOOS=linux GOARCH=386 go build -o ./bin/offers-linux-i386
+	$(MAKE) build-linux-64
+	@echo "Building for darwin-i386..."
+	@env GOOS=darwin GOARCH=386 go build -o ./bin/offers-darwin-i386
+	@echo "Building for darwin-x86_64..."
+	@env GOOS=darwin GOARCH=amd64 go build -o ./bin/offers-darwin-x86_64
+	@chmod +x bin/*
