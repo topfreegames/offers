@@ -162,6 +162,43 @@ var _ = Describe("Game Handler", func() {
 			Expect(obj["error"]).To(Equal("Upserting game failed"))
 			Expect(obj["description"]).To(Equal("sql: database is closed"))
 		})
+
+		It("should return status code of 401 if no auth provided", func() {
+			defer func() {
+				config.Set("basicauth.username", "")
+				config.Set("basicauth.password", "")
+			}()
+			config.Set("basicauth.username", "user")
+			config.Set("basicauth.password", "pass")
+			id := uuid.NewV4().String()
+			gameReader := JSONFor(JSON{
+				"Name": "Game Awesome Name",
+			})
+			request, _ := http.NewRequest("PUT", fmt.Sprintf("/games/%s", id), gameReader)
+
+			app.Router.ServeHTTP(recorder, request)
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
+			Expect(recorder.Code).To(Equal(http.StatusUnauthorized))
+		})
+
+		It("should return status code of 401 if invalid auth provided", func() {
+			defer func() {
+				config.Set("basicauth.username", "")
+				config.Set("basicauth.password", "")
+			}()
+			config.Set("basicauth.username", "user")
+			config.Set("basicauth.password", "pass")
+			id := uuid.NewV4().String()
+			gameReader := JSONFor(JSON{
+				"Name": "Game Awesome Name",
+			})
+			request, _ := http.NewRequest("PUT", fmt.Sprintf("/games/%s", id), gameReader)
+			request.SetBasicAuth("invaliduser", "invalidpass")
+
+			app.Router.ServeHTTP(recorder, request)
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
+			Expect(recorder.Code).To(Equal(http.StatusUnauthorized))
+		})
 	})
 
 	Describe("GET /games", func() {
@@ -217,6 +254,35 @@ var _ = Describe("Game Handler", func() {
 			Expect(obj["code"]).To(Equal("OFF-004"))
 			Expect(obj["error"]).To(Equal("List games failed."))
 			Expect(obj["description"]).To(Equal("sql: database is closed"))
+		})
+
+		It("should return status code of 401 if no auth provided", func() {
+			defer func() {
+				config.Set("basicauth.username", "")
+				config.Set("basicauth.password", "")
+			}()
+			config.Set("basicauth.username", "user")
+			config.Set("basicauth.password", "pass")
+			request, _ := http.NewRequest("GET", "/games", nil)
+
+			app.Router.ServeHTTP(recorder, request)
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
+			Expect(recorder.Code).To(Equal(http.StatusUnauthorized))
+		})
+
+		It("should return status code of 401 if invalid auth provided", func() {
+			defer func() {
+				config.Set("basicauth.username", "")
+				config.Set("basicauth.password", "")
+			}()
+			config.Set("basicauth.username", "user")
+			config.Set("basicauth.password", "pass")
+			request, _ := http.NewRequest("GET", "/games", nil)
+			request.SetBasicAuth("invaliduser", "invalidpass")
+
+			app.Router.ServeHTTP(recorder, request)
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
+			Expect(recorder.Code).To(Equal(http.StatusUnauthorized))
 		})
 	})
 })

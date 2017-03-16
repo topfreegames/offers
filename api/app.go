@@ -74,7 +74,7 @@ func (a *App) getRouter() *mux.Router {
 		&GameHandler{App: a, Method: "list"},
 		&MetricsReporterMiddleware{App: a},
 		&NewRelicMiddleware{App: a},
-		&AuthMiddleware{App: a},
+		&AuthMiddleware{App: a, useBasicAuth: true},
 		&LoggingMiddleware{App: a},
 		&VersionMiddleware{},
 	)).Methods("GET").Name("game")
@@ -83,7 +83,7 @@ func (a *App) getRouter() *mux.Router {
 		&GameHandler{App: a, Method: "upsert"},
 		&MetricsReporterMiddleware{App: a},
 		&NewRelicMiddleware{App: a},
-		&AuthMiddleware{App: a},
+		&AuthMiddleware{App: a, useBasicAuth: true},
 		&LoggingMiddleware{App: a},
 		&VersionMiddleware{},
 		NewParamKeyMiddleware(a, func(id string) bool {
@@ -95,7 +95,7 @@ func (a *App) getRouter() *mux.Router {
 	r.Handle("/offers", Chain(
 		&OfferHandler{App: a, Method: "list"},
 		&NewRelicMiddleware{App: a},
-		&AuthMiddleware{App: a},
+		&AuthMiddleware{App: a, useBasicAuth: true},
 		&LoggingMiddleware{App: a},
 		&VersionMiddleware{},
 	)).Methods("GET").Name("offers")
@@ -103,7 +103,7 @@ func (a *App) getRouter() *mux.Router {
 	r.Handle("/offers", Chain(
 		&OfferHandler{App: a, Method: "insert"},
 		&NewRelicMiddleware{App: a},
-		&AuthMiddleware{App: a},
+		&AuthMiddleware{App: a, useBasicAuth: true},
 		&LoggingMiddleware{App: a},
 		&VersionMiddleware{},
 		NewValidationMiddleware(func() interface{} { return &models.Offer{} }),
@@ -121,7 +121,7 @@ func (a *App) getRouter() *mux.Router {
 	r.Handle("/offers/{id}", Chain(
 		&OfferHandler{App: a, Method: "update"},
 		&NewRelicMiddleware{App: a},
-		&AuthMiddleware{App: a},
+		&AuthMiddleware{App: a, useBasicAuth: true},
 		&LoggingMiddleware{App: a},
 		&VersionMiddleware{},
 		NewParamKeyMiddleware(a, govalidator.IsUUIDv4),
@@ -131,7 +131,7 @@ func (a *App) getRouter() *mux.Router {
 	r.Handle("/offers/{id}/enable", Chain(
 		&OfferHandler{App: a, Method: "enable"},
 		&NewRelicMiddleware{App: a},
-		&AuthMiddleware{App: a},
+		&AuthMiddleware{App: a, useBasicAuth: true},
 		&LoggingMiddleware{App: a},
 		&VersionMiddleware{},
 		NewParamKeyMiddleware(a, govalidator.IsUUIDv4),
@@ -140,7 +140,7 @@ func (a *App) getRouter() *mux.Router {
 	r.Handle("/offers/{id}/disable", Chain(
 		&OfferHandler{App: a, Method: "disable"},
 		&NewRelicMiddleware{App: a},
-		&AuthMiddleware{App: a},
+		&AuthMiddleware{App: a, useBasicAuth: true},
 		&LoggingMiddleware{App: a},
 		&VersionMiddleware{},
 		NewParamKeyMiddleware(a, govalidator.IsUUIDv4),

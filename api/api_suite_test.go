@@ -13,6 +13,7 @@ import (
 	"github.com/Sirupsen/logrus"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/spf13/viper"
 	runner "gopkg.in/mgutz/dat.v2/sqlx-runner"
 
 	"testing"
@@ -24,6 +25,7 @@ import (
 var app *api.App
 var db runner.Connection
 var closer io.Closer
+var config *viper.Viper
 
 func TestApi(t *testing.T) {
 	RegisterFailHandler(Fail)
@@ -41,7 +43,7 @@ var _ = BeforeSuite(func() {
 	err = oTesting.LoadFixtures(db)
 	Expect(err).NotTo(HaveOccurred())
 
-	config, err := oTesting.GetDefaultConfig()
+	config, err = oTesting.GetDefaultConfig()
 	Expect(err).NotTo(HaveOccurred())
 	clock := oTesting.MockClock{
 		CurrentTime: 1486678000,

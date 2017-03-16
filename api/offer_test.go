@@ -192,6 +192,73 @@ var _ = Describe("Offer Template Handler", func() {
 			Expect(obj["description"]).To(Equal("sql: database is closed"))
 			app.DB = oldDB // avoid errors in after each
 		})
+
+		It("should return status code of 401 if no auth provided", func() {
+			defer func() {
+				config.Set("basicauth.username", "")
+				config.Set("basicauth.password", "")
+			}()
+			config.Set("basicauth.username", "user")
+			config.Set("basicauth.password", "pass")
+			name := "New Awesome Game"
+			productID := "com.tfg.example"
+			gameID := "game-id"
+			contents := "{\"gems\": 5, \"gold\": 100}"
+			period := "{\"max\": 1}"
+			frequency := "{\"every\": \"24h\"}"
+			trigger := "{\"from\": 1487280506875, \"to\": 1487366964730}"
+			placement := "popup"
+			offerReader := JSONFor(JSON{
+				"name":      name,
+				"productId": productID,
+				"gameId":    gameID,
+				"contents":  dat.JSON([]byte(contents)),
+				"period":    dat.JSON([]byte(period)),
+				"frequency": dat.JSON([]byte(frequency)),
+				"trigger":   dat.JSON([]byte(trigger)),
+				"placement": placement,
+			})
+
+			request, _ := http.NewRequest("POST", "/offers", offerReader)
+
+			app.Router.ServeHTTP(recorder, request)
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
+			Expect(recorder.Code).To(Equal(http.StatusUnauthorized))
+		})
+
+		It("should return status code of 401 if invalid auth provided", func() {
+			defer func() {
+				config.Set("basicauth.username", "")
+				config.Set("basicauth.password", "")
+			}()
+			config.Set("basicauth.username", "user")
+			config.Set("basicauth.password", "pass")
+			name := "New Awesome Game"
+			productID := "com.tfg.example"
+			gameID := "game-id"
+			contents := "{\"gems\": 5, \"gold\": 100}"
+			period := "{\"max\": 1}"
+			frequency := "{\"every\": \"24h\"}"
+			trigger := "{\"from\": 1487280506875, \"to\": 1487366964730}"
+			placement := "popup"
+			offerReader := JSONFor(JSON{
+				"name":      name,
+				"productId": productID,
+				"gameId":    gameID,
+				"contents":  dat.JSON([]byte(contents)),
+				"period":    dat.JSON([]byte(period)),
+				"frequency": dat.JSON([]byte(frequency)),
+				"trigger":   dat.JSON([]byte(trigger)),
+				"placement": placement,
+			})
+
+			request, _ := http.NewRequest("POST", "/offers", offerReader)
+			request.SetBasicAuth("invaliduser", "invalidpass")
+
+			app.Router.ServeHTTP(recorder, request)
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
+			Expect(recorder.Code).To(Equal(http.StatusUnauthorized))
+		})
 	})
 
 	Describe("PUT /offers/{id}/enable", func() {
@@ -290,6 +357,39 @@ var _ = Describe("Offer Template Handler", func() {
 
 			app.Router.ServeHTTP(recorder, request)
 			Expect(recorder.Code).To(Equal(http.StatusMovedPermanently))
+		})
+
+		It("should return status code of 401 if no auth provided", func() {
+			defer func() {
+				config.Set("basicauth.username", "")
+				config.Set("basicauth.password", "")
+			}()
+			config.Set("basicauth.username", "user")
+			config.Set("basicauth.password", "pass")
+			id := "dd21ec96-2890-4ba0-b8e2-40ea67196990"
+			offerReader := JSONFor(JSON{})
+			request, _ := http.NewRequest("PUT", fmt.Sprintf("/offers/%s/enable?game-id=offers-game", id), offerReader)
+
+			app.Router.ServeHTTP(recorder, request)
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
+			Expect(recorder.Code).To(Equal(http.StatusUnauthorized))
+		})
+
+		It("should return status code of 401 if invalid auth provided", func() {
+			defer func() {
+				config.Set("basicauth.username", "")
+				config.Set("basicauth.password", "")
+			}()
+			config.Set("basicauth.username", "user")
+			config.Set("basicauth.password", "pass")
+			id := "dd21ec96-2890-4ba0-b8e2-40ea67196990"
+			offerReader := JSONFor(JSON{})
+			request, _ := http.NewRequest("PUT", fmt.Sprintf("/offers/%s/enable?game-id=offers-game", id), offerReader)
+			request.SetBasicAuth("invaliduser", "invalidpass")
+
+			app.Router.ServeHTTP(recorder, request)
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
+			Expect(recorder.Code).To(Equal(http.StatusUnauthorized))
 		})
 	})
 
@@ -406,6 +506,39 @@ var _ = Describe("Offer Template Handler", func() {
 			app.Router.ServeHTTP(recorder, request)
 			Expect(recorder.Code).To(Equal(http.StatusMovedPermanently))
 		})
+
+		It("should return status code of 401 if no auth provided", func() {
+			defer func() {
+				config.Set("basicauth.username", "")
+				config.Set("basicauth.password", "")
+			}()
+			config.Set("basicauth.username", "user")
+			config.Set("basicauth.password", "pass")
+			id := "dd21ec96-2890-4ba0-b8e2-40ea67196990"
+			offerReader := JSONFor(JSON{})
+			request, _ := http.NewRequest("PUT", fmt.Sprintf("/offers/%s/disable?game-id=offers-game", id), offerReader)
+
+			app.Router.ServeHTTP(recorder, request)
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
+			Expect(recorder.Code).To(Equal(http.StatusUnauthorized))
+		})
+
+		It("should return status code of 401 if invalid auth provided", func() {
+			defer func() {
+				config.Set("basicauth.username", "")
+				config.Set("basicauth.password", "")
+			}()
+			config.Set("basicauth.username", "user")
+			config.Set("basicauth.password", "pass")
+			id := "dd21ec96-2890-4ba0-b8e2-40ea67196990"
+			offerReader := JSONFor(JSON{})
+			request, _ := http.NewRequest("PUT", fmt.Sprintf("/offers/%s/disable?game-id=offers-game", id), offerReader)
+			request.SetBasicAuth("invaliduser", "invalidpass")
+
+			app.Router.ServeHTTP(recorder, request)
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
+			Expect(recorder.Code).To(Equal(http.StatusUnauthorized))
+		})
 	})
 
 	Describe("PUT /offers/{id}", func() {
@@ -501,7 +634,7 @@ var _ = Describe("Offer Template Handler", func() {
 
 		It("should return status code 422 if invalid parameters", func() {
 			id := "dd21ec96-2890-4ba0-b8e2-40ea67196990"
-			offerReader := JSONFor(JSON{
+			offerReader = JSONFor(JSON{
 				"contents": "invalid",
 			})
 			request, _ := http.NewRequest("PUT", fmt.Sprintf("/offers/%s", id), offerReader)
@@ -515,6 +648,37 @@ var _ = Describe("Offer Template Handler", func() {
 			Expect(obj["code"]).To(Equal("OFF-002"))
 			Expect(obj["error"]).To(Equal("ValidationFailedError"))
 			Expect(obj["description"]).To(Equal("GameID: non zero value required;Name: non zero value required;Period: [] does not validate as RequiredJSONObject;;Frequency: [] does not validate as RequiredJSONObject;;Trigger: [] does not validate as RequiredJSONObject;;Placement: non zero value required;ProductID: non zero value required;Contents: [34 105 110 118 97 108 105 100 34] does not validate as RequiredJSONObject;;"))
+		})
+
+		It("should return status code of 401 if no auth provided", func() {
+			defer func() {
+				config.Set("basicauth.username", "")
+				config.Set("basicauth.password", "")
+			}()
+			config.Set("basicauth.username", "user")
+			config.Set("basicauth.password", "pass")
+			id := "dd21ec96-2890-4ba0-b8e2-40ea67196990"
+			request, _ := http.NewRequest("PUT", fmt.Sprintf("/offers/%s", id), offerReader)
+
+			app.Router.ServeHTTP(recorder, request)
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
+			Expect(recorder.Code).To(Equal(http.StatusUnauthorized))
+		})
+
+		It("should return status code of 401 if invalid auth provided", func() {
+			defer func() {
+				config.Set("basicauth.username", "")
+				config.Set("basicauth.password", "")
+			}()
+			config.Set("basicauth.username", "user")
+			config.Set("basicauth.password", "pass")
+			id := "dd21ec96-2890-4ba0-b8e2-40ea67196990"
+			request, _ := http.NewRequest("PUT", fmt.Sprintf("/offers/%s", id), offerReader)
+			request.SetBasicAuth("invaliduser", "invalidpass")
+
+			app.Router.ServeHTTP(recorder, request)
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
+			Expect(recorder.Code).To(Equal(http.StatusUnauthorized))
 		})
 	})
 
@@ -590,6 +754,34 @@ var _ = Describe("Offer Template Handler", func() {
 			Expect(obj["code"]).To(Equal("OFF-004"))
 			Expect(obj["error"]).To(Equal("List game offers failed."))
 			Expect(obj["description"]).To(Equal("sql: database is closed"))
+		})
+
+		It("should return status code of 401 if no auth provided", func() {
+			defer func() {
+				config.Set("basicauth.username", "")
+				config.Set("basicauth.password", "")
+			}()
+			config.Set("basicauth.username", "user")
+			config.Set("basicauth.password", "pass")
+			request, _ := http.NewRequest("GET", "/offers?game-id=offers-game", nil)
+
+			app.Router.ServeHTTP(recorder, request)
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
+			Expect(recorder.Code).To(Equal(http.StatusUnauthorized))
+		})
+
+		It("should return status code of 401 if invalid auth provided", func() {
+			defer func() {
+				config.Set("basicauth.username", "")
+				config.Set("basicauth.password", "")
+			}()
+			config.Set("basicauth.username", "user")
+			config.Set("basicauth.password", "pass")
+			request, _ := http.NewRequest("GET", "/offers?game-id=offers-game", nil)
+			request.SetBasicAuth("invaliduser", "invalidpass")
+			app.Router.ServeHTTP(recorder, request)
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
+			Expect(recorder.Code).To(Equal(http.StatusUnauthorized))
 		})
 	})
 })

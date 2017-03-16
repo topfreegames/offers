@@ -11,7 +11,6 @@ import "net/http"
 
 //Write to the response and with the status code
 func Write(w http.ResponseWriter, status int, text string) {
-	w.WriteHeader(status)
 	WriteBytes(w, status, []byte(text))
 }
 

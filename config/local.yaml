@@ -17,3 +17,6 @@ redis:
   maxPoolSize: 20
 cache:
   maxAgeSeconds: 43200
+basicauth:
+  username: user
+  password: pass

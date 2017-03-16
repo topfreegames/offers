@@ -14,18 +14,12 @@ import (
 
 //AuthMiddleware automatically adds a user email to the context
 type AuthMiddleware struct {
-	App  *App
-	Next http.Handler
+	App          *App
+	Next         http.Handler
+	useBasicAuth bool
 }
 
 const userEmailKey = contextKey("userEmail")
-
-//NewAuthMiddleware returns a configured auth middleware
-func NewAuthMiddleware(app *App) *AuthMiddleware {
-	return &AuthMiddleware{
-		App: app,
-	}
-}
 
 func newContextWithUserEmail(ctx context.Context, r *http.Request) context.Context {
 	userEmail := r.Header.Get("x-forwarded-email")
@@ -41,6 +35,18 @@ func userEmailFromContext(ctx context.Context) string {
 func (m *AuthMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := newContextWithUserEmail(r.Context(), r)
 
+	basicAuthUser := m.App.Config.GetString("basicauth.username")
+	basicAuthPass := m.App.Config.GetString("basicauth.password")
+	if m.useBasicAuth && basicAuthUser != "" && basicAuthPass != "" {
+		user, pass, ok := r.BasicAuth()
+		if !ok {
+			Write(w, http.StatusUnauthorized, "Authentication failed.")
+			return
+		} else if user != basicAuthUser || pass != basicAuthPass {
+			Write(w, http.StatusUnauthorized, "Authentication failed.")
+			return
+		}
+	}
 	// Call the next middleware/handler in chain
 	m.Next.ServeHTTP(w, r.WithContext(ctx))
 }
