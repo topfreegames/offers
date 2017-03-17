@@ -1,0 +1,12 @@
+postgres:
+  user: "offers_perf"
+  dbName: "offers_perf"
+  host: "localhost"
+  port: 8585
+  sslMode: "disable"
+redis:
+  host: localhost
+  port: 6333
+  password: ""
+  db: 0
+  maxPoolSize: 20

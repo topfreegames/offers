@@ -28,6 +28,15 @@ func GetTestDB() (runner.Connection, error) {
 	)
 }
 
+//GetPerfDB returns a connection to the perf database
+func GetPerfDB() (runner.Connection, error) {
+	return models.GetDB(
+		"localhost", "offers_perf", 8585, "disable",
+		"offers_perf", "",
+		10, 10, 100,
+	)
+}
+
 //GetTestRedis returns a redis client
 func GetTestRedis() (*util.RedisClient, error) {
 	redisHost := "localhost"
