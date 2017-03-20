@@ -62,7 +62,7 @@ func (h *OfferRequestHandler) getOffers(w http.ResponseWriter, r *http.Request) 
 	var err error
 	var offers map[string][]*models.OfferToReturn
 	err = mr.WithSegment(models.SegmentModel, func() error {
-		offers, err = models.GetAvailableOffers(h.App.DB, h.App.RedisClient, gameID, playerID, currentTime, mr)
+		offers, err = models.GetAvailableOffers(h.App.DB, h.App.RedisClient, h.App.Cache, gameID, playerID, currentTime, h.App.OffersCacheMaxAge, mr)
 		return err
 	})
 

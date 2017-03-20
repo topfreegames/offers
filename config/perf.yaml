@@ -10,3 +10,6 @@ redis:
   password: ""
   db: 0
   maxPoolSize: 20
+offersCache:
+  maxAgeSeconds: 300
+  cleanupInterval: 30

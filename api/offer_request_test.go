@@ -529,6 +529,24 @@ var _ = Describe("Offer Handler", func() {
 			}
 			Expect(offersToReturn["store"]).NotTo(ContainElement(offer))
 		})
+
+		It("should return available offers from cache on second request", func() {
+			playerID := "player-1"
+			gameID := "offers-game"
+			url := fmt.Sprintf("/available-offers?player-id=%s&game-id=%s", playerID, gameID)
+			request, _ := http.NewRequest("GET", url, nil)
+
+			start := time.Now().UnixNano()
+			app.Router.ServeHTTP(recorder, request)
+			dbElapsedTime := time.Now().UnixNano() - start
+
+			recorder = httptest.NewRecorder()
+			start = time.Now().UnixNano()
+			app.Router.ServeHTTP(recorder, request)
+			cacheElapsedTime := time.Now().UnixNano() - start
+
+			Expect(dbElapsedTime).To(BeNumerically(">", cacheElapsedTime))
+		})
 	})
 
 	Describe("PUT /offers/claim", func() {

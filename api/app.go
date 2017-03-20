@@ -12,11 +12,13 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"time"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/asaskevich/govalidator"
 	"github.com/gorilla/mux"
 	newrelic "github.com/newrelic/go-agent"
+	"github.com/pmylund/go-cache"
 	"github.com/spf13/viper"
 	"github.com/topfreegames/offers/errors"
 	"github.com/topfreegames/offers/metadata"
@@ -27,17 +29,19 @@ import (
 
 //App is our API application
 type App struct {
-	Address     string
-	Clock       models.Clock
-	Config      *viper.Viper
-	DB          runner.Connection
-	Debug       bool
-	Logger      logrus.FieldLogger
-	MaxAge      int64
-	NewRelic    newrelic.Application
-	RedisClient *util.RedisClient
-	Router      *mux.Router
-	Server      *http.Server
+	Address           string
+	Clock             models.Clock
+	Config            *viper.Viper
+	DB                runner.Connection
+	Debug             bool
+	Logger            logrus.FieldLogger
+	MaxAge            int64
+	NewRelic          newrelic.Application
+	RedisClient       *util.RedisClient
+	Router            *mux.Router
+	Server            *http.Server
+	Cache             *cache.Cache
+	OffersCacheMaxAge time.Duration
 }
 
 //NewApp ctor
@@ -187,7 +191,15 @@ func (a *App) configureApp() error {
 
 	a.MaxAge = a.Config.GetInt64("cache.maxAgeSeconds")
 	a.configureServer()
+	a.configureCache()
 	return nil
+}
+
+func (a *App) configureCache() {
+	maxAge := time.Duration(a.Config.GetInt64("offersCache.maxAgeSeconds")) * time.Second
+	cleanupInterval := time.Duration(a.Config.GetInt64("offersCache.cleanupInterval")) * time.Second
+	a.Cache = cache.New(maxAge, cleanupInterval)
+	a.OffersCacheMaxAge = maxAge
 }
 
 func (a *App) configureRedisClient() error {

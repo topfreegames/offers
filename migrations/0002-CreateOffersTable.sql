@@ -15,3 +15,5 @@ CREATE TABLE offers (
   version integer NOT NULL DEFAULT 1,
   created_at timestamp WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
+
+CREATE INDEX offers_game ON offers (game_id);

@@ -18,16 +18,6 @@ import (
 var gameResult *http.Response
 
 func BenchmarkListGames(b *testing.B) {
-	db, err := GetPerfDB()
-	if err != nil {
-		panic(err.Error())
-	}
-
-	_, err = createGames(&db, NumberOfGames)
-	if err != nil {
-		panic(err.Error())
-	}
-
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
@@ -61,16 +51,19 @@ func BenchmarkUpdateGame(b *testing.B) {
 		panic(err.Error())
 	}
 
-	games, err := createGames(&db, b.N)
+	games, err := getGames(&db)
 	if err != nil {
 		panic(err.Error())
 	}
+	length := len(games)
+
 	b.ResetTimer()
 
-	for _, game := range games {
+	for i := 0; i < b.N; i++ {
+		game := games[i%length]
 		route := getRoute(fmt.Sprintf("/games/%s", game.ID))
 		res, err := putTo(route, map[string]interface{}{
-			"name": fmt.Sprintf("%s-new", game.Name),
+			"name": fmt.Sprintf("%s-%d", game.Name, i),
 		})
 		validateResp(res, err)
 		res.Body.Close()
