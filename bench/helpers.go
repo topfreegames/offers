@@ -22,7 +22,7 @@ import (
 )
 
 func getRoute(url string) string {
-	return fmt.Sprintf("http://localhost:8888%s", url)
+	return fmt.Sprintf("http://localhost:8889%s", url)
 }
 
 func createGames(db *runner.Connection, numberOfGames int) ([]*models.Game, error) {

@@ -10,6 +10,7 @@ package models
 import (
 	"time"
 
+	"github.com/pmylund/go-cache"
 	"gopkg.in/mgutz/dat.v2/dat"
 	runner "gopkg.in/mgutz/dat.v2/sqlx-runner"
 )
@@ -56,20 +57,36 @@ func GetOfferByID(db runner.Connection, gameID, id string, mr *MixedMetricsRepor
 }
 
 //GetEnabledOffers returns all the enabled offers
-func GetEnabledOffers(db runner.Connection, gameID string, mr *MixedMetricsReporter) ([]*Offer, error) {
+func GetEnabledOffers(db runner.Connection, gameID string, offersCache *cache.Cache, expireDuration time.Duration, mr *MixedMetricsReporter) ([]*Offer, error) {
 	var offers []*Offer
-	err := mr.WithDatastoreSegment("offers", SegmentSelect, func() error {
+	var err error
+
+	offersInterface, found := offersCache.Get(gameID)
+
+	if found {
+		//fmt.Println("Offers Cache Hit")
+		offers = offersInterface.([]*Offer)
+		return offers, err
+	}
+
+	//fmt.Println("Offers Cache Miss")
+	err = mr.WithDatastoreSegment("offers", SegmentSelect, func() error {
 		return db.
 			Select(`
-				id, game_id, name, period, frequency,
-				trigger, placement, metadata,
-				product_id, contents, version
-			`).
+		id, game_id, name, period, frequency,
+		trigger, placement, metadata,
+		product_id, contents, version
+		`).
 			From("offers").
 			Scope(enabledOffers, gameID).
 			QueryStructs(&offers)
 	})
 	err = HandleNotFoundError("Offer", map[string]interface{}{"enabled": true}, err)
+
+	if err == nil {
+		offersCache.Set(gameID, offers, expireDuration)
+	}
+
 	return offers, err
 }
 
