@@ -67,6 +67,7 @@ var _ = AfterEach(func() {
 	app.Clock = oTesting.MockClock{
 		CurrentTime: 1486678000,
 	}
+	app.Cache.Flush()
 })
 
 var _ = AfterSuite(func() {

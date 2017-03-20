@@ -11,9 +11,11 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	runner "gopkg.in/mgutz/dat.v2/sqlx-runner"
+	"time"
 
 	"testing"
 
+	"github.com/pmylund/go-cache"
 	oTesting "github.com/topfreegames/offers/testing"
 	"github.com/topfreegames/offers/util"
 )
@@ -21,6 +23,7 @@ import (
 var conn runner.Connection
 var db *runner.Tx
 var redisClient *util.RedisClient
+var offersCache *cache.Cache
 
 func TestApi(t *testing.T) {
 	RegisterFailHandler(Fail)
@@ -37,12 +40,15 @@ var _ = BeforeSuite(func() {
 
 	redisClient, err = oTesting.GetTestRedis()
 	Expect(err).NotTo(HaveOccurred())
+
+	offersCache = cache.New(300*time.Second, 30*time.Second)
 })
 
 var _ = BeforeEach(func() {
 	var err error
 	db, err = conn.Begin()
 	Expect(err).NotTo(HaveOccurred())
+	offersCache.Flush()
 })
 
 var _ = AfterEach(func() {

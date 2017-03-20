@@ -14,3 +14,6 @@ redis:
   maxPoolSize: 20
 cache:
   maxAgeSeconds: 43200
+offersCache:
+  maxAgeSeconds: 300
+  cleanupInterval: 30

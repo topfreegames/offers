@@ -9,8 +9,8 @@ package bench
 
 import (
 	"fmt"
-	"github.com/topfreegames/offers/models"
 	. "github.com/topfreegames/offers/testing"
+	"gopkg.in/mgutz/dat.v2/dat"
 	"net/http"
 	"testing"
 )
@@ -23,16 +23,9 @@ func BenchmarkListOffers(b *testing.B) {
 		panic(err.Error())
 	}
 
-	games, err := createGames(&db, NumberOfGames)
+	games, err := getGames(&db)
 	if err != nil {
 		panic(err.Error())
-	}
-
-	for i := 0; i < NumberOfGames; i++ {
-		_, err = createOffers(&db, games[i], true, NumberOfOffersPerGame)
-		if err != nil {
-			panic(err.Error())
-		}
 	}
 
 	b.ResetTimer()
@@ -54,33 +47,27 @@ func BenchmarkInsertOffer(b *testing.B) {
 		panic(err.Error())
 	}
 
-	games, err := createGames(&db, NumberOfGames)
+	games, err := getGames(&db)
 	if err != nil {
 		panic(err.Error())
 	}
 
-	var offers []*models.Offer
-	for _, game := range games {
-		newOffers := getOffers(game, true, NumberOfOffersPerGame)
-		offers = append(offers, newOffers...)
-	}
-
-	offersLength := len(offers)
+	gamesLength := len(games)
 
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		offer := offers[i%offersLength]
+		gameID := games[i%gamesLength].ID
 		route := getRoute("/offers")
 		res, err := postTo(route, map[string]interface{}{
-			"gameId":    offer.GameID,
-			"name":      offer.Name,
-			"period":    offer.Period,
-			"frequency": offer.Frequency,
-			"trigger":   offer.Trigger,
-			"placement": offer.Placement,
-			"productId": offer.ProductID,
-			"contents":  offer.Contents,
+			"gameId":    gameID,
+			"name":      fmt.Sprintf("offer-%d", i),
+			"period":    dat.JSON([]byte(`{"every": "1s"}`)),
+			"frequency": dat.JSON([]byte(`{"every": "1s"}`)),
+			"trigger":   dat.JSON([]byte(`{"from": 1487280506000, "to": 1487280507000}`)),
+			"placement": "popup",
+			"productId": "tfg.com.sample",
+			"contents":  dat.JSON([]byte(`{"gems": 5, "gold": 100}`)),
 		})
 		validateResp(res, err)
 		res.Body.Close()
@@ -95,20 +82,10 @@ func BenchmarkUpdateOffer(b *testing.B) {
 		panic(err.Error())
 	}
 
-	games, err := createGames(&db, NumberOfGames)
+	offers, err := getOffers(&db)
 	if err != nil {
 		panic(err.Error())
 	}
-
-	var offers []*models.Offer
-	for _, game := range games {
-		newOffers, err := createOffers(&db, game, true, NumberOfOffersPerGame)
-		if err != nil {
-			panic(err.Error())
-		}
-		offers = append(offers, newOffers...)
-	}
-
 	offersLength := len(offers)
 
 	b.ResetTimer()
@@ -133,32 +110,23 @@ func BenchmarkUpdateOffer(b *testing.B) {
 	}
 }
 
-func BenchmarkEnableOffer(b *testing.B) {
+func BenchmarkDisableOffer(b *testing.B) {
 	db, err := GetPerfDB()
 	if err != nil {
 		panic(err.Error())
 	}
 
-	games, err := createGames(&db, NumberOfGames)
+	offers, err := getOffers(&db)
 	if err != nil {
 		panic(err.Error())
 	}
-
-	offersByGame := make(map[string][]*models.Offer)
-	for _, game := range games {
-		offers, err := createOffers(&db, game, false, NumberOfOffersPerGame)
-		if err != nil {
-			panic(err.Error())
-		}
-		offersByGame[game.ID] = offers
-	}
+	offersLength := len(offers)
 
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		game := games[i%NumberOfGames]
-		offer := offersByGame[game.ID][i%NumberOfOffersPerGame]
-		route := getRoute(fmt.Sprintf("/offers/%s/enable?game-id=%s", offer.ID, game.ID))
+		offer := offers[i%offersLength]
+		route := getRoute(fmt.Sprintf("/offers/%s/disable?game-id=%s", offer.ID, offer.GameID))
 		res, err := putTo(route, map[string]interface{}{})
 		validateResp(res, err)
 		res.Body.Close()
@@ -167,32 +135,23 @@ func BenchmarkEnableOffer(b *testing.B) {
 	}
 }
 
-func BenchmarkDisableOffer(b *testing.B) {
+func BenchmarkEnableOffer(b *testing.B) {
 	db, err := GetPerfDB()
 	if err != nil {
 		panic(err.Error())
 	}
 
-	games, err := createGames(&db, NumberOfGames)
+	offers, err := getOffers(&db)
 	if err != nil {
 		panic(err.Error())
 	}
-
-	offersByGame := make(map[string][]*models.Offer)
-	for _, game := range games {
-		offers, err := createOffers(&db, game, false, NumberOfOffersPerGame)
-		if err != nil {
-			panic(err.Error())
-		}
-		offersByGame[game.ID] = offers
-	}
+	offersLength := len(offers)
 
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		game := games[i%NumberOfGames]
-		offer := offersByGame[game.ID][i%NumberOfOffersPerGame]
-		route := getRoute(fmt.Sprintf("/offers/%s/disable?game-id=%s", offer.ID, game.ID))
+		offer := offers[i%offersLength]
+		route := getRoute(fmt.Sprintf("/offers/%s/enable?game-id=%s", offer.ID, offer.GameID))
 		res, err := putTo(route, map[string]interface{}{})
 		validateResp(res, err)
 		res.Body.Close()

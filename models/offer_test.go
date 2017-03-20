@@ -15,10 +15,14 @@ import (
 	. "github.com/topfreegames/offers/testing"
 	"gopkg.in/mgutz/dat.v2/dat"
 	runner "gopkg.in/mgutz/dat.v2/sqlx-runner"
+	"time"
 )
 
-const defaultOfferID string = "dd21ec96-2890-4ba0-b8e2-40ea67196990"
-const defaultGameID string = "offers-game"
+const (
+	defaultOfferID string        = "dd21ec96-2890-4ba0-b8e2-40ea67196990"
+	defaultGameID  string        = "offers-game"
+	expireDuration time.Duration = 300 * time.Second
+)
 
 var _ = Describe("Offer Models", func() {
 	Describe("Get offer id", func() {
@@ -168,7 +172,7 @@ var _ = Describe("Offer Models", func() {
 				"5fed76ab-1fd7-4a91-972d-bca228ce80c4",
 			}
 			gameID := defaultGameID
-			offers, err := models.GetEnabledOffers(db, gameID, nil)
+			offers, err := models.GetEnabledOffers(db, gameID, offersCache, expireDuration, nil)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(offers).To(HaveLen(4))
 			for i := 0; i < len(offers); i++ {
@@ -178,9 +182,37 @@ var _ = Describe("Offer Models", func() {
 
 		It("should return an empty list if there are no enabled offers", func() {
 			gameID := uuid.NewV4().String()
-			offers, err := models.GetEnabledOffers(db, gameID, nil)
+			offers, err := models.GetEnabledOffers(db, gameID, offersCache, expireDuration, nil)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(offers).To(HaveLen(0))
+		})
+
+		It("should get enabled offers from cache on the second time", func() {
+			expectedIDs := []string{
+				"dd21ec96-2890-4ba0-b8e2-40ea67196990",
+				"d5114990-77d7-45c4-ba5f-462fc86b213f",
+				"a411fbcf-dddc-4153-b42b-3f9b2684c965",
+				"5fed76ab-1fd7-4a91-972d-bca228ce80c4",
+			}
+			gameID := defaultGameID
+			start := time.Now().UnixNano()
+			offers, err := models.GetEnabledOffers(db, gameID, offersCache, expireDuration, nil)
+			dbElapsedTime := time.Now().UnixNano() - start
+			Expect(err).NotTo(HaveOccurred())
+			Expect(offers).To(HaveLen(4))
+
+			start = time.Now().UnixNano()
+			offers, err = models.GetEnabledOffers(db, gameID, offersCache, expireDuration, nil)
+			cacheElapsedTime := time.Now().UnixNano() - start
+			Expect(err).NotTo(HaveOccurred())
+			_, found := offersCache.Get(gameID)
+			Expect(found).To(BeTrue())
+
+			Expect(dbElapsedTime).To(BeNumerically(">", cacheElapsedTime))
+			Expect(offers).To(HaveLen(4))
+			for i := 0; i < len(offers); i++ {
+				Expect(expectedIDs).To(ContainElement(offers[i].ID))
+			}
 		})
 	})
 

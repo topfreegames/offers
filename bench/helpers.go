@@ -13,71 +13,59 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"time"
 
-	"github.com/satori/go.uuid"
 	"github.com/topfreegames/offers/models"
-	"gopkg.in/mgutz/dat.v2/dat"
 	runner "gopkg.in/mgutz/dat.v2/sqlx-runner"
 )
 
 func getRoute(url string) string {
-	return fmt.Sprintf("http://localhost:8888%s", url)
+	return fmt.Sprintf("http://localhost:8889%s", url)
 }
 
-func createGames(db *runner.Connection, numberOfGames int) ([]*models.Game, error) {
+func getGames(db *runner.Connection) ([]*models.Game, error) {
 	var games []*models.Game
 
-	for i := 0; i < numberOfGames; i++ {
-		now := time.Now()
-		game := &models.Game{
-			Name: fmt.Sprintf("game-%d", i),
-			ID:   uuid.NewV4().String(),
-		}
-		if err := models.UpsertGame(*db, game, now, nil); err != nil {
-			return nil, err
-		}
-		games = append(games, game)
-	}
+	query := `SELECT id, name FROM games`
+	err := (*db).SQL(query).QueryStructs(&games)
 
-	return games, nil
+	return games, err
 }
 
-func createOffers(db *runner.Connection, game *models.Game, enabled bool, numberOfOffers int) ([]*models.Offer, error) {
-	var err error
-	offers := getOffers(game, enabled, numberOfOffers)
-
-	for _, offer := range offers {
-		offer, err = models.InsertOffer(*db, offer, nil)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return offers, nil
-}
-
-func getOffers(game *models.Game, enabled bool, numberOfOffers int) []*models.Offer {
+func getOffers(db *runner.Connection) ([]*models.Offer, error) {
 	var offers []*models.Offer
 
-	for i := 0; i < numberOfOffers; i++ {
-		to := time.Now().Unix() + 5*60
-		trigger := fmt.Sprintf("{\"from\": 1486678000, \"to\": %d}", to)
-		offer := &models.Offer{
-			GameID:    game.ID,
-			Name:      fmt.Sprintf("offer-%d", i),
-			Period:    dat.JSON([]byte(`{"every": "1h"}`)),
-			Frequency: dat.JSON([]byte(`{"every": "1h"}`)),
-			Trigger:   dat.JSON([]byte(trigger)),
-			Placement: "popup",
-			ProductID: "tfg.com.sample",
-			Contents:  dat.JSON([]byte(`{"x": 1}`)),
-			Enabled:   enabled,
+	query := "SELECT * FROM offers"
+	err := (*db).SQL(query).QueryStructs(&offers)
+
+	return offers, err
+}
+
+func getOfferInstances(gameID, playerID string) ([]*models.OfferInstance, error) {
+	var offerInstances []*models.OfferInstance
+	route := getRoute(fmt.Sprintf("/available-offers?game-id=%s&player-id=%s", gameID, playerID))
+	res, err := get(route)
+	validateResp(res, err)
+
+	var offersPerPlacement map[string][]*models.OfferToReturn
+	buf := new(bytes.Buffer)
+	buf.ReadFrom(res.Body)
+	err = json.Unmarshal(buf.Bytes(), &offersPerPlacement)
+	if err != nil {
+		panic(err.Error())
+	}
+	res.Body.Close()
+
+	for _, offers := range offersPerPlacement {
+		for _, offer := range offers {
+			offerInstances = append(offerInstances, &models.OfferInstance{
+				GameID:   gameID,
+				PlayerID: playerID,
+				ID:       offer.ID,
+			})
 		}
-		offers = append(offers, offer)
 	}
 
-	return offers
+	return offerInstances, err
 }
 
 func get(url string) (*http.Response, error) {
