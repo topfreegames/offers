@@ -1,4 +1,5 @@
-// offers api // https://github.com/topfreegames/offers
+// offers api
+// https://github.com/topfreegames/offers
 //
 // Licensed under the MIT license:
 // http://www.opensource.org/licenses/mit-license
@@ -10,6 +11,7 @@ import (
 	"encoding/json"
 	"time"
 
+	"github.com/pmylund/go-cache"
 	"github.com/topfreegames/offers/util"
 	"gopkg.in/mgutz/dat.v2/dat"
 	runner "gopkg.in/mgutz/dat.v2/sqlx-runner"
@@ -144,20 +146,29 @@ func ClaimOffer(
 	}
 
 	if isReplay {
+		pipe := redisClient.Client.TxPipeline()
+
+		claimCountGetOp := pipe.Get(claimCounterKey)
+		claimTimestampGetOp := pipe.Get(claimTimestampKey)
+
 		err = mr.WithRedisSegment(SegmentGet, func() error {
-			claimCount, err = redisClient.Client.Get(claimCounterKey).Int64()
+			_, err = pipe.Exec()
 			return err
 		})
 		if err != nil {
 			return nil, false, 0, err
 		}
-		err = mr.WithRedisSegment(SegmentGet, func() error {
-			claimTimestamp, err = redisClient.Client.Get(claimTimestampKey).Int64()
-			return err
-		})
+
+		claimCount, err = claimCountGetOp.Int64()
 		if err != nil {
 			return nil, false, 0, err
 		}
+
+		claimTimestamp, err = claimTimestampGetOp.Int64()
+		if err != nil {
+			return nil, false, 0, err
+		}
+
 		nextAt, err = getClaimedOfferNextAt(db, gameID, offerInstance.OfferID, int(claimCount), time.Unix(claimTimestamp, 0), mr)
 		if err != nil {
 			return nil, false, 0, err
@@ -165,24 +176,21 @@ func ClaimOffer(
 		return offerInstance.Contents, true, nextAt, nil
 	}
 
-	err = mr.WithRedisSegment(SegmentIncr, func() error {
-		claimCount, err = redisClient.Client.Incr(claimCounterKey).Result()
+	pipe := redisClient.Client.TxPipeline()
+
+	claimCountIncrOp := pipe.Incr(claimCounterKey)
+	pipe.Set(claimTimestampKey, timestamp, 0)
+	pipe.SAdd(transactionsKey, transactionID)
+
+	err = mr.WithRedisSegment(SegmentRedis, func() error {
+		_, err = pipe.Exec()
 		return err
 	})
 	if err != nil {
 		return nil, false, 0, err
 	}
 
-	err = mr.WithRedisSegment(SegmentSet, func() error {
-		return redisClient.Client.Set(claimTimestampKey, timestamp, 0).Err()
-	})
-	if err != nil {
-		return nil, false, 0, err
-	}
-
-	err = mr.WithRedisSegment(SegmentSAdd, func() error {
-		return redisClient.Client.SAdd(transactionsKey, transactionID).Err()
-	})
+	claimCount, err = claimCountIncrOp.Result()
 	if err != nil {
 		return nil, false, 0, err
 	}
@@ -226,6 +234,7 @@ func getViewedOfferNextAt(
 		return 0, err
 	}
 	var f FrequencyOrPeriod
+
 	json.Unmarshal(offer.Frequency, &f)
 	if f.Max != 0 && viewCounter >= f.Max {
 		return 0, nil
@@ -286,24 +295,21 @@ func ViewOffer(
 		return true, nextAt, nil
 	}
 
-	err = mr.WithRedisSegment(SegmentIncr, func() error {
-		viewCount, err = redisClient.Client.Incr(viewCounterKey).Result()
+	pipe := redisClient.Client.TxPipeline()
+
+	viewCounterIncrOp := pipe.Incr(viewCounterKey)
+	pipe.Set(viewTimestampKey, t.Unix(), 0)
+	pipe.SAdd(impressionsKey, impressionID)
+
+	err = mr.WithRedisSegment(SegmentRedis, func() error {
+		_, err = pipe.Exec()
 		return err
 	})
 	if err != nil {
 		return false, 0, err
 	}
 
-	err = mr.WithRedisSegment(SegmentSet, func() error {
-		return redisClient.Client.Set(viewTimestampKey, t.Unix(), 0).Err()
-	})
-	if err != nil {
-		return false, 0, err
-	}
-
-	err = mr.WithRedisSegment(SegmentSAdd, func() error {
-		return redisClient.Client.SAdd(impressionsKey, impressionID).Err()
-	})
+	viewCount, err = viewCounterIncrOp.Result()
 	if err != nil {
 		return false, 0, err
 	}
@@ -319,12 +325,15 @@ func ViewOffer(
 func GetAvailableOffers(
 	db runner.Connection,
 	redisClient *util.RedisClient,
+	offersCache *cache.Cache,
 	gameID, playerID string,
 	t time.Time,
+	expireDuration time.Duration,
 	mr *MixedMetricsReporter,
 ) (map[string][]*OfferToReturn, error) {
 	offersByPlacement := make(map[string][]*OfferToReturn)
-	enabledOffers, err := GetEnabledOffers(db, gameID, mr)
+
+	enabledOffers, err := GetEnabledOffers(db, gameID, offersCache, expireDuration, mr)
 	if err != nil {
 		return nil, err
 	}
@@ -450,8 +459,14 @@ func filterOffersByFrequencyAndPeriod(
 		var viewCounter int64
 		var viewTimestamp int64
 
-		err = mr.WithRedisSegment(SegmentGet, func() error {
-			claimCounter, err = redisClient.Client.Get(claimCounterKey).Int64()
+		pipe := redisClient.Client.TxPipeline()
+		claimCounterGetOp := pipe.Get(claimCounterKey)
+		claimTimestampGetOp := pipe.Get(claimTimestampKey)
+		viewCounterGetOp := pipe.Get(viewCounterKey)
+		viewTimestampGetOp := pipe.Get(viewTimestampKey)
+
+		err = mr.WithRedisSegment(SegmentRedis, func() error {
+			_, err = pipe.Exec()
 			return err
 		})
 		// If err == redis.Nil, then Get didn't found claimCounter fot that key
@@ -460,25 +475,24 @@ func filterOffersByFrequencyAndPeriod(
 		if err != nil && err != redis.Nil {
 			return nil, err
 		}
-		err = mr.WithRedisSegment(SegmentGet, func() error {
-			claimTimestamp, err = redisClient.Client.Get(claimTimestampKey).Int64()
-			return err
-		})
+
+		claimCounter, err = claimCounterGetOp.Int64()
+		if err != nil && err != redis.Nil {
+			return nil, err
+		}
+
+		claimTimestamp, err = claimTimestampGetOp.Int64()
 		if err != nil && err != redis.Nil {
 			return nil, err
 		}
 		lastClaimAt := time.Unix(claimTimestamp, 0)
-		err = mr.WithRedisSegment(SegmentGet, func() error {
-			viewCounter, err = redisClient.Client.Get(viewCounterKey).Int64()
-			return err
-		})
+
+		viewCounter, err = viewCounterGetOp.Int64()
 		if err != nil && err != redis.Nil {
 			return nil, err
 		}
-		err = mr.WithRedisSegment(SegmentGet, func() error {
-			viewTimestamp, err = redisClient.Client.Get(viewTimestampKey).Int64()
-			return err
-		})
+
+		viewTimestamp, err = viewTimestampGetOp.Int64()
 		if err != nil && err != redis.Nil {
 			return nil, err
 		}

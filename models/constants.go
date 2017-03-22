@@ -45,3 +45,6 @@ const SegmentSet = "Redis/SET"
 
 //SegmentSAdd represents a redis op
 const SegmentSAdd = "Redis/SADD"
+
+//SegmentRedis represents a redis op
+const SegmentRedis = "Redis"

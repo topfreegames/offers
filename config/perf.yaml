@@ -1,22 +1,15 @@
 postgres:
-  user: "offers_test"
-  dbName: "offers_test"
+  user: "offers_perf"
+  dbName: "offers_perf"
   host: "localhost"
   port: 8585
   sslMode: "disable"
-  maxIdleConns: 10
-  maxOpenConns: 10
-newrelic:
-  app: offers
-  key: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 redis:
   host: localhost
   port: 6333
   password: ""
   db: 0
   maxPoolSize: 20
-cache:
-  maxAgeSeconds: 43200
 offersCache:
   maxAgeSeconds: 300
   cleanupInterval: 30

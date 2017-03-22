@@ -54,7 +54,7 @@ start-deps:
 stop-deps:
 	@env MY_IP=${MY_IP} docker-compose --project-name offers down
 
-test: deps unit integration acceptance test-coverage-func
+test: deps unit integration test-coverage-func #acceptance test-coverage-func
 
 clear-coverage-profiles:
 	@find . -name '*.coverprofile' -delete
@@ -137,3 +137,22 @@ cross: assets
 	@echo "Building for darwin-x86_64..."
 	@env GOOS=darwin GOARCH=amd64 go build -o ./bin/offers-darwin-x86_64
 	@chmod +x bin/*
+
+perf: deps drop-perf migrate-perf run-test-offers run-perf
+
+drop-perf:
+	@psql -d postgres -h localhost -p 8585 -U postgres -f scripts/drop-perf.sql > /dev/null
+	@echo "Perf database created successfully!"
+
+migrate-perf:
+	@go run main.go migrate -c ./config/perf.yaml
+
+run-perf:
+	@go test -bench . -benchtime 3s ./bench/...
+
+run-test-offers: build kill-test-offers
+	@rm -rf /tmp/offers-bench.log
+	@./bin/offers start -p 8889 -q -c ./config/perf.yaml 2>&1 > /tmp/offers-bench.log &
+
+kill-test-offers:
+	@-ps aux | egrep './bin/offers.+perf.yaml' | egrep -v grep | awk ' { print $$2 } ' | xargs kill -9
