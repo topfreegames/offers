@@ -205,7 +205,7 @@ var _ = Describe("Offer Models", func() {
 			offers, err = models.GetEnabledOffers(db, gameID, offersCache, expireDuration, nil)
 			cacheElapsedTime := time.Now().UnixNano() - start
 			Expect(err).NotTo(HaveOccurred())
-			_, found := offersCache.Get(gameID)
+			_, found := offersCache.Get(models.GetEnabledOffersKey(gameID))
 			Expect(found).To(BeTrue())
 
 			Expect(dbElapsedTime).To(BeNumerically(">", cacheElapsedTime))

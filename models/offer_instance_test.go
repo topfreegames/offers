@@ -27,7 +27,7 @@ var _ = Describe("Offer Instance Model", func() {
 		defaultGameID          string        = "offers-game"
 		defaultPlayerID        string        = "player-1"
 		defaultProductID       string        = "com.tfg.sample"
-		aexpireDuration        time.Duration = 300 * time.Second
+		expireDuration         time.Duration = 300 * time.Second
 	)
 
 	Describe("Offer Instance", func() {

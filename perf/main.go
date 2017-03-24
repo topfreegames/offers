@@ -101,14 +101,9 @@ func populateTestDB(db *runner.Connection, redis *util.RedisClient) error {
 		return err
 	}
 
-	offerInstances, err := populateOfferInstances(db, redis, offersByGame)
+	_, err = populateOfferInstances(db, redis, offersByGame)
 	if err != nil {
 		return err
-	}
-	for gameID, offers := range offerInstances {
-		for _, offer := range offers {
-			fmt.Println(gameID, offer.ID)
-		}
 	}
 
 	return nil

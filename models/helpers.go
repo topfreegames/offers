@@ -68,6 +68,16 @@ func GetViewTimestampKey(playerID, offerID string) string {
 	return fmt.Sprintf("view:timestamp:%s:%s", playerID, offerID)
 }
 
+//GetEnabledOffersKey returns the key of the current enabled offers
+func GetEnabledOffersKey(gameID string) string {
+	return fmt.Sprintf("offers:enabled:%s", gameID)
+}
+
+//GetOfferInstancesKey returns the key of the players available offer instances
+func GetOfferInstancesKey(offerInstanceID, gameID string) string {
+	return fmt.Sprintf("offers:instances:%s:%s", gameID, offerInstanceID)
+}
+
 //GetDB Connection using the given properties
 func GetDB(
 	host string, user string, port int, sslmode string,

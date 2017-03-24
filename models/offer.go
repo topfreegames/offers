@@ -61,7 +61,8 @@ func GetEnabledOffers(db runner.Connection, gameID string, offersCache *cache.Ca
 	var offers []*Offer
 	var err error
 
-	offersInterface, found := offersCache.Get(gameID)
+	enabledOffersKey := GetEnabledOffersKey(gameID)
+	offersInterface, found := offersCache.Get(enabledOffersKey)
 
 	if found {
 		//fmt.Println("Offers Cache Hit")
@@ -84,7 +85,7 @@ func GetEnabledOffers(db runner.Connection, gameID string, offersCache *cache.Ca
 	err = HandleNotFoundError("Offer", map[string]interface{}{"enabled": true}, err)
 
 	if err == nil {
-		offersCache.Set(gameID, offers, expireDuration)
+		offersCache.Set(enabledOffersKey, offers, expireDuration)
 	}
 
 	return offers, err
