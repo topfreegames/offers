@@ -36,6 +36,8 @@ Offers API
 
   Update an existing Game or insert a new Game into database. `:id` must match `^[^-][a-zA-Z0-9-_]*$`.
 
+  **Requires basic auth**.
+
   * Payload
     ```
     {
@@ -84,6 +86,8 @@ Offers API
 
   List all existing games.
 
+  **Requires basic auth**.
+
   * Success Response
     * Code: `200`
     * Content:
@@ -119,6 +123,8 @@ Offers API
   `POST /offers`
 
   Insert a new Offer into the database.
+
+  **Requires basic auth**.
 
   * Payload
     ```
@@ -217,6 +223,8 @@ Offers API
 
   Updated the offer with given id in the database.
 
+  **Requires basic auth**.
+
   * Payload
     ```
       {
@@ -308,6 +316,8 @@ Offers API
 
   Enable an offer. `:id` must be an `uuidv4`.
 
+  **Requires basic auth**.
+
   * Success Response
     * Code: `200`
     * Content:
@@ -346,6 +356,8 @@ Offers API
 
   Disable an offer template. `:id` must be an `uuidv4`.
 
+  **Requires basic auth**.
+
   * Success Response
     * Code: `200`
     * Content:
@@ -383,6 +395,8 @@ Offers API
   `GET /offers?game-id=<required-game-id>`
 
   List all game's offers.
+
+  **Requires basic auth**.
 
   * Success Response
     * Code: `200`

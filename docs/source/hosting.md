@@ -1,48 +1,9 @@
-# Offers
+Hosting Offers
+==============
 
-[![Build Status](https://travis-ci.org/topfreegames/offers.svg?branch=master)](https://travis-ci.org/topfreegames/offers)
-[![Coverage Status](https://coveralls.io/repos/github/topfreegames/offers/badge.svg?branch=master)](https://coveralls.io/github/topfreegames/offers?branch=master)
-[![Code Climate](https://codeclimate.com/github/topfreegames/offers/badges/gpa.svg)](https://codeclimate.com/github/topfreegames/offers)
-[![Go Report Card](https://goreportcard.com/badge/github.com/topfreegames/offers)](https://goreportcard.com/report/github.com/topfreegames/offers)
-[![Docs](https://readthedocs.org/projects/offers-api/badge/?version=latest
-)](http://offers-api.readthedocs.io/en/latest/)
-[![](https://imagelayers.io/badge/tfgco/offers:latest.svg)](https://imagelayers.io/?images=tfgco/offers:latest 'Offers Image Layers')
+## Docker
 
-Offers is a service meant to handle offers/promotions in your games.
-
-### Dependencies
-* Go 1.7
-* Postgres >= 9.5
-* Redis
-
-### Setup
-First, set your $GOPATH ([Go Lang](https://golang.org/doc/install)) env variable and add $GOPATH/bin to your $PATH
-
-```bash
-make setup
-```
-
-### Building
-
-```bash
-make build
-```
-
-### Running
-
-```bash
-make run-full
-```
-
-### Automated tests
-
-Offers has unit, integration and acceptance tests (using cucumber). To run all of them:
-
-```bash
-make test
-```
-
-### Available Environment variables
+Running Offers with docker is rather simple. Our docker container image comes bundled with the API binary. All you need to do is load balance all the containers and you're good to go. The API runs at port `8888` in the docker image.
 
 Offers uses PostgreSQL to store offers information. The container takes environment variables to specify this connection:
 
