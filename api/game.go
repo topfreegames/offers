@@ -40,7 +40,6 @@ func (g *GameHandler) list(w http.ResponseWriter, r *http.Request) {
 		"operation": "list",
 		"userEmail": userEmail,
 	})
-
 	mr := metricsReporterFromCtx(r.Context())
 
 	var err error

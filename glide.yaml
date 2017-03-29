@@ -27,3 +27,6 @@ import:
 - package: gopkg.in/redis.v5
   version: ^5.2.9
 - package: github.com/patrickmn/go-cache
+- package: github.com/getsentry/raven-go
+- package: github.com/certifi/gocertifi
+  version: ^2017.1.23

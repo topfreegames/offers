@@ -8,6 +8,7 @@
 package api
 
 import (
+	e "errors"
 	"fmt"
 	"io"
 	"net"
@@ -16,6 +17,7 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/asaskevich/govalidator"
+	raven "github.com/getsentry/raven-go"
 	"github.com/gorilla/mux"
 	newrelic "github.com/newrelic/go-agent"
 	"github.com/pmylund/go-cache"
@@ -67,6 +69,7 @@ func (a *App) getRouter() *mux.Router {
 	r := mux.NewRouter()
 	r.Handle("/healthcheck", Chain(
 		&HealthcheckHandler{App: a},
+		&SentryMiddleware{},
 		&MetricsReporterMiddleware{App: a},
 		&NewRelicMiddleware{App: a},
 		&AuthMiddleware{App: a},
@@ -76,6 +79,7 @@ func (a *App) getRouter() *mux.Router {
 
 	r.Handle("/games", Chain(
 		&GameHandler{App: a, Method: "list"},
+		&SentryMiddleware{},
 		&MetricsReporterMiddleware{App: a},
 		&NewRelicMiddleware{App: a},
 		&AuthMiddleware{App: a, useBasicAuth: true},
@@ -85,6 +89,7 @@ func (a *App) getRouter() *mux.Router {
 
 	r.HandleFunc("/games/{id}", Chain(
 		&GameHandler{App: a, Method: "upsert"},
+		&SentryMiddleware{},
 		&MetricsReporterMiddleware{App: a},
 		&NewRelicMiddleware{App: a},
 		&AuthMiddleware{App: a, useBasicAuth: true},
@@ -98,6 +103,7 @@ func (a *App) getRouter() *mux.Router {
 
 	r.Handle("/offers", Chain(
 		&OfferHandler{App: a, Method: "list"},
+		&SentryMiddleware{},
 		&NewRelicMiddleware{App: a},
 		&AuthMiddleware{App: a, useBasicAuth: true},
 		&LoggingMiddleware{App: a},
@@ -106,6 +112,7 @@ func (a *App) getRouter() *mux.Router {
 
 	r.Handle("/offers", Chain(
 		&OfferHandler{App: a, Method: "insert"},
+		&SentryMiddleware{},
 		&NewRelicMiddleware{App: a},
 		&AuthMiddleware{App: a, useBasicAuth: true},
 		&LoggingMiddleware{App: a},
@@ -115,6 +122,7 @@ func (a *App) getRouter() *mux.Router {
 
 	r.Handle("/offers/claim", Chain(
 		&OfferRequestHandler{App: a, Method: "claim"},
+		&SentryMiddleware{},
 		&NewRelicMiddleware{App: a},
 		&AuthMiddleware{App: a},
 		&LoggingMiddleware{App: a},
@@ -124,6 +132,7 @@ func (a *App) getRouter() *mux.Router {
 
 	r.Handle("/offers/{id}", Chain(
 		&OfferHandler{App: a, Method: "update"},
+		&SentryMiddleware{},
 		&NewRelicMiddleware{App: a},
 		&AuthMiddleware{App: a, useBasicAuth: true},
 		&LoggingMiddleware{App: a},
@@ -134,6 +143,7 @@ func (a *App) getRouter() *mux.Router {
 
 	r.Handle("/offers/{id}/enable", Chain(
 		&OfferHandler{App: a, Method: "enable"},
+		&SentryMiddleware{},
 		&NewRelicMiddleware{App: a},
 		&AuthMiddleware{App: a, useBasicAuth: true},
 		&LoggingMiddleware{App: a},
@@ -143,6 +153,7 @@ func (a *App) getRouter() *mux.Router {
 
 	r.Handle("/offers/{id}/disable", Chain(
 		&OfferHandler{App: a, Method: "disable"},
+		&SentryMiddleware{},
 		&NewRelicMiddleware{App: a},
 		&AuthMiddleware{App: a, useBasicAuth: true},
 		&LoggingMiddleware{App: a},
@@ -152,6 +163,7 @@ func (a *App) getRouter() *mux.Router {
 
 	r.Handle("/available-offers", Chain(
 		&OfferRequestHandler{App: a, Method: "get-offers"},
+		&SentryMiddleware{},
 		&NewRelicMiddleware{App: a},
 		&AuthMiddleware{App: a},
 		&LoggingMiddleware{App: a},
@@ -160,6 +172,7 @@ func (a *App) getRouter() *mux.Router {
 
 	r.HandleFunc("/offers/{id}/impressions", Chain(
 		&OfferRequestHandler{App: a, Method: "impressions"},
+		&SentryMiddleware{},
 		&NewRelicMiddleware{App: a},
 		&AuthMiddleware{App: a},
 		&LoggingMiddleware{App: a},
@@ -188,6 +201,8 @@ func (a *App) configureApp() error {
 	if err != nil {
 		return err
 	}
+
+	a.configureSentry()
 
 	a.MaxAge = a.Config.GetInt64("cache.maxAgeSeconds")
 	a.configureServer()
@@ -278,6 +293,16 @@ func (a *App) configureLogger() {
 	})
 }
 
+func (a *App) configureSentry() {
+	l := a.Logger.WithFields(logrus.Fields{
+		"operation": "configureSentry",
+	})
+	sentryURL := a.Config.GetString("sentry.url")
+	l.Debug("Configuring sentry...")
+	raven.SetDSN(sentryURL)
+	raven.SetRelease(metadata.Version)
+}
+
 func (a *App) configureNewRelic() error {
 	appName := a.Config.GetString("newrelic.app")
 	key := a.Config.GetString("newrelic.key")
@@ -321,6 +346,15 @@ func (a *App) HandleError(w http.ResponseWriter, status int, msg string, err int
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(sErr.Serialize())
+
+	var rErr error
+	errVal, ok := err.(error)
+	if ok {
+		rErr = errVal
+	} else {
+		rErr = e.New(msg)
+	}
+	raven.CaptureError(rErr, nil)
 }
 
 //ListenAndServe requests
