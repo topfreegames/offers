@@ -336,6 +336,7 @@ func (a *App) configureServer() {
 
 //HandleError writes an error response with message and status
 func (a *App) HandleError(w http.ResponseWriter, status int, msg string, err interface{}) {
+	w.WriteHeader(status)
 	var sErr errors.SerializableError
 	val, ok := err.(errors.SerializableError)
 	if ok {
