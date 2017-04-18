@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/Sirupsen/logrus"
+	"github.com/gorilla/mux"
 	uuid "github.com/satori/go.uuid"
 )
 
@@ -46,23 +47,26 @@ func (m *LoggingMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	defer func() {
 		l := loggerFromContext(ctx)
 		status := getStatusFromResponseWriter(w)
-
+		route, _ := mux.CurrentRoute(r).GetPathTemplate()
 		// request failed
 		if status > 399 && status < 500 {
 			l.WithFields(logrus.Fields{
 				"path":            r.URL.Path,
+				"route":           route,
 				"requestDuration": time.Since(start).Nanoseconds(),
 				"status":          status,
 			}).Warn("Request failed.")
 		} else if status > 499 { // request is ok, but server failed
 			l.WithFields(logrus.Fields{
 				"path":            r.URL.Path,
+				"route":           route,
 				"requestDuration": time.Since(start).Nanoseconds(),
 				"status":          status,
 			}).Error("Response failed.")
 		} else { // Everything went ok
 			l.WithFields(logrus.Fields{
 				"path":            r.URL.Path,
+				"route":           route,
 				"requestDuration": time.Since(start).Nanoseconds(),
 				"status":          status,
 			}).Info("Request successful.")
