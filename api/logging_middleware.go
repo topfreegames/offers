@@ -45,10 +45,28 @@ func (m *LoggingMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	start := time.Now()
 	defer func() {
 		l := loggerFromContext(ctx)
-		l.WithFields(logrus.Fields{
-			"path":            r.URL.Path,
-			"requestDuration": time.Since(start).Nanoseconds(),
-		}).Info("Request completed.")
+		status := getStatusFromResponseWriter(w)
+
+		// request failed
+		if status > 399 && status < 500 {
+			l.WithFields(logrus.Fields{
+				"path":            r.URL.Path,
+				"requestDuration": time.Since(start).Nanoseconds(),
+				"status":          status,
+			}).Warn("Request failed.")
+		} else if status > 499 { // request is ok, but server failed
+			l.WithFields(logrus.Fields{
+				"path":            r.URL.Path,
+				"requestDuration": time.Since(start).Nanoseconds(),
+				"status":          status,
+			}).Error("Response failed.")
+		} else { // Everything went ok
+			l.WithFields(logrus.Fields{
+				"path":            r.URL.Path,
+				"requestDuration": time.Since(start).Nanoseconds(),
+				"status":          status,
+			}).Info("Request successful.")
+		}
 	}()
 
 	// Call the next middleware/handler in chain

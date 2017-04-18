@@ -119,7 +119,7 @@ rtfd:
 
 clean: drop-test migrate-test clear-coverage-profiles
 
-run-full: drop migrate deps run
+run-full: deps drop migrate run
 
 build-linux-64: assets
 	@mkdir -p ./bin
@@ -140,7 +140,7 @@ cross: assets
 
 perf: deps drop-perf migrate-perf db-perf run-test-offers run-perf
 
-db-perf: 
+db-perf:
 	@go run perf/main.go
 
 drop-perf:

@@ -40,4 +40,4 @@ ENV OFFERS_REDIS_HOST localhost
 ENV OFFERS_REDIS_PASSWORD ""
 ENV OFFERS_REDIS_PORT 6333
 
-CMD /app/offers start -v3 -c /app/config/local.yaml
+CMD /app/offers start -v2 -c /app/config/local.yaml
