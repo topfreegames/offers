@@ -34,7 +34,7 @@ Offers API
   ### Upsert Game
   `PUT /games/:id`
 
-  Update an existing Game or insert a new Game into database. `:id` must match `^[^-][a-zA-Z0-9-_]*$`.
+  Updates an existing Game or insert a new Game into database. `:id` must match `^[^-][a-zA-Z0-9-_]*$`.
 
   **Requires basic auth**.
 
@@ -84,7 +84,7 @@ Offers API
   ### List Games
   `GET /games`
 
-  List all existing games.
+  Lists all existing games.
 
   **Requires basic auth**.
 
@@ -122,7 +122,7 @@ Offers API
   ### Create Offer
   `POST /offers`
 
-  Insert a new Offer into the database.
+  Inserts a new Offer into the database.
 
   **Requires basic auth**.
 
@@ -221,7 +221,7 @@ Offers API
   ### Update Offer
   `PUT /offers/:id`
 
-  Updated the offer with given id in the database.
+  Updates the offer with given id in the database.
 
   **Requires basic auth**.
 
@@ -314,7 +314,7 @@ Offers API
   ### Enable offer
   `PUT /offers/:id/enable?game-id=<required-game-id>`
 
-  Enable an offer. `:id` must be an `uuidv4`.
+  Enables an offer. `:id` must be an `uuidv4`.
 
   **Requires basic auth**.
 
@@ -354,7 +354,7 @@ Offers API
   ### Disable offer template
   `PUT /offers/:id/disable?game-id=<required-game-id>`
 
-  Disable an offer template. `:id` must be an `uuidv4`.
+  Disables an offer template. `:id` must be an `uuidv4`.
 
   **Requires basic auth**.
 
@@ -394,7 +394,7 @@ Offers API
   ### List Offers
   `GET /offers?game-id=<required-game-id>`
 
-  List all game's offers.
+  Lists all game's offers.
 
   **Requires basic auth**.
 
@@ -453,7 +453,7 @@ Offers API
   ### Get Available Offers
   `GET /available-offers?player-id=<required-player-id>&game-id=<required-game-id>`
 
-  Get the available offers for a player of a game. An offer is available if it respects the frequency (last time player saw the offer), respects the period (last time player claimed the offer), is triggered (current time is between "from" and "to") and is enabled. The success response is a JSON where each key is a placement on the UI and the value is a list of available offers.
+  Gets the available offers for a player of a game. An offer is available if it respects the frequency (last time player saw the offer), respects the period (last time player claimed the offer), is triggered (current time is between "from" and "to") and is enabled. The success response is a JSON where each key is a placement on the UI and the value is a list of available offers.
 
   * Success Response
     * Code: `200`
@@ -498,7 +498,7 @@ Offers API
   ### Claim Offer
   `PUT /offers/claim`
 
-  Claim a player's offer. Should only be called after payment confirmation. `:id` must be an `uuidv4`.
+  Claims a player's offer. Should only be called after payment confirmation. `:id` must be an `uuidv4`.
 
   * Payload
     ```
