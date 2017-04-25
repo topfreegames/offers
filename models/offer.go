@@ -49,18 +49,20 @@ func buildScope(enabledOffers string, filterAttrs map[string]string) string {
 		rawSubQuery := `
 		AND (
 			(filters::json#>>'{%s}') IS NULL OR
-			((filters::json#>>'{%s,eq}') IS NOT NULL AND (filters::json#>>'{%s,eq}') = '%s')
+			((filters::json#>>'{%s,eq}') IS NOT NULL AND (filters::json#>>'{%s,eq}') = '%s') OR
+			((filters::json#>>'{%s,neq}') IS NOT NULL AND (filters::json#>>'{%s,neq}') != '%s')
 		)`
-		subQuery := fmt.Sprintf(rawSubQuery, k, k, k, v)
+		subQuery := fmt.Sprintf(rawSubQuery, k, k, k, v, k, k, v)
 		if f, err := strconv.ParseFloat(v, 64); err == nil {
 			rawSubQuery = `
 			AND (
 				(filters::json#>>'{%s}') IS NULL OR
+				((filters::json#>>'{%s,eq}') IS NOT NULL AND (filters::json#>>'{%s,eq}') = '%s') OR
+				((filters::json#>>'{%s,neq}') IS NOT NULL AND (filters::json#>>'{%s,neq}') != '%s') OR
 				((filters::json#>>'{%s,geq}') IS NOT NULL AND (filters::json#>>'{%s,lt}') IS NOT NULL AND
-				%f >= (filters::json#>>'{%s,geq}')::float AND %f < (filters::json#>>'{%s,lt}')::float) OR
-				((filters::json#>>'{%s,eq}') IS NOT NULL AND (filters::json#>>'{%s,eq}') = '%s')
+				%f >= (filters::json#>>'{%s,geq}')::float AND %f < (filters::json#>>'{%s,lt}')::float)
 			)`
-			subQuery = fmt.Sprintf(rawSubQuery, k, k, k, f, k, f, k, k, k, v)
+			subQuery = fmt.Sprintf(rawSubQuery, k, k, k, v, k, k, v, k, k, f, k, f, k)
 		}
 		subQueries = append(subQueries, subQuery)
 	}

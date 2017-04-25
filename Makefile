@@ -1,6 +1,6 @@
 MY_IP=`ifconfig | grep --color=none -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep --color=none -Eo '([0-9]*\.){3}[0-9]*' | grep -v '127.0.0.1' | head -n 1`
 PACKAGES = $(shell glide novendor)
-TEST_PACKAGES = $(shell glide novendor | egrep -v features | egrep -v '^[.]$$' | sed 's@\/[.][.][.]@@')
+TEST_PACKAGES = $(shell glide novendor | egrep -v bench | egrep -v features | egrep -v '^[.]$$' | sed 's@\/[.][.][.]@@')
 
 setup: setup-hooks
 	@go get -u github.com/Masterminds/glide/...

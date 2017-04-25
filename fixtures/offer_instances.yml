@@ -131,3 +131,21 @@
     contents: '{"gems": 5, "gold": 100}'
     product_id: com.tfg.sample
     created_at: 2016-01-01 12:30:12
+-
+    id: 33f9bbc1-5e9e-4a80-ae95-8d74d8774629
+    game_id: another-game-with-filters
+    player_id: player-13
+    offer_id: 26baac0a-4a1a-42ba-a561-7fd3735b1799
+    offer_version: 1
+    contents: '{"gems": 5, "gold": 100}'
+    product_id: com.tfg.sample
+    created_at: 2016-01-01 12:30:12
+-
+    id: 0eebb309-753c-4736-98f1-5be851e1ac4d
+    game_id: another-game-with-filters
+    player_id: player-13
+    offer_id: 03408436-f7d4-4ba0-ad0d-93e03f1c4267
+    offer_version: 1
+    contents: '{"gems": 5, "gold": 100}'
+    product_id: com.tfg.sample
+    created_at: 2016-01-01 12:30:12

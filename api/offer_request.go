@@ -60,8 +60,8 @@ func (h *OfferRequestHandler) getOffers(w http.ResponseWriter, r *http.Request) 
 	currentTime := h.App.Clock.GetTime()
 	filterAttrsList := r.URL.Query()
 	filterAttrs := make(map[string]string)
-	delete(filterAttrs, "player-id")
-	delete(filterAttrs, "game-id")
+	delete(filterAttrsList, "player-id")
+	delete(filterAttrsList, "game-id")
 	for k, v := range filterAttrsList {
 		if len(v) == 0 || len(v) > 1 {
 			err := fmt.Errorf("Filter attribute passed with invalid number of arguments. Key: %s", k)

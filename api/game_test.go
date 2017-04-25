@@ -211,7 +211,7 @@ var _ = Describe("Game Handler", func() {
 			var obj []map[string]interface{}
 			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
 			Expect(err).NotTo(HaveOccurred())
-			Expect(obj).To(HaveLen(7))
+			Expect(obj).To(HaveLen(8))
 			for i := 0; i < len(obj); i++ {
 				Expect(obj[i]).To(HaveKey("id"))
 				Expect(obj[i]).To(HaveKey("name"))

@@ -80,6 +80,62 @@ var _ = Describe("Offer Handler", func() {
 			Expect(recorder.Header().Get("Cache-Control")).To(Equal(fmt.Sprintf("max-age=%d", maxAge)))
 		})
 
+		It("should return filtered available offers", func() {
+			playerID := "player-13"
+			gameID := "another-game-with-filters"
+			url := fmt.Sprintf("/available-offers?player-id=%s&game-id=%s&level=1", playerID, gameID)
+			request, _ := http.NewRequest("GET", url, nil)
+			var jsonBody map[string][]map[string]interface{}
+
+			app.Router.ServeHTTP(recorder, request)
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
+			err := json.Unmarshal(recorder.Body.Bytes(), &jsonBody)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(recorder.Code).To(Equal(http.StatusOK))
+			Expect(jsonBody).To(HaveKey("popup"))
+			Expect(jsonBody).To(HaveKey("store"))
+			popup := jsonBody["popup"]
+			Expect(popup).To(HaveLen(1))
+			Expect(popup[0]).To(HaveKey("id"))
+			Expect(popup[0]).To(HaveKey("productId"))
+			Expect(popup[0]).To(HaveKey("contents"))
+			Expect(popup[0]).To(HaveKey("metadata"))
+			store := jsonBody["store"]
+			Expect(store).To(HaveLen(1))
+			Expect(store[0]).To(HaveKey("id"))
+			Expect(store[0]).To(HaveKey("productId"))
+			Expect(store[0]).To(HaveKey("contents"))
+			Expect(store[0]).To(HaveKey("metadata"))
+			Expect(store[0]).To(HaveKey("expireAt"))
+			maxAge := app.MaxAge
+			Expect(recorder.Header().Get("Cache-Control")).To(Equal(fmt.Sprintf("max-age=%d", maxAge)))
+		})
+
+		It("should return filtered available offers not being received", func() {
+			playerID := "player-13"
+			gameID := "another-game-with-filters"
+			url := fmt.Sprintf("/available-offers?player-id=%s&game-id=%s&level=3", playerID, gameID)
+			request, _ := http.NewRequest("GET", url, nil)
+			var jsonBody map[string][]map[string]interface{}
+
+			app.Router.ServeHTTP(recorder, request)
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
+			err := json.Unmarshal(recorder.Body.Bytes(), &jsonBody)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(recorder.Code).To(Equal(http.StatusOK))
+			Expect(jsonBody).NotTo(HaveKey("popup"))
+			Expect(jsonBody).To(HaveKey("store"))
+			store := jsonBody["store"]
+			Expect(store).To(HaveLen(1))
+			Expect(store[0]).To(HaveKey("id"))
+			Expect(store[0]).To(HaveKey("productId"))
+			Expect(store[0]).To(HaveKey("contents"))
+			Expect(store[0]).To(HaveKey("metadata"))
+			Expect(store[0]).To(HaveKey("expireAt"))
+			maxAge := app.MaxAge
+			Expect(recorder.Header().Get("Cache-Control")).To(Equal(fmt.Sprintf("max-age=%d", maxAge)))
+		})
+
 		It("should return game cacheMaxAge if available", func() {
 			playerID := "player-1"
 			gameID := "offers-game-maxage"
