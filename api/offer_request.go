@@ -58,11 +58,24 @@ func (h *OfferRequestHandler) getOffers(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	currentTime := h.App.Clock.GetTime()
+	filterAttrsList := r.URL.Query()
+	filterAttrs := make(map[string]string)
+	delete(filterAttrs, "player-id")
+	delete(filterAttrs, "game-id")
+	for k, v := range filterAttrsList {
+		if len(v) == 0 || len(v) > 1 {
+			err := fmt.Errorf("Filter attribute passed with invalid number of arguments. Key: %s", k)
+			logger.WithError(err).Error("Failed to retrieve offer for player.")
+			h.App.HandleError(w, http.StatusBadRequest, "A filter parameter was invalid.", err)
+			return
+		}
+		filterAttrs[k] = v[0]
+	}
 
 	var err error
 	var offers map[string][]*models.OfferToReturn
 	err = mr.WithSegment(models.SegmentModel, func() error {
-		offers, err = models.GetAvailableOffers(h.App.DB, h.App.RedisClient, h.App.Cache, gameID, playerID, currentTime, h.App.OffersCacheMaxAge, mr)
+		offers, err = models.GetAvailableOffers(h.App.DB, h.App.RedisClient, h.App.Cache, gameID, playerID, currentTime, h.App.OffersCacheMaxAge, filterAttrs, mr)
 		return err
 	})
 

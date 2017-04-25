@@ -41,13 +41,13 @@ type OfferToReturn struct {
 	ExpireAt  int64    `json:"expireAt"`
 }
 
-//FrequencyOrPeriod is the struct for basic Frequecy and Period types
+//FrequencyOrPeriod is the struct for basic Frequency and Period types
 type FrequencyOrPeriod struct {
 	Every string
 	Max   int
 }
 
-//GetOfferInstanceByID returns a offer by it's pk
+//GetOfferInstanceByID returns a offer by its pk
 func GetOfferInstanceByID(db runner.Connection, gameID, id string, mr *MixedMetricsReporter) (*OfferInstance, error) {
 	var offerInstance OfferInstance
 	err := mr.WithDatastoreSegment("offer_instances", SegmentSelect, func() error {
@@ -331,11 +331,12 @@ func GetAvailableOffers(
 	gameID, playerID string,
 	t time.Time,
 	expireDuration time.Duration,
+	filterAttrs map[string]string,
 	mr *MixedMetricsReporter,
 ) (map[string][]*OfferToReturn, error) {
 	offersByPlacement := make(map[string][]*OfferToReturn)
 
-	enabledOffers, err := GetEnabledOffers(db, gameID, offersCache, expireDuration, mr)
+	enabledOffers, err := GetEnabledOffers(db, gameID, offersCache, expireDuration, filterAttrs, mr)
 
 	if err != nil {
 		return nil, err

@@ -8,6 +8,9 @@
 package models
 
 import (
+	"fmt"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/pmylund/go-cache"
@@ -30,6 +33,7 @@ type Offer struct {
 	Enabled   bool      `db:"enabled" json:"enabled" valid:"matches(^(true|false)$),optional"`
 	Version   int       `db:"version" json:"version" valid:"int,optional"`
 	CreatedAt time.Time `db:"created_at" json:"createdAt" valid:"optional"`
+	Filters   dat.JSON  `db:"filters" json:"filters" valid:"JSONObject"`
 }
 
 const enabledOffers = `
@@ -37,6 +41,32 @@ const enabledOffers = `
 		offers.game_id = $1
 		AND offers.enabled = true
 `
+
+func buildScope(enabledOffers string, filterAttrs map[string]string) string {
+	subQueries := []string{enabledOffers}
+	for k, v := range filterAttrs {
+		// TODO: Possible SQL injection
+		rawSubQuery := `
+		AND (
+			(filters::json#>>'{%s}') IS NULL OR
+			((filters::json#>>'{%s,eq}') IS NOT NULL AND (filters::json#>>'{%s,eq}') = '%s')
+		)`
+		subQuery := fmt.Sprintf(rawSubQuery, k, k, k, v)
+		if f, err := strconv.ParseFloat(v, 64); err == nil {
+			rawSubQuery = `
+			AND (
+				(filters::json#>>'{%s}') IS NULL OR
+				((filters::json#>>'{%s,geq}') IS NOT NULL AND (filters::json#>>'{%s,lt}') IS NOT NULL AND
+				%f >= (filters::json#>>'{%s,geq}')::float AND %f < (filters::json#>>'{%s,lt}')::float) OR
+				((filters::json#>>'{%s,eq}') IS NOT NULL AND (filters::json#>>'{%s,eq}') = '%s')
+			)`
+			subQuery = fmt.Sprintf(rawSubQuery, k, k, k, f, k, f, k, k, k, v)
+		}
+		subQueries = append(subQueries, subQuery)
+	}
+	query := strings.Join(subQueries, " ")
+	return query
+}
 
 //GetOfferByID returns Offer by ID
 func GetOfferByID(db runner.Connection, gameID, id string, mr *MixedMetricsReporter) (*Offer, error) {
@@ -56,19 +86,24 @@ func GetOfferByID(db runner.Connection, gameID, id string, mr *MixedMetricsRepor
 	return &offer, err
 }
 
-//GetEnabledOffers returns all the enabled offers
-func GetEnabledOffers(db runner.Connection, gameID string, offersCache *cache.Cache, expireDuration time.Duration, mr *MixedMetricsReporter) ([]*Offer, error) {
+//GetEnabledOffers returns all the enabled offers and matching offers
+func GetEnabledOffers(db runner.Connection, gameID string, offersCache *cache.Cache, expireDuration time.Duration, filterAttrs map[string]string, mr *MixedMetricsReporter) ([]*Offer, error) {
 	var offers []*Offer
 	var err error
 
 	enabledOffersKey := GetEnabledOffersKey(gameID)
-	offersInterface, found := offersCache.Get(enabledOffersKey)
+	// TODO: See if it is possible to enable cache with filters
+	if len(filterAttrs) == 0 {
+		offersInterface, found := offersCache.Get(enabledOffersKey)
 
-	if found {
-		//fmt.Println("Offers Cache Hit")
-		offers = offersInterface.([]*Offer)
-		return offers, err
+		if found {
+			//fmt.Println("Offers Cache Hit")
+			offers = offersInterface.([]*Offer)
+			return offers, err
+		}
 	}
+
+	scope := buildScope(enabledOffers, filterAttrs)
 
 	//fmt.Println("Offers Cache Miss")
 	err = mr.WithDatastoreSegment("offers", SegmentSelect, func() error {
@@ -79,12 +114,12 @@ func GetEnabledOffers(db runner.Connection, gameID string, offersCache *cache.Ca
 		product_id, contents, version
 		`).
 			From("offers").
-			Scope(enabledOffers, gameID).
+			Scope(scope, gameID).
 			QueryStructs(&offers)
 	})
 	err = HandleNotFoundError("Offer", map[string]interface{}{"enabled": true}, err)
 
-	if err == nil {
+	if err == nil && len(filterAttrs) == 0 {
 		offersCache.Set(enabledOffersKey, offers, expireDuration)
 	}
 

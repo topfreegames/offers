@@ -6,6 +6,7 @@ setup: setup-hooks
 	@go get -u github.com/Masterminds/glide/...
 	@go get -u github.com/jteeuwen/go-bindata/...
 	@go get -u github.com/wadey/gocovmerge
+	@go get -u github.com/onsi/ginkgo
 	@glide install
 
 setup-hooks:

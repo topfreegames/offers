@@ -1,12 +1,12 @@
-hash: 4692523fd31d8e6d36e0f7141258b93ec3cee4eefde9035f234d060157c771da
-updated: 2017-03-29T11:56:25.414331343-03:00
+hash: abafd531d29b514b81ec94ecda010a4b9d93f53dccee4c1c05a261dbf8fb5c8a
+updated: 2017-04-24T16:46:44.094074497-03:00
 imports:
 - name: github.com/asaskevich/govalidator
   version: 7b3beb6df3c42abd3509abfc3bcacc0fbfb7c877
 - name: github.com/cenkalti/backoff
   version: 32cd0c5b3aef12c76ed64aaf678f6c79736be7dc
 - name: github.com/certifi/gocertifi
-  version: 03be5e6bb9874570ea7fb0961225d193cbc374c5
+  version: a9c833d2837d3b16888d55d5aafa9ffe9afb22b0
 - name: github.com/DATA-DOG/godog
   version: cf8fbb4ad0d5fab464a5c9b79abbcfbd7c27e85b
   subpackages:
@@ -69,7 +69,7 @@ imports:
 - name: github.com/mitchellh/mapstructure
   version: ca63d7c062ee3c9f34db231e352b60012b4fd0c1
 - name: github.com/newrelic/go-agent
-  version: 60ed7aa03a85a1355b4189f66e23604de8f27d57
+  version: 29ec3cd1bb2f21d21d36da37dae52695cb2c3a17
   subpackages:
   - internal
   - internal/jsonx
@@ -77,7 +77,7 @@ imports:
   - internal/sysinfo
   - internal/utilization
 - name: github.com/onsi/ginkgo
-  version: 13c94a130ef24c498bdb2d8d3873cf7790925dcf
+  version: 77a8c1e5c40d6bb6c5eb4dd4bdce9763564f6298
   subpackages:
   - config
   - internal/codelocation
@@ -110,6 +110,8 @@ imports:
   - matchers/support/goraph/node
   - matchers/support/goraph/util
   - types
+- name: github.com/patrickmn/go-cache
+  version: 7ac151875ffb48b9f3ccce9ea20f020b0c1596c8
 - name: github.com/pelletier/go-buffruneio
   version: df1e16fde7fc330a0ca68167c23bf7ed6ac31d6d
 - name: github.com/pelletier/go-toml

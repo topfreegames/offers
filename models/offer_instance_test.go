@@ -626,9 +626,50 @@ var _ = Describe("Offer Instance Model", func() {
 			playerID := "player-1"
 			gameID := defaultGameID
 			currentTime := time.Unix(1486678000, 0)
+			filterAttrs := make(map[string]string)
 
 			//When
-			offerInstances, err := models.GetAvailableOffers(db, redisClient, offersCache, gameID, playerID, currentTime, expireDuration, nil)
+			offerInstances, err := models.GetAvailableOffers(db, redisClient, offersCache, gameID, playerID, currentTime, expireDuration, filterAttrs, nil)
+
+			//Then
+			Expect(err).NotTo(HaveOccurred())
+			Expect(offerInstances).To(HaveLen(3))
+			Expect(offerInstances).To(HaveKey("popup"))
+			Expect(offerInstances["popup"]).To(HaveLen(1))
+			Expect(offerInstances["popup"][0].ID).To(Equal("56fc0477-39f1-485c-898e-4909e9155eb1"))
+			Expect(offerInstances["popup"][0].ProductID).To(Equal("com.tfg.sample"))
+			Expect(offerInstances["popup"][0].Contents).To(Equal(dat.JSON([]byte(`{"gems": 5, "gold": 100}`))))
+			Expect(offerInstances["popup"][0].Metadata).To(Equal(dat.JSON([]byte(`{}`))))
+			Expect(offerInstances["popup"][0].ExpireAt).To(Equal(int64(1486679000)))
+
+			Expect(offerInstances).To(HaveKey("store"))
+			Expect(offerInstances["store"]).To(HaveLen(2))
+			Expect(offerInstances["store"][0].ID).NotTo(BeNil())
+			Expect(offerInstances["store"][0].ProductID).To(Equal("com.tfg.sample.2"))
+			Expect(offerInstances["store"][0].Contents).To(Equal(dat.JSON([]byte(`{"gems": 100, "gold": 5}`))))
+			Expect(offerInstances["store"][0].Metadata).To(Equal(dat.JSON([]byte(`{"meta": "data"}`))))
+			Expect(offerInstances["store"][0].ExpireAt).To(Equal(int64(1486679200)))
+
+			Expect(offerInstances["store"][1].ID).To(Equal("6c4a79f2-24b8-4be9-93d4-12413b789823"))
+			Expect(offerInstances["store"][1].ProductID).To(Equal("com.tfg.sample.3"))
+			Expect(offerInstances["store"][1].Contents).To(Equal(dat.JSON([]byte(`{"gems": 5, "gold": 100}`))))
+			Expect(offerInstances["store"][1].Metadata).To(Equal(dat.JSON([]byte(`{}`))))
+			Expect(offerInstances["store"][1].ExpireAt).To(Equal(int64(1486679100)))
+		})
+
+		It("should return a list of offer templates for each available placement when with filters", func() {
+			//Given
+			playerID := "player-1"
+			gameID := defaultGameID
+			currentTime := time.Unix(1486678000, 0)
+			filterAttrs := map[string]string{
+				"key1": "value1",
+				"key2": "1.2",
+				"key3": "1",
+			}
+
+			//When
+			offerInstances, err := models.GetAvailableOffers(db, redisClient, offersCache, gameID, playerID, currentTime, expireDuration, filterAttrs, nil)
 
 			//Then
 			Expect(err).NotTo(HaveOccurred())
@@ -661,9 +702,10 @@ var _ = Describe("Offer Instance Model", func() {
 			playerID := "player-1"
 			gameID := "non-existing-game"
 			currentTime := time.Unix(1486678000, 0)
+			filterAttrs := make(map[string]string)
 
 			//When
-			offerInstances, err := models.GetAvailableOffers(db, redisClient, offersCache, gameID, playerID, currentTime, expireDuration, nil)
+			offerInstances, err := models.GetAvailableOffers(db, redisClient, offersCache, gameID, playerID, currentTime, expireDuration, filterAttrs, nil)
 
 			//Then
 			Expect(offerInstances).To(BeEmpty())
@@ -675,12 +717,13 @@ var _ = Describe("Offer Instance Model", func() {
 			gameID := "offers-game"
 			currentTime := time.Unix(1486678000, 0)
 			nextTime := time.Unix(1486678000, 100)
+			filterAttrs := make(map[string]string)
 			impressionID := uuid.NewV4().String()
 
 			//When
 			_, _, err := models.ViewOffer(db, redisClient, gameID, defaultOfferInstanceID, playerID, impressionID, currentTime, nil)
 			Expect(err).NotTo(HaveOccurred())
-			offerInstances, err := models.GetAvailableOffers(db, redisClient, offersCache, gameID, playerID, nextTime, expireDuration, nil)
+			offerInstances, err := models.GetAvailableOffers(db, redisClient, offersCache, gameID, playerID, nextTime, expireDuration, filterAttrs, nil)
 			Expect(err).NotTo(HaveOccurred())
 
 			//Then
@@ -694,12 +737,13 @@ var _ = Describe("Offer Instance Model", func() {
 			gameID := "offers-game"
 			currentTime := time.Unix(1486678000, 0)
 			nextTime := time.Unix(1486678000, 100)
+			filterAttrs := make(map[string]string)
 			offerInstanceID := "4407b770-5b24-4ffa-8563-0694d1a10156"
 
 			//When
 			_, _, _, err := models.ClaimOffer(db, redisClient, gameID, offerInstanceID, "", "", "", currentTime.Unix(), currentTime, nil)
 			Expect(err).NotTo(HaveOccurred())
-			offerInstances, err := models.GetAvailableOffers(db, redisClient, offersCache, gameID, playerID, nextTime, expireDuration, nil)
+			offerInstances, err := models.GetAvailableOffers(db, redisClient, offersCache, gameID, playerID, nextTime, expireDuration, filterAttrs, nil)
 			Expect(err).NotTo(HaveOccurred())
 
 			//Then
@@ -713,9 +757,10 @@ var _ = Describe("Offer Instance Model", func() {
 			playerID := "player-1"
 			gameID := "offers-game-empty-trigger"
 			currentTime := time.Unix(1486678000, 0)
+			filterAttrs := make(map[string]string)
 
 			//When
-			offerInstances, err := models.GetAvailableOffers(db, redisClient, offersCache, gameID, playerID, currentTime, expireDuration, nil)
+			offerInstances, err := models.GetAvailableOffers(db, redisClient, offersCache, gameID, playerID, currentTime, expireDuration, filterAttrs, nil)
 
 			//Then
 			Expect(err).NotTo(HaveOccurred())
@@ -729,8 +774,9 @@ var _ = Describe("Offer Instance Model", func() {
 			transactionID := uuid.NewV4().String()
 			currentTime := time.Unix(1486678000, 0)
 			claimTime := int64(1486678000)
+			filterAttrs := make(map[string]string)
 
-			offerInstances, err := models.GetAvailableOffers(db, redisClient, offersCache, gameID, playerID, currentTime, expireDuration, nil)
+			offerInstances, err := models.GetAvailableOffers(db, redisClient, offersCache, gameID, playerID, currentTime, expireDuration, filterAttrs, nil)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(offerInstances).To(HaveLen(1))
 			Expect(offerInstances).To(HaveKey("store"))
@@ -740,7 +786,7 @@ var _ = Describe("Offer Instance Model", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(alreadyClaimed).To(BeFalse())
 
-			offerInstances, err = models.GetAvailableOffers(db, redisClient, offersCache, gameID, playerID, currentTime, expireDuration, nil)
+			offerInstances, err = models.GetAvailableOffers(db, redisClient, offersCache, gameID, playerID, currentTime, expireDuration, filterAttrs, nil)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(offerInstances).To(HaveLen(0))
 		})
@@ -753,8 +799,9 @@ var _ = Describe("Offer Instance Model", func() {
 			transactionID := uuid.NewV4().String()
 			currentTime := time.Unix(1486678000, 0)
 			claimTime := int64(1486678000)
+			filterAttrs := make(map[string]string)
 
-			offerInstances, err := models.GetAvailableOffers(db, redisClient, offersCache, gameID, playerID, currentTime, expireDuration, nil)
+			offerInstances, err := models.GetAvailableOffers(db, redisClient, offersCache, gameID, playerID, currentTime, expireDuration, filterAttrs, nil)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(offerInstances).To(HaveLen(1))
 			Expect(offerInstances).To(HaveKey("store"))
@@ -764,7 +811,7 @@ var _ = Describe("Offer Instance Model", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(alreadyClaimed).To(BeFalse())
 
-			offerInstances, err = models.GetAvailableOffers(db, redisClient, offersCache, gameID, playerID, currentTime, expireDuration, nil)
+			offerInstances, err = models.GetAvailableOffers(db, redisClient, offersCache, gameID, playerID, currentTime, expireDuration, filterAttrs, nil)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(offerInstances).To(HaveLen(0))
 		})
@@ -774,9 +821,10 @@ var _ = Describe("Offer Instance Model", func() {
 			playerID := "player-1"
 			gameID := "offers-game-invalid-every-freq"
 			currentTime := time.Unix(1486678000, 0)
+			filterAttrs := make(map[string]string)
 
 			//When
-			_, err := models.GetAvailableOffers(db, redisClient, offersCache, gameID, playerID, currentTime, expireDuration, nil)
+			_, err := models.GetAvailableOffers(db, redisClient, offersCache, gameID, playerID, currentTime, expireDuration, filterAttrs, nil)
 
 			//Then
 			Expect(err).To(HaveOccurred())
@@ -788,9 +836,10 @@ var _ = Describe("Offer Instance Model", func() {
 			playerID := "player-1"
 			gameID := "offers-game-invalid-every-period"
 			currentTime := time.Unix(1486678000, 0)
+			filterAttrs := make(map[string]string)
 
 			//When
-			_, err := models.GetAvailableOffers(db, redisClient, offersCache, gameID, playerID, currentTime, expireDuration, nil)
+			_, err := models.GetAvailableOffers(db, redisClient, offersCache, gameID, playerID, currentTime, expireDuration, filterAttrs, nil)
 
 			//Then
 			Expect(err).To(HaveOccurred())
@@ -801,6 +850,7 @@ var _ = Describe("Offer Instance Model", func() {
 			playerID := "player-1"
 			gameID := "offers-game"
 			currentTime := time.Unix(1486678000, 0)
+			filterAttrs := make(map[string]string)
 
 			oldDB := db
 			defer func() {
@@ -810,7 +860,7 @@ var _ = Describe("Offer Instance Model", func() {
 			Expect(err).NotTo(HaveOccurred())
 			db.(*runner.DB).DB.Close() // make DB connection unavailable
 
-			_, err = models.GetAvailableOffers(db, redisClient, offersCache, gameID, playerID, currentTime, expireDuration, nil)
+			_, err = models.GetAvailableOffers(db, redisClient, offersCache, gameID, playerID, currentTime, expireDuration, filterAttrs, nil)
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(Equal("sql: database is closed"))
 		})
@@ -824,9 +874,10 @@ var _ = Describe("Offer Instance Model", func() {
 			currentTime := time.Unix(1486678000, 0)
 			place := "unique-place"
 			transactionID := uuid.NewV4().String()
+			filterAttrs := make(map[string]string)
 
 			// Get fot the first time
-			offerInstances, err := models.GetAvailableOffers(db, redisClient, offersCache, gameID, playerID, currentTime, expireDuration, nil)
+			offerInstances, err := models.GetAvailableOffers(db, redisClient, offersCache, gameID, playerID, currentTime, expireDuration, filterAttrs, nil)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(offerInstances).To(HaveLen(1))
 			Expect(offerInstances[place]).To(HaveLen(2))
@@ -847,7 +898,7 @@ var _ = Describe("Offer Instance Model", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			// Should not return the popup offer, since it was claimed for the first time
-			offerInstances, err = models.GetAvailableOffers(db, redisClient, offersCache, gameID, playerID, currentTime, expireDuration, nil)
+			offerInstances, err = models.GetAvailableOffers(db, redisClient, offersCache, gameID, playerID, currentTime, expireDuration, filterAttrs, nil)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(offerInstances).To(HaveKey(place))
 			Expect(offerInstances[place]).To(HaveLen(1))
@@ -862,9 +913,10 @@ var _ = Describe("Offer Instance Model", func() {
 			nextTime := func(currentTime time.Time) time.Time {
 				return time.Unix(currentTime.Unix()+10, 0)
 			}
+			filterAttrs := make(map[string]string)
 
 			// Get offer instances
-			offerInstances, err := models.GetAvailableOffers(db, redisClient, offersCache, gameID, playerID, currentTime, expireDuration, nil)
+			offerInstances, err := models.GetAvailableOffers(db, redisClient, offersCache, gameID, playerID, currentTime, expireDuration, filterAttrs, nil)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(offerInstances[place]).To(HaveLen(2))
 			offerInstanceID := offerInstances[place][0].ID
@@ -883,7 +935,7 @@ var _ = Describe("Offer Instance Model", func() {
 
 			// Get offer
 			currentTime = nextTime(currentTime)
-			offerInstances, err = models.GetAvailableOffers(db, redisClient, offersCache, gameID, playerID, currentTime, expireDuration, nil)
+			offerInstances, err = models.GetAvailableOffers(db, redisClient, offersCache, gameID, playerID, currentTime, expireDuration, filterAttrs, nil)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(offerInstances).To(HaveKey(place))
 			Expect(offerInstances[place]).To(HaveLen(2))
@@ -895,7 +947,7 @@ var _ = Describe("Offer Instance Model", func() {
 
 			// Get offer, expect unique-place to not be returned
 			currentTime = nextTime(currentTime)
-			offerInstances, err = models.GetAvailableOffers(db, redisClient, offersCache, gameID, playerID, currentTime, expireDuration, nil)
+			offerInstances, err = models.GetAvailableOffers(db, redisClient, offersCache, gameID, playerID, currentTime, expireDuration, filterAttrs, nil)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(offerInstances).To(HaveKey(place))
 			Expect(offerInstances[place]).To(HaveLen(1))

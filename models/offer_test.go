@@ -172,7 +172,9 @@ var _ = Describe("Offer Models", func() {
 				"5fed76ab-1fd7-4a91-972d-bca228ce80c4",
 			}
 			gameID := defaultGameID
-			offers, err := models.GetEnabledOffers(db, gameID, offersCache, expireDuration, nil)
+
+			filterAttrs := make(map[string]string)
+			offers, err := models.GetEnabledOffers(db, gameID, offersCache, expireDuration, filterAttrs, nil)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(offers).To(HaveLen(4))
 			for i := 0; i < len(offers); i++ {
@@ -182,7 +184,8 @@ var _ = Describe("Offer Models", func() {
 
 		It("should return an empty list if there are no enabled offers", func() {
 			gameID := uuid.NewV4().String()
-			offers, err := models.GetEnabledOffers(db, gameID, offersCache, expireDuration, nil)
+			filterAttrs := make(map[string]string)
+			offers, err := models.GetEnabledOffers(db, gameID, offersCache, expireDuration, filterAttrs, nil)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(offers).To(HaveLen(0))
 		})
@@ -196,13 +199,14 @@ var _ = Describe("Offer Models", func() {
 			}
 			gameID := defaultGameID
 			start := time.Now().UnixNano()
-			offers, err := models.GetEnabledOffers(db, gameID, offersCache, expireDuration, nil)
+			filterAttrs := make(map[string]string)
+			offers, err := models.GetEnabledOffers(db, gameID, offersCache, expireDuration, filterAttrs, nil)
 			dbElapsedTime := time.Now().UnixNano() - start
 			Expect(err).NotTo(HaveOccurred())
 			Expect(offers).To(HaveLen(4))
 
 			start = time.Now().UnixNano()
-			offers, err = models.GetEnabledOffers(db, gameID, offersCache, expireDuration, nil)
+			offers, err = models.GetEnabledOffers(db, gameID, offersCache, expireDuration, filterAttrs, nil)
 			cacheElapsedTime := time.Now().UnixNano() - start
 			Expect(err).NotTo(HaveOccurred())
 			_, found := offersCache.Get(models.GetEnabledOffersKey(gameID))
