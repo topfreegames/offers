@@ -74,6 +74,52 @@ var _ = Describe("Offer Template Handler", func() {
 			Expect(int(obj["version"].(float64))).To(Equal(1))
 		})
 
+		It("should return status code 201 for valid parameters, including filters", func() {
+			name := "New Awesome Game"
+			productID := "com.tfg.example"
+			gameID := "game-id"
+			contents := `{"gems": 5, "gold": 100}`
+			period := `{"max": 1}`
+			frequency := `{"every": "24h"}`
+			trigger := `{"from": 1487280506875, "to": 1487366964730}`
+			filters := `{"level": {"eq": "5"}}`
+			placement := "popup"
+			offerReader := JSONFor(JSON{
+				"name":      name,
+				"productId": productID,
+				"gameId":    gameID,
+				"contents":  dat.JSON([]byte(contents)),
+				"period":    dat.JSON([]byte(period)),
+				"frequency": dat.JSON([]byte(frequency)),
+				"trigger":   dat.JSON([]byte(trigger)),
+				"placement": placement,
+				"filters":   dat.JSON([]byte(filters)),
+			})
+
+			request, _ := http.NewRequest("POST", "/offers", offerReader)
+			app.Router.ServeHTTP(recorder, request)
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
+			Expect(recorder.Code).To(Equal(http.StatusCreated), recorder.Body.String())
+			var obj map[string]interface{}
+			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(obj["id"]).NotTo(BeEmpty())
+			Expect(obj["name"]).To(Equal(name))
+			Expect(obj["productId"]).To(Equal(productID))
+			Expect(obj["gameId"]).To(Equal(gameID))
+			Expect(obj["contents"].(map[string]interface{})["gems"].(float64)).To(BeEquivalentTo(5))
+			Expect(obj["contents"].(map[string]interface{})["gold"]).To(BeEquivalentTo(100))
+			Expect(obj["period"].(map[string]interface{})["max"].(float64)).To(BeEquivalentTo(1))
+			Expect(obj["frequency"].(map[string]interface{})["every"].(string)).To(Equal("24h"))
+			Expect(obj["trigger"].(map[string]interface{})["to"].(float64)).To(BeEquivalentTo(1487366964730))
+			Expect(obj["trigger"].(map[string]interface{})["from"].(float64)).To(BeEquivalentTo(1487280506875))
+			Expect(obj["filters"].(map[string]interface{})["level"].(map[string]interface{})["eq"].(string)).To(Equal("5"))
+			Expect(obj["placement"]).To(Equal(placement))
+			Expect(obj["enabled"]).To(BeTrue())
+			Expect(int(obj["version"].(float64))).To(Equal(1))
+		})
+
 		It("should return status code 422 if missing arguments", func() {
 			offerReader := JSONFor(JSON{})
 
@@ -159,6 +205,212 @@ var _ = Describe("Offer Template Handler", func() {
 			Expect(obj["code"]).To(Equal("OFF-002"))
 			Expect(obj["error"]).To(Equal("ValidationFailedError"))
 			Expect(obj["description"]).To(Equal("Contents: [34 34] does not validate as RequiredJSONObject;;"))
+		})
+
+		Describe("Invalid filters format", func() {
+			It("should return status code 422 if invalid filter format", func() {
+				name := "New Awesome Game"
+				productID := "com.tfg.example"
+				gameID := "game-id"
+				contents := `{"gems": 5, "gold": 100}`
+				period := `{"max": 1}`
+				frequency := `{"every": "24h"}`
+				trigger := `{"from": 1487280506875, "to": 1487366964730}`
+				filters := `{"level": {"eq": 5}}`
+				placement := "popup"
+				offerReader := JSONFor(JSON{
+					"name":      name,
+					"productId": productID,
+					"gameId":    gameID,
+					"contents":  dat.JSON([]byte(contents)),
+					"period":    dat.JSON([]byte(period)),
+					"frequency": dat.JSON([]byte(frequency)),
+					"trigger":   dat.JSON([]byte(trigger)),
+					"placement": placement,
+					"filters":   dat.JSON([]byte(filters)),
+				})
+
+				request, _ := http.NewRequest("POST", "/offers", offerReader)
+				app.Router.ServeHTTP(recorder, request)
+				Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
+				Expect(recorder.Code).To(Equal(http.StatusUnprocessableEntity))
+				var obj map[string]interface{}
+				err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(obj["code"]).To(Equal("OFF-002"))
+				Expect(obj["error"]).To(Equal("ValidationFailedError"))
+				Expect(obj["description"]).To(ContainSubstring("Filters:"))
+			})
+
+			It("should return status code 422 if invalid filter format", func() {
+				name := "New Awesome Game"
+				productID := "com.tfg.example"
+				gameID := "game-id"
+				contents := `{"gems": 5, "gold": 100}`
+				period := `{"max": 1}`
+				frequency := `{"every": "24h"}`
+				trigger := `{"from": 1487280506875, "to": 1487366964730}`
+				filters := `{"level": {"leq": 5}}`
+				placement := "popup"
+				offerReader := JSONFor(JSON{
+					"name":      name,
+					"productId": productID,
+					"gameId":    gameID,
+					"contents":  dat.JSON([]byte(contents)),
+					"period":    dat.JSON([]byte(period)),
+					"frequency": dat.JSON([]byte(frequency)),
+					"trigger":   dat.JSON([]byte(trigger)),
+					"placement": placement,
+					"filters":   dat.JSON([]byte(filters)),
+				})
+
+				request, _ := http.NewRequest("POST", "/offers", offerReader)
+				app.Router.ServeHTTP(recorder, request)
+				Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
+				Expect(recorder.Code).To(Equal(http.StatusUnprocessableEntity))
+				var obj map[string]interface{}
+				err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(obj["code"]).To(Equal("OFF-002"))
+				Expect(obj["error"]).To(Equal("ValidationFailedError"))
+				Expect(obj["description"]).To(ContainSubstring("Filters:"))
+			})
+
+			It("should return status code 422 if invalid filter format", func() {
+				name := "New Awesome Game"
+				productID := "com.tfg.example"
+				gameID := "game-id"
+				contents := `{"gems": 5, "gold": 100}`
+				period := `{"max": 1}`
+				frequency := `{"every": "24h"}`
+				trigger := `{"from": 1487280506875, "to": 1487366964730}`
+				filters := `{"level": {}}`
+				placement := "popup"
+				offerReader := JSONFor(JSON{
+					"name":      name,
+					"productId": productID,
+					"gameId":    gameID,
+					"contents":  dat.JSON([]byte(contents)),
+					"period":    dat.JSON([]byte(period)),
+					"frequency": dat.JSON([]byte(frequency)),
+					"trigger":   dat.JSON([]byte(trigger)),
+					"placement": placement,
+					"filters":   dat.JSON([]byte(filters)),
+				})
+
+				request, _ := http.NewRequest("POST", "/offers", offerReader)
+				app.Router.ServeHTTP(recorder, request)
+				Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
+				Expect(recorder.Code).To(Equal(http.StatusUnprocessableEntity))
+				var obj map[string]interface{}
+				err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(obj["code"]).To(Equal("OFF-002"))
+				Expect(obj["error"]).To(Equal("ValidationFailedError"))
+				Expect(obj["description"]).To(ContainSubstring("Filters:"))
+			})
+
+			It("should return status code 422 if invalid filter format", func() {
+				name := "New Awesome Game"
+				productID := "com.tfg.example"
+				gameID := "game-id"
+				contents := `{"gems": 5, "gold": 100}`
+				period := `{"max": 1}`
+				frequency := `{"every": "24h"}`
+				trigger := `{"from": 1487280506875, "to": 1487366964730}`
+				filters := `{"level": {"lt": "5", "geq": 2}}`
+				placement := "popup"
+				offerReader := JSONFor(JSON{
+					"name":      name,
+					"productId": productID,
+					"gameId":    gameID,
+					"contents":  dat.JSON([]byte(contents)),
+					"period":    dat.JSON([]byte(period)),
+					"frequency": dat.JSON([]byte(frequency)),
+					"trigger":   dat.JSON([]byte(trigger)),
+					"placement": placement,
+					"filters":   dat.JSON([]byte(filters)),
+				})
+
+				request, _ := http.NewRequest("POST", "/offers", offerReader)
+				app.Router.ServeHTTP(recorder, request)
+				Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
+				Expect(recorder.Code).To(Equal(http.StatusUnprocessableEntity))
+				var obj map[string]interface{}
+				err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(obj["code"]).To(Equal("OFF-002"))
+				Expect(obj["error"]).To(Equal("ValidationFailedError"))
+				Expect(obj["description"]).To(ContainSubstring("Filters:"))
+			})
+
+			It("should return status code 422 if invalid filter format", func() {
+				name := "New Awesome Game"
+				productID := "com.tfg.example"
+				gameID := "game-id"
+				contents := `{"gems": 5, "gold": 100}`
+				period := `{"max": 1}`
+				frequency := `{"every": "24h"}`
+				trigger := `{"from": 1487280506875, "to": 1487366964730}`
+				filters := `{"level": {"lt": 2, "geq": 2}}`
+				placement := "popup"
+				offerReader := JSONFor(JSON{
+					"name":      name,
+					"productId": productID,
+					"gameId":    gameID,
+					"contents":  dat.JSON([]byte(contents)),
+					"period":    dat.JSON([]byte(period)),
+					"frequency": dat.JSON([]byte(frequency)),
+					"trigger":   dat.JSON([]byte(trigger)),
+					"placement": placement,
+					"filters":   dat.JSON([]byte(filters)),
+				})
+
+				request, _ := http.NewRequest("POST", "/offers", offerReader)
+				app.Router.ServeHTTP(recorder, request)
+				Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
+				Expect(recorder.Code).To(Equal(http.StatusUnprocessableEntity))
+				var obj map[string]interface{}
+				err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(obj["code"]).To(Equal("OFF-002"))
+				Expect(obj["error"]).To(Equal("ValidationFailedError"))
+				Expect(obj["description"]).To(ContainSubstring("Filters:"))
+			})
+
+			It("should return status code 422 if invalid filter format", func() {
+				name := "New Awesome Game"
+				productID := "com.tfg.example"
+				gameID := "game-id"
+				contents := `{"gems": 5, "gold": 100}`
+				period := `{"max": 1}`
+				frequency := `{"every": "24h"}`
+				trigger := `{"from": 1487280506875, "to": 1487366964730}`
+				filters := `{"level": 5}`
+				placement := "popup"
+				offerReader := JSONFor(JSON{
+					"name":      name,
+					"productId": productID,
+					"gameId":    gameID,
+					"contents":  dat.JSON([]byte(contents)),
+					"period":    dat.JSON([]byte(period)),
+					"frequency": dat.JSON([]byte(frequency)),
+					"trigger":   dat.JSON([]byte(trigger)),
+					"placement": placement,
+					"filters":   dat.JSON([]byte(filters)),
+				})
+
+				request, _ := http.NewRequest("POST", "/offers", offerReader)
+				app.Router.ServeHTTP(recorder, request)
+				Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
+				Expect(recorder.Code).To(Equal(http.StatusUnprocessableEntity))
+				var obj map[string]interface{}
+				err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(obj["code"]).To(Equal("OFF-002"))
+				Expect(obj["error"]).To(Equal("ValidationFailedError"))
+				Expect(obj["description"]).To(ContainSubstring("Filters:"))
+			})
 		})
 
 		It("returns status code of 500 if database is unavailable", func() {
@@ -551,6 +803,7 @@ var _ = Describe("Offer Template Handler", func() {
 			period := "{\"max\": 123}"
 			frequency := "{\"every\": \"240h\"}"
 			trigger := "{\"from\": 123456789101, \"to\": 123456789111}"
+			filters := `{"level": {"geq": 5}}`
 			placement := "popup"
 			offerReader = JSONFor(JSON{
 				"name":      name,
@@ -561,6 +814,7 @@ var _ = Describe("Offer Template Handler", func() {
 				"frequency": dat.JSON([]byte(frequency)),
 				"trigger":   dat.JSON([]byte(trigger)),
 				"placement": placement,
+				"filters":   dat.JSON([]byte(filters)),
 			})
 		})
 

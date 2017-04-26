@@ -81,6 +81,28 @@ var _ = Describe("Offer Models", func() {
 			Expect(offer.Version).To(Equal(1))
 		})
 
+		It("should create an offer with valid parameters, including filters and metadata", func() {
+			offer := &models.Offer{
+				Name:      "offer-1",
+				ProductID: "com.tfg.example",
+				GameID:    "game-id",
+				Contents:  dat.JSON([]byte(`{"gems": 5, "gold": 100}`)),
+				Period:    dat.JSON([]byte(`{"every": "10m"}`)),
+				Frequency: dat.JSON([]byte(`{"every": "24h"}`)),
+				Trigger:   dat.JSON([]byte(`{"from": 1487280506875}`)),
+				Placement: "popup",
+				Metadata:  dat.JSON([]byte(`{"Awesome": "offer"}`)),
+				Filters:   dat.JSON([]byte(`{"level": {"geq": 1.0, "lt": 3.0}}`)),
+			}
+
+			offer, err := models.InsertOffer(db, offer, nil)
+
+			Expect(err).NotTo(HaveOccurred())
+			Expect(offer.ID).NotTo(Equal(""))
+			Expect(offer.Enabled).To(BeTrue())
+			Expect(offer.Version).To(Equal(1))
+		})
+
 		It("should return error if game with given id does not exist", func() {
 			offer := &models.Offer{
 				Name:      "offer-1",
@@ -342,6 +364,55 @@ var _ = Describe("Offer Models", func() {
 			Expect(dbOffer.Frequency).To(Equal(offerUpdate.Frequency))
 			Expect(dbOffer.Trigger).To(Equal(offerUpdate.Trigger))
 			Expect(dbOffer.Placement).To(Equal(offerUpdate.Placement))
+			Expect(dbOffer.Version).To(Equal(createdOffer.Version + 1))
+		})
+
+		It("should update the offer and increment the version with valid parameters, including filters and metadata", func() {
+			offer := &models.Offer{
+				Name:      "offer-1",
+				ProductID: "com.tfg.example",
+				GameID:    "game-id",
+				Contents:  dat.JSON([]byte(`{"gems": 5, "gold": 100}`)),
+				Period:    dat.JSON([]byte(`{"every": "10m"}`)),
+				Frequency: dat.JSON([]byte(`{"every": "24h"}`)),
+				Trigger:   dat.JSON([]byte(`{"from": 1487280506875}`)),
+				Placement: "popup",
+			}
+			createdOffer, err := models.InsertOffer(db, offer, nil)
+			Expect(err).NotTo(HaveOccurred())
+
+			offerUpdate := &models.Offer{
+				ID:        createdOffer.ID,
+				GameID:    "game-id",
+				Name:      "offer-2",
+				ProductID: "com.tfg.example2",
+				Contents:  dat.JSON([]byte(`{"gems": 5}`)),
+				Period:    dat.JSON([]byte(`{"every": "1m"}`)),
+				Frequency: dat.JSON([]byte(`{"every": "2h"}`)),
+				Trigger:   dat.JSON([]byte(`{"from": 1111111111111}`)),
+				Filters:   dat.JSON([]byte(`{"level": {"eq": "5"}}`)),
+				Metadata:  dat.JSON([]byte(`{"Cool": "offer"}`)),
+				Placement: "store",
+			}
+
+			updatedOffer, err := models.UpdateOffer(db, offerUpdate, nil)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(updatedOffer.ID).To(Equal(offerUpdate.ID))
+			Expect(updatedOffer.Version).To(Equal(createdOffer.Version + 1))
+
+			var dbOffer models.Offer
+			err = db.Select("*").From("offers").Where("id=$1", offerUpdate.ID).QueryStruct(&dbOffer)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(dbOffer.GameID).To(Equal(offerUpdate.GameID))
+			Expect(dbOffer.Name).To(Equal(offerUpdate.Name))
+			Expect(dbOffer.ProductID).To(Equal(offerUpdate.ProductID))
+			Expect(dbOffer.Contents).To(Equal(offerUpdate.Contents))
+			Expect(dbOffer.Period).To(Equal(offerUpdate.Period))
+			Expect(dbOffer.Frequency).To(Equal(offerUpdate.Frequency))
+			Expect(dbOffer.Trigger).To(Equal(offerUpdate.Trigger))
+			Expect(dbOffer.Placement).To(Equal(offerUpdate.Placement))
+			Expect(dbOffer.Filters).To(Equal(offerUpdate.Filters))
+			Expect(dbOffer.Metadata).To(Equal(offerUpdate.Metadata))
 			Expect(dbOffer.Version).To(Equal(createdOffer.Version + 1))
 		})
 

@@ -33,7 +33,7 @@ type Offer struct {
 	Enabled   bool      `db:"enabled" json:"enabled" valid:"matches(^(true|false)$),optional"`
 	Version   int       `db:"version" json:"version" valid:"int,optional"`
 	CreatedAt time.Time `db:"created_at" json:"createdAt" valid:"optional"`
-	Filters   dat.JSON  `db:"filters" json:"filters" valid:"JSONObject"`
+	Filters   dat.JSON  `db:"filters" json:"filters" valid:"FilterJSONObject"`
 }
 
 const enabledOffers = `
@@ -46,6 +46,9 @@ func buildScope(enabledOffers string, filterAttrs map[string]string) string {
 	subQueries := []string{enabledOffers}
 	for k, v := range filterAttrs {
 		// TODO: Possible SQL injection
+		if strings.Contains(k, "'") || strings.Contains(v, "'") {
+			break
+		}
 		rawSubQuery := `
 		AND (
 			(filters::json#>>'{%s}') IS NULL OR
@@ -59,10 +62,10 @@ func buildScope(enabledOffers string, filterAttrs map[string]string) string {
 				(filters::json#>>'{%s}') IS NULL OR
 				((filters::json#>>'{%s,eq}') IS NOT NULL AND (filters::json#>>'{%s,eq}') = '%s') OR
 				((filters::json#>>'{%s,neq}') IS NOT NULL AND (filters::json#>>'{%s,neq}') != '%s') OR
-				((filters::json#>>'{%s,geq}') IS NOT NULL AND (filters::json#>>'{%s,lt}') IS NOT NULL AND
-				%f >= (filters::json#>>'{%s,geq}')::float AND %f < (filters::json#>>'{%s,lt}')::float)
+				(((filters::json#>>'{%s,geq}') IS NULL OR %f >= (filters::json#>>'{%s,geq}')::float) AND
+				((filters::json#>>'{%s,lt}') IS NULL OR %f < (filters::json#>>'{%s,lt}')::float))
 			)`
-			subQuery = fmt.Sprintf(rawSubQuery, k, k, k, v, k, k, v, k, k, f, k, f, k)
+			subQuery = fmt.Sprintf(rawSubQuery, k, k, k, v, k, k, v, k, f, k, k, f, k)
 		}
 		subQueries = append(subQueries, subQuery)
 	}
@@ -109,6 +112,8 @@ func GetEnabledOffers(db runner.Connection, gameID string, offersCache *cache.Ca
 
 	//fmt.Println("Offers Cache Miss")
 	err = mr.WithDatastoreSegment("offers", SegmentSelect, func() error {
+		// TODO: Add a configurable limit to this query
+		// Explicitly not fetching filters, the player does not need to know about them
 		return db.
 			Select(`
 		id, game_id, name, period, frequency,
@@ -146,11 +151,14 @@ func InsertOffer(db runner.Connection, offer *Offer, mr *MixedMetricsReporter) (
 	if offer.Metadata == nil {
 		offer.Metadata = dat.JSON([]byte(`{}`))
 	}
+	if offer.Filters == nil {
+		offer.Filters = dat.JSON([]byte(`{}`))
+	}
 
 	err := mr.WithDatastoreSegment("offers", SegmentInsert, func() error {
 		return db.
 			InsertInto("offers").
-			Columns("game_id", "name", "period", "frequency", "trigger", "placement", "metadata", "product_id", "contents").
+			Columns("game_id", "name", "period", "frequency", "trigger", "placement", "metadata", "product_id", "contents", "filters").
 			Record(offer).
 			Returning("id, enabled, version").
 			QueryStruct(offer)
@@ -169,6 +177,9 @@ func UpdateOffer(db runner.Connection, offer *Offer, mr *MixedMetricsReporter) (
 	if offer.Metadata == nil {
 		offer.Metadata = dat.JSON([]byte(`{}`))
 	}
+	if offer.Filters == nil {
+		offer.Filters = dat.JSON([]byte(`{}`))
+	}
 	offersMap := map[string]interface{}{
 		"name":       offer.Name,
 		"period":     offer.Period,
@@ -178,6 +189,7 @@ func UpdateOffer(db runner.Connection, offer *Offer, mr *MixedMetricsReporter) (
 		"metadata":   offer.Metadata,
 		"product_id": offer.ProductID,
 		"contents":   offer.Contents,
+		"filters":    offer.Filters,
 		"version":    prevOffer.Version + 1,
 	}
 	offer.Version = prevOffer.Version + 1
