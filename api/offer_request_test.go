@@ -83,7 +83,7 @@ var _ = Describe("Offer Handler", func() {
 		It("should return filtered available offers", func() {
 			playerID := "player-13"
 			gameID := "another-game-with-filters"
-			url := fmt.Sprintf("/available-offers?player-id=%s&game-id=%s&level=1", playerID, gameID)
+			url := fmt.Sprintf("/available-offers?player-id=%s&game-id=%s&level=1&pa'ram=sth", playerID, gameID)
 			request, _ := http.NewRequest("GET", url, nil)
 			var jsonBody map[string][]map[string]interface{}
 
@@ -134,6 +134,24 @@ var _ = Describe("Offer Handler", func() {
 			Expect(store[0]).To(HaveKey("expireAt"))
 			maxAge := app.MaxAge
 			Expect(recorder.Header().Get("Cache-Control")).To(Equal(fmt.Sprintf("max-age=%d", maxAge)))
+		})
+
+		It("should receive error if passing an array in query string", func() {
+			playerID := "player-13"
+			gameID := "another-game-with-filters"
+			url := fmt.Sprintf("/available-offers?player-id=%s&game-id=%s&level=3&level=4", playerID, gameID)
+			request, _ := http.NewRequest("GET", url, nil)
+
+			app.Router.ServeHTTP(recorder, request)
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
+
+			Expect(recorder.Code).To(Equal(http.StatusBadRequest))
+			var obj map[string]interface{}
+			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(obj["code"]).To(Equal("OFF-004"))
+			Expect(obj["error"]).To(Equal("A filter parameter is invalid."))
+			Expect(obj["description"]).To(Equal("Filter attribute passed with invalid number of arguments. Key: level"))
 		})
 
 		It("should return game cacheMaxAge if available", func() {

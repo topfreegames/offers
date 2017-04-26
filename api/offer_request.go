@@ -66,7 +66,7 @@ func (h *OfferRequestHandler) getOffers(w http.ResponseWriter, r *http.Request) 
 		if len(v) == 0 || len(v) > 1 {
 			err := fmt.Errorf("Filter attribute passed with invalid number of arguments. Key: %s", k)
 			logger.WithError(err).Error("Failed to retrieve offer for player.")
-			h.App.HandleError(w, http.StatusBadRequest, "A filter parameter was invalid.", err)
+			h.App.HandleError(w, http.StatusBadRequest, "A filter parameter is invalid.", err)
 			return
 		}
 		filterAttrs[k] = v[0]

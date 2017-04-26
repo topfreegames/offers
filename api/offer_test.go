@@ -352,6 +352,74 @@ var _ = Describe("Offer Template Handler", func() {
 				period := `{"max": 1}`
 				frequency := `{"every": "24h"}`
 				trigger := `{"from": 1487280506875, "to": 1487366964730}`
+				filters := `{"level": {"neq": 2}}`
+				placement := "popup"
+				offerReader := JSONFor(JSON{
+					"name":      name,
+					"productId": productID,
+					"gameId":    gameID,
+					"contents":  dat.JSON([]byte(contents)),
+					"period":    dat.JSON([]byte(period)),
+					"frequency": dat.JSON([]byte(frequency)),
+					"trigger":   dat.JSON([]byte(trigger)),
+					"placement": placement,
+					"filters":   dat.JSON([]byte(filters)),
+				})
+
+				request, _ := http.NewRequest("POST", "/offers", offerReader)
+				app.Router.ServeHTTP(recorder, request)
+				Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
+				Expect(recorder.Code).To(Equal(http.StatusUnprocessableEntity))
+				var obj map[string]interface{}
+				err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(obj["code"]).To(Equal("OFF-002"))
+				Expect(obj["error"]).To(Equal("ValidationFailedError"))
+				Expect(obj["description"]).To(ContainSubstring("Filters:"))
+			})
+
+			It("should return status code 422 if invalid filter format", func() {
+				name := "New Awesome Game"
+				productID := "com.tfg.example"
+				gameID := "game-id"
+				contents := `{"gems": 5, "gold": 100}`
+				period := `{"max": 1}`
+				frequency := `{"every": "24h"}`
+				trigger := `{"from": 1487280506875, "to": 1487366964730}`
+				filters := `{"level": {"geq": "2"}}`
+				placement := "popup"
+				offerReader := JSONFor(JSON{
+					"name":      name,
+					"productId": productID,
+					"gameId":    gameID,
+					"contents":  dat.JSON([]byte(contents)),
+					"period":    dat.JSON([]byte(period)),
+					"frequency": dat.JSON([]byte(frequency)),
+					"trigger":   dat.JSON([]byte(trigger)),
+					"placement": placement,
+					"filters":   dat.JSON([]byte(filters)),
+				})
+
+				request, _ := http.NewRequest("POST", "/offers", offerReader)
+				app.Router.ServeHTTP(recorder, request)
+				Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
+				Expect(recorder.Code).To(Equal(http.StatusUnprocessableEntity))
+				var obj map[string]interface{}
+				err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(obj["code"]).To(Equal("OFF-002"))
+				Expect(obj["error"]).To(Equal("ValidationFailedError"))
+				Expect(obj["description"]).To(ContainSubstring("Filters:"))
+			})
+
+			It("should return status code 422 if invalid filter format", func() {
+				name := "New Awesome Game"
+				productID := "com.tfg.example"
+				gameID := "game-id"
+				contents := `{"gems": 5, "gold": 100}`
+				period := `{"max": 1}`
+				frequency := `{"every": "24h"}`
+				trigger := `{"from": 1487280506875, "to": 1487366964730}`
 				filters := `{"level": {"lt": 2, "geq": 2}}`
 				placement := "popup"
 				offerReader := JSONFor(JSON{
