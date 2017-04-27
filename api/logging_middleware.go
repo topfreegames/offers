@@ -55,6 +55,7 @@ func (m *LoggingMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				"route":           route,
 				"requestDuration": time.Since(start).Nanoseconds(),
 				"status":          status,
+				"operation":       "serveHTTP",
 			}).Warn("Request failed.")
 		} else if status > 499 { // request is ok, but server failed
 			l.WithFields(logrus.Fields{
@@ -62,6 +63,7 @@ func (m *LoggingMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				"route":           route,
 				"requestDuration": time.Since(start).Nanoseconds(),
 				"status":          status,
+				"operation":       "serveHTTP",
 			}).Error("Response failed.")
 		} else { // Everything went ok
 			l.WithFields(logrus.Fields{
@@ -69,6 +71,7 @@ func (m *LoggingMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				"route":           route,
 				"requestDuration": time.Since(start).Nanoseconds(),
 				"status":          status,
+				"operation":       "serveHTTP",
 			}).Info("Request successful.")
 		}
 	}()

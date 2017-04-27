@@ -137,16 +137,17 @@ Offers API
         "period":    {         // required
           "every": [string],   // required
           "max":   [int]       // required
-        },   
+        },
         "frequency": {         // required
           "every": [string],   // required
           "max":   [int]       // required
-        },   
+        },
         "trigger":   {         // required
           "from":  [int],      // required
           "to":    [int]       // required
         },
-        "metadata":  [json]    // optional
+        "metadata":  [json],   // optional
+        "filters":   [json]    // optional
       }
     ```
 
@@ -159,6 +160,7 @@ Offers API
        - **period**:       Enable player to buy offer every x times, at most y times. <ul><li>every: decimal number with unit suffix, such as "300ms", "-1.5h" or "2h45m". Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h"</li><li>max: maximum number of times this offer can be bought by the player</li></ul>If "every" is an empty string, then the offer can be bought max times with no time restriction.  If "max" is 0, then the offer can be bought infinite times with time restriction.  They can't be "" and 0 at the same time.
        - **frequency**:    Enable player to see offer on UI x/unit of time, at most y times. <ul><li>every: decimal number with unit suffix, such as "300ms", "-1.5h" or "2h45m". Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h"</li><li>max: maximum number of times this offer can be seen by the player</li></ul>If "every" is an empty string, then the offer can be seen max times with no time restriction.  If "max" is 0, then the offer can be seen infinite times with time restriction.  They can't be "" and 0 at the same time.  
        - **trigger**:      Time when the offer is available.  
+       - **filters**:      The filters for the offer, they can be of three different types for a given attribute: <ul><li>interval: the attribute must define the beginning and/or end of the interval with "geq" and "lt", the interval includes the beginning but not the end</li><li>equality: the attribute must define the "eq", the value that the filter expects the attribute to be equal to, it should be a string</li><li>difference: the attribute must define "neq", the value that the filter expects the attribute to be different from, it should be a string</ul>An example: "{ "intervalValue": { "geq": 0.0, "lt": 10.0 }, "equalValue": { "eq": "John" } }".  
        - **enabled**:      True if the offer is enabled.  
        - **placement**:    Where the offer is shown in the UI.  
        - **version**:      Offer current version.
@@ -187,8 +189,9 @@ Offers API
             "from":  [int],     
             "to":    [int]      
           },
-          "enabled": true,       // created offer are enabled by default
-          "version": 1           // created offer version is 1 by default
+          "enabled":   true,       // created offer are enabled by default
+          "version":   1,          // created offer version is 1 by default
+          "filters":   [json]
         }
       ```
 
@@ -245,7 +248,8 @@ Offers API
           "from":  [int],      // required
           "to":    [int]       // required
         },
-        "metadata":  [json]    // optional
+        "metadata":  [json],   // optional
+        "filters":   [json]    // optional
       }
     ```
 
@@ -258,6 +262,7 @@ Offers API
        - **period**:       Enable player to buy offer every x times, at most y times. <ul><li>every: decimal number with unit suffix, such as "300ms", "-1.5h" or "2h45m". Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h"</li><li>max: maximum number of times this offer can be bought by the player</li></ul>If "every" is an empty string, then the offer can be bought max times with no time restriction.  If "max" is 0, then the offer can be bought infinite times with time restriction.  They can't be "" and 0 at the same time.
        - **frequency**:    Enable player to see offer on UI x/unit of time, at most y times. <ul><li>every: decimal number with unit suffix, such as "300ms", "-1.5h" or "2h45m". Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h"</li><li>max: maximum number of times this offer can be seen by the player</li></ul>If "every" is an empty string, then the offer can be seen max times with no time restriction.  If "max" is 0, then the offer can be seen infinite times with time restriction.  They can't be "" and 0 at the same time.  
        - **trigger**:      Time when the offer is available.  
+       - **filters**:      The filters for the offer, they can be of three different types for a given attribute: <ul><li>interval: the attribute must define the beginning and/or end of the interval with "geq" and "lt", the interval includes the beginning but not the end</li><li>equality: the attribute must define the "eq", the value that the filter expects the attribute to be equal to, it should be a string</li><li>difference: the attribute must define "neq", the value that the filter expects the attribute to be different from, it should be a string</ul>An example: "{ "intervalValue": { "geq": 0.0, "lt": 10.0 }, "equalValue": { "eq": "John" } }".  
        - **enabled**:      True if the offer is enabled.  
        - **placement**:    Where the offer is shown in the UI.  
        - **version**:      Offer current version.
@@ -425,8 +430,9 @@ Offers API
           "from":  [int],     
           "to":    [int]      
         },
-        "enabled": [bool],
-        "version": [int]
+        "enabled":   [bool],
+        "version":   [int],
+        "filters":   [json]
       },
       ...
     ]
@@ -451,9 +457,10 @@ Offers API
   There are the routes accessed by the offers lib.
 
   ### Get Available Offers
-  `GET /available-offers?player-id=<required-player-id>&game-id=<required-game-id>`
+  `GET /available-offers?player-id=<required-player-id>&game-id=<required-game-id>&<attr1>=<val1>&...`
 
-  Gets the available offers for a player of a game. An offer is available if it respects the frequency (last time player saw the offer), respects the period (last time player claimed the offer), is triggered (current time is between "from" and "to") and is enabled. The success response is a JSON where each key is a placement on the UI and the value is a list of available offers.
+  Gets the available offers for a player of a game. An offer is available if it respects the frequency (last time player saw the offer), respects the period (last time player claimed the offer), is triggered (current time is between "from" and "to"), matches the filters of the offer for the parameters sent in the query string  and is enabled. The success response is a JSON where each key is a placement on the UI and the value is a list of available offers.  
+  If an attribute sent in the query string doesn't exist in a filter it is ignored and the extra parameters for a filter are ignored if the request doesn't send a value for them. If the filter defines an interval the query string parameter value must be a number. There is no limit in the amount of attributes that can be sent to be used in the filters.
 
   * Success Response
     * Code: `200`

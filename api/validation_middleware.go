@@ -77,6 +77,52 @@ func claimOfferPayloadFromCtx(ctx context.Context) *models.ClaimOfferPayload {
 	return payload.(*models.ClaimOfferPayload)
 }
 
+func validateFilterObj(obj map[string]interface{}) bool {
+	cnt := 0
+	for k := range obj {
+		if k != "eq" && k != "neq" && k != "geq" && k != "lt" {
+			return false
+		}
+	}
+	if val, ok := obj["eq"]; ok {
+		cnt++
+		sval, match := val.(string)
+		if !match || !models.ValidateString(sval) {
+			return false
+		}
+	}
+	if val, ok := obj["neq"]; ok {
+		cnt++
+		sval, match := val.(string)
+		if !match || !models.ValidateString(sval) {
+			return false
+		}
+	}
+	if val, ok := obj["geq"]; ok {
+		cnt++
+		if _, match := val.(float64); !match {
+			return false
+		}
+	}
+	if val, ok := obj["lt"]; ok {
+		cnt++
+		v, match := val.(float64)
+		if !match {
+			return false
+		}
+		if val2, ok2 := obj["geq"]; ok2 {
+			v2 := val2.(float64)
+			if v <= v2 {
+				return false
+			}
+		}
+	}
+	if cnt < 1 {
+		return false
+	}
+	return true
+}
+
 func (m *ValidationMiddleware) configureCustomValidators() {
 	govalidator.CustomTypeTagMap.Set(
 		"RequiredJSONObject",
@@ -87,6 +133,37 @@ func (m *ValidationMiddleware) configureCustomValidators() {
 					var val map[string]interface{}
 					err := v.Unmarshal(&val)
 					return err == nil && len(val) > 0
+				}
+				return false
+			},
+		),
+	)
+	govalidator.CustomTypeTagMap.Set(
+		"FilterJSONObject",
+		govalidator.CustomTypeValidator(
+			func(i interface{}, context interface{}) bool {
+				switch v := i.(type) {
+				case dat.JSON:
+					var val map[string]interface{}
+					err := v.Unmarshal(&val)
+					if err == nil {
+						for key, value := range val {
+							if !models.ValidateString(key) {
+								return false
+							}
+							switch obj := value.(type) {
+							case map[string]interface{}:
+								if ok := validateFilterObj(obj); !ok {
+									return false
+								}
+							default:
+								return false
+							}
+						}
+						return true
+					}
+					m, err := v.MarshalJSON()
+					return err == nil && string(m) == "null"
 				}
 				return false
 			},

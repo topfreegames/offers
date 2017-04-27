@@ -34,3 +34,7 @@
     name: offers-game-maxage
     created_at: 2016-01-01 12:30:12
     metadata: {"cacheMaxAge": 123}
+-
+    id: another-game-with-filters
+    name: another-game-with-filters
+    created_at: 2016-01-01 12:30:12
