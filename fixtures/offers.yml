@@ -153,14 +153,14 @@
     id: 17e42a40-da28-44dc-abd1-0cef8c2dff42
     name: template-11
     product_id: com.tfg.sample
-    game_id: another-game
+    game_id: another-game-v8
     contents: '{"gems": 5, "gold": 100}'
     metadata: '{}'
     period: '{"max": 20}'
     frequency: '{"max": 20}'
     trigger: '{"from": 1486678000, "to": 1486679000}'
     placement: unique-place
-    enabled: false
+    enabled: true
 -
     id: f1f74fcd-17ae-4ccd-a248-f77c60e78c8c
     name: template-12

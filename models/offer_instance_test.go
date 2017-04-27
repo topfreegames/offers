@@ -226,10 +226,40 @@ var _ = Describe("Offer Instance Model", func() {
 			Expect(claimTimestamp).To(Equal(currentTime.Unix()))
 		})
 
+		It("should claim and receive 0 nextAt if offer was disabled", func() {
+			//Given
+			currentTime := time.Unix(from+500, 0)
+			gameID := "offers-game"
+			id := "b0bffdd6-5cb8-4b54-b250-349b18c07638"
+			offerID := "27b0370f-bd61-4346-a10d-50ec052ae125"
+			playerID := "player-14"
+			transactionID := uuid.NewV4().String()
+
+			claimCounterKey := models.GetClaimCounterKey(playerID, offerID)
+			claimTimestampKey := models.GetClaimTimestampKey(playerID, offerID)
+
+			//When
+			contents, alreadyClaimed, nextAt, err := models.ClaimOffer(db, redisClient, gameID, id, playerID, defaultProductID, transactionID, currentTime.Unix(), currentTime, nil)
+
+			//Then
+			Expect(contents).NotTo(BeNil())
+			Expect(alreadyClaimed).To(BeFalse())
+			Expect(nextAt).To(Equal(int64(0)))
+			Expect(err).NotTo(HaveOccurred())
+
+			claimCounter, err := redisClient.Client.Get(claimCounterKey).Int64()
+			Expect(err).NotTo(HaveOccurred())
+			claimTimestamp, err := redisClient.Client.Get(claimTimestampKey).Int64()
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(claimCounter).To(Equal(int64(1)))
+			Expect(claimTimestamp).To(Equal(currentTime.Unix()))
+		})
+
 		It("should claim and receive nextAt equal to currentTime if no every frequency or period", func() {
 			//Given
 			currentTime := time.Unix(from+500, 0)
-			gameID := "another-game"
+			gameID := "another-game-v8"
 			id := "0a90073e-a798-46a8-a4f2-6b32182672ff"
 			offerID := "17e42a40-da28-44dc-abd1-0cef8c2dff42"
 			playerID := "player-11"
@@ -465,6 +495,23 @@ var _ = Describe("Offer Instance Model", func() {
 			gameID := "limited-offers-game"
 			currentTime := time.Now()
 			offerInstanceID := "5ba8848f-1df0-45b3-b8b1-27a7d5eedd6a"
+			impressionID := uuid.NewV4().String()
+
+			//When
+			isReplay, nextAt, err := models.ViewOffer(db, redisClient, gameID, offerInstanceID, playerID, impressionID, currentTime, nil)
+			Expect(isReplay).To(BeFalse())
+
+			//Then
+			Expect(err).NotTo(HaveOccurred())
+			Expect(nextAt).To(Equal(int64(0)))
+		})
+
+		It("should return 0 nextAt if offer was disabled", func() {
+			//Given
+			playerID := "player-14"
+			gameID := "offers-game"
+			currentTime := time.Now()
+			offerInstanceID := "b0bffdd6-5cb8-4b54-b250-349b18c07638"
 			impressionID := uuid.NewV4().String()
 
 			//When

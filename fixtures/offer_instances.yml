@@ -115,7 +115,7 @@
     created_at: 2016-01-01 12:30:12
 -
     id: 0a90073e-a798-46a8-a4f2-6b32182672ff
-    game_id: another-game
+    game_id: another-game-v8
     player_id: player-11
     offer_id: 17e42a40-da28-44dc-abd1-0cef8c2dff42
     offer_version: 1
@@ -145,6 +145,15 @@
     game_id: another-game-with-filters
     player_id: player-13
     offer_id: 03408436-f7d4-4ba0-ad0d-93e03f1c4267
+    offer_version: 1
+    contents: '{"gems": 5, "gold": 100}'
+    product_id: com.tfg.sample
+    created_at: 2016-01-01 12:30:12
+-
+    id: b0bffdd6-5cb8-4b54-b250-349b18c07638
+    game_id: offers-game
+    player_id: player-14
+    offer_id: 27b0370f-bd61-4346-a10d-50ec052ae125
     offer_version: 1
     contents: '{"gems": 5, "gold": 100}'
     product_id: com.tfg.sample

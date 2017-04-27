@@ -186,7 +186,7 @@ func (h *OfferRequestHandler) viewOffer(w http.ResponseWriter, r *http.Request) 
 		mr,
 	)
 	if err != nil {
-		logger.WithError(err).Error("Failed to updated offer impressions.")
+		logger.WithError(err).Error("Failed to update offer impressions.")
 		if modelNotFound, ok := err.(*e.ModelNotFoundError); ok {
 			h.App.HandleError(w, http.StatusNotFound, modelNotFound.Error(), modelNotFound)
 			return
@@ -195,7 +195,7 @@ func (h *OfferRequestHandler) viewOffer(w http.ResponseWriter, r *http.Request) 
 		h.App.HandleError(w, http.StatusInternalServerError, err.Error(), err)
 		return
 	}
-	logger.Info("Upated offer impressions successfully")
+	logger.Info("Updated offer impressions successfully")
 	res := map[string]interface{}{}
 	if nextAt != 0 {
 		res["nextAt"] = nextAt
