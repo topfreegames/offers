@@ -606,7 +606,7 @@ Offers API
         }
       ```
 
-      if the player can still see the offer
+      if the player can no longer see the offer
       ```
         {}
       ```

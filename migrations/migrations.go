@@ -146,7 +146,7 @@ func migrations0004AddfiltertooffersSql() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "migrations/0004-AddFilterToOffers.sql", size: 75, mode: os.FileMode(420), modTime: time.Unix(1493067497, 0)}
+	info := bindataFileInfo{name: "migrations/0004-AddFilterToOffers.sql", size: 75, mode: os.FileMode(420), modTime: time.Unix(1493320856, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }

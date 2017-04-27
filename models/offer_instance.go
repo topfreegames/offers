@@ -32,6 +32,15 @@ type OfferInstance struct {
 	CreatedAt    dat.NullTime `db:"created_at" json:"createdAt" valid:""`
 }
 
+//OfferInstanceOffer is a join of OfferInstance with
+type OfferInstanceOffer struct {
+	ID       string   `db:"id" json:"id" valid:"uuidv4,required"`
+	GameID   string   `db:"game_id" json:"gameId" valid:"matches(^[^-][a-zA-Z0-9-_]*$),stringlength(1|255),required"`
+	OfferID  string   `db:"offer_id" json:"offerId" valid:"uuidv4,required"`
+	Contents dat.JSON `db:"contents" json:"contents" valid:"RequiredJSONObject"`
+	Enabled  bool     `db:"enabled" json:"enabled"`
+}
+
 //OfferToReturn has the fields for the returned offer
 type OfferToReturn struct {
 	ID        string   `json:"id"`
@@ -45,6 +54,25 @@ type OfferToReturn struct {
 type FrequencyOrPeriod struct {
 	Every string
 	Max   int
+}
+
+//GetOfferInstanceAndOfferEnabled returns a offer by its pk
+func GetOfferInstanceAndOfferEnabled(db runner.Connection, gameID, id string, mr *MixedMetricsReporter) (*OfferInstanceOffer, error) {
+	var offerInstance OfferInstanceOffer
+	err := mr.WithDatastoreSegment("offer_instances", SegmentSelect, func() error {
+		return db.
+			Select("oi.id, oi.offer_id, oi.contents, o.enabled").
+			From("offer_instances oi JOIN offers o ON (oi.offer_id=o.id)").
+			Where("oi.id=$1 AND oi.game_id=$2", id, gameID).
+			QueryStruct(&offerInstance)
+	})
+
+	err = HandleNotFoundError("OfferInstance", map[string]interface{}{
+		"GameID": gameID,
+		"ID":     id,
+	}, err)
+
+	return &offerInstance, err
 }
 
 //GetOfferInstanceByID returns a offer by its pk
@@ -261,9 +289,14 @@ func ViewOffer(
 	mr *MixedMetricsReporter,
 ) (bool, int64, error) {
 
-	offerInstance, err := GetOfferInstanceByID(db, gameID, offerInstanceID, mr)
+	offerInstance, err := GetOfferInstanceAndOfferEnabled(db, gameID, offerInstanceID, mr)
 	if err != nil {
 		return false, 0, err
+	}
+
+	// Offer is disabled
+	if !offerInstance.Enabled {
+		return false, 0, nil
 	}
 
 	impressionsKey := GetImpressionsKey(playerID, gameID)

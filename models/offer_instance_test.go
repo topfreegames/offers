@@ -476,6 +476,23 @@ var _ = Describe("Offer Instance Model", func() {
 			Expect(nextAt).To(Equal(int64(0)))
 		})
 
+		It("should return 0 nextAt if offer was disabled", func() {
+			//Given
+			playerID := "player-14"
+			gameID := "offers-game"
+			currentTime := time.Now()
+			offerInstanceID := "b0bffdd6-5cb8-4b54-b250-349b18c07638"
+			impressionID := uuid.NewV4().String()
+
+			//When
+			isReplay, nextAt, err := models.ViewOffer(db, redisClient, gameID, offerInstanceID, playerID, impressionID, currentTime, nil)
+			Expect(isReplay).To(BeFalse())
+
+			//Then
+			Expect(err).NotTo(HaveOccurred())
+			Expect(nextAt).To(Equal(int64(0)))
+		})
+
 		It("should return nextAt equal to now if offer has no every in frequency", func() {
 			//Given
 			playerID := "player-11"
