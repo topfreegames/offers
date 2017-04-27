@@ -9,6 +9,7 @@ package models
 
 import (
 	"fmt"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -42,30 +43,38 @@ const enabledOffers = `
 		AND offers.enabled = true
 `
 
+var isValidString = regexp.MustCompile(`^[a-zA-Z0-9_\.]+$`).MatchString
+
+//ValidateString validates the string contains only valid characters for filters
+func ValidateString(s string) bool {
+	return isValidString(s)
+}
+
 func buildScope(enabledOffers string, filterAttrs map[string]string) string {
 	subQueries := []string{enabledOffers}
 	for k, v := range filterAttrs {
 		// TODO: Possible SQL injection
-		if strings.Contains(k, "'") || strings.Contains(v, "'") {
+		if !ValidateString(k) || !ValidateString(v) {
+			subQueries = []string{enabledOffers}
 			break
 		}
 		rawSubQuery := `
 		AND (
-			(filters::json#>>'{%s}') IS NULL OR
-			((filters::json#>>'{%s,eq}') IS NOT NULL AND (filters::json#>>'{%s,eq}') = '%s') OR
-			((filters::json#>>'{%s,neq}') IS NOT NULL AND (filters::json#>>'{%s,neq}') != '%s')
+			(filters::json#>>'{"%[1]s"}') IS NULL OR
+			((filters::json#>>'{"%[1]s",eq}') IS NOT NULL AND (filters::json#>>'{"%[1]s",eq}') = '%[2]s') OR
+			((filters::json#>>'{"%[1]s",neq}') IS NOT NULL AND (filters::json#>>'{"%[1]s",neq}') != '%[2]s')
 		)`
-		subQuery := fmt.Sprintf(rawSubQuery, k, k, k, v, k, k, v)
+		subQuery := fmt.Sprintf(rawSubQuery, k, v)
 		if f, err := strconv.ParseFloat(v, 64); err == nil {
 			rawSubQuery = `
 			AND (
-				(filters::json#>>'{%s}') IS NULL OR
-				((filters::json#>>'{%s,eq}') IS NOT NULL AND (filters::json#>>'{%s,eq}') = '%s') OR
-				((filters::json#>>'{%s,neq}') IS NOT NULL AND (filters::json#>>'{%s,neq}') != '%s') OR
-				(((filters::json#>>'{%s,geq}') IS NULL OR %f >= (filters::json#>>'{%s,geq}')::float) AND
-				((filters::json#>>'{%s,lt}') IS NULL OR %f < (filters::json#>>'{%s,lt}')::float))
+				(filters::json#>>'{"%[1]s"}') IS NULL OR
+				((filters::json#>>'{"%[1]s",eq}') IS NOT NULL AND (filters::json#>>'{"%[1]s",eq}') = '%[2]s') OR
+				((filters::json#>>'{"%[1]s",neq}') IS NOT NULL AND (filters::json#>>'{"%[1]s",neq}') != '%[2]s') OR
+				(((filters::json#>>'{"%[1]s",geq}') IS NULL OR %[3]f >= (filters::json#>>'{"%[1]s",geq}')::float) AND
+				((filters::json#>>'{"%[1]s",lt}') IS NULL OR %[3]f < (filters::json#>>'{"%[1]s",lt}')::float))
 			)`
-			subQuery = fmt.Sprintf(rawSubQuery, k, k, k, v, k, k, v, k, f, k, k, f, k)
+			subQuery = fmt.Sprintf(rawSubQuery, k, v, f)
 		}
 		subQueries = append(subQueries, subQuery)
 	}

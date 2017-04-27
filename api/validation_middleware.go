@@ -86,13 +86,15 @@ func validateFilterObj(obj map[string]interface{}) bool {
 	}
 	if val, ok := obj["eq"]; ok {
 		cnt++
-		if _, match := val.(string); !match {
+		sval, match := val.(string)
+		if !match || !models.ValidateString(sval) {
 			return false
 		}
 	}
 	if val, ok := obj["neq"]; ok {
 		cnt++
-		if _, match := val.(string); !match {
+		sval, match := val.(string)
+		if !match || !models.ValidateString(sval) {
 			return false
 		}
 	}
@@ -145,7 +147,10 @@ func (m *ValidationMiddleware) configureCustomValidators() {
 					var val map[string]interface{}
 					err := v.Unmarshal(&val)
 					if err == nil {
-						for _, value := range val {
+						for key, value := range val {
+							if !models.ValidateString(key) {
+								return false
+							}
 							switch obj := value.(type) {
 							case map[string]interface{}:
 								if ok := validateFilterObj(obj); !ok {
