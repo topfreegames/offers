@@ -87,7 +87,7 @@ func GetOfferByID(db runner.Connection, gameID, id string, mr *MixedMetricsRepor
 	var offer Offer
 	err := mr.WithDatastoreSegment("offers", SegmentSelect, func() error {
 		return db.
-			Select("id, frequency, period, version").
+			Select("id, frequency, period, version, enabled").
 			From("offers").
 			Where("id=$1 AND game_id=$2", id, gameID).
 			QueryStruct(&offer)

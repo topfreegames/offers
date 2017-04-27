@@ -115,7 +115,7 @@
     created_at: 2016-01-01 12:30:12
 -
     id: 0a90073e-a798-46a8-a4f2-6b32182672ff
-    game_id: another-game
+    game_id: another-game-v8
     player_id: player-11
     offer_id: 17e42a40-da28-44dc-abd1-0cef8c2dff42
     offer_version: 1

@@ -105,6 +105,10 @@ func getClaimedOfferNextAt(
 	if err != nil {
 		return 0, err
 	}
+	if !offer.Enabled {
+		return 0, nil
+	}
+
 	var p FrequencyOrPeriod
 	var f FrequencyOrPeriod
 	json.Unmarshal(offer.Period, &p)
