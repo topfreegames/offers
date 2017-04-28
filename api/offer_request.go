@@ -51,12 +51,12 @@ func (h *OfferRequestHandler) getOffers(w http.ResponseWriter, r *http.Request) 
 	if playerID == "" {
 		err := fmt.Errorf("The player-id parameter cannot be empty")
 		logger.WithError(err).Error("Failed to retrieve offer for player.")
-		h.App.HandleError(w, http.StatusBadRequest, "The player-id parameter cannot be empty.", err)
+		h.App.HandleError(w, http.StatusBadRequest, err.Error(), err)
 		return
 	} else if gameID == "" {
 		err := fmt.Errorf("The game-id parameter cannot be empty")
 		logger.WithError(err).Error("Failed to retrieve offer for player.")
-		h.App.HandleError(w, http.StatusBadRequest, "The game-id parameter cannot be empty.", err)
+		h.App.HandleError(w, http.StatusBadRequest, err.Error(), err)
 		return
 	}
 	currentTime := h.App.Clock.GetTime()
@@ -226,17 +226,17 @@ func (h *OfferRequestHandler) offerInfo(w http.ResponseWriter, r *http.Request) 
 	if playerID == "" {
 		err := fmt.Errorf("The player-id parameter cannot be empty")
 		logger.WithError(err).Error("Failed to retrieve offer for player.")
-		h.App.HandleError(w, http.StatusBadRequest, "The player-id parameter cannot be empty.", err)
+		h.App.HandleError(w, http.StatusBadRequest, err.Error(), err)
 		return
 	} else if gameID == "" {
 		err := fmt.Errorf("The game-id parameter cannot be empty")
 		logger.WithError(err).Error("Failed to retrieve offer for player.")
-		h.App.HandleError(w, http.StatusBadRequest, "The game-id parameter cannot be empty.", err)
+		h.App.HandleError(w, http.StatusBadRequest, err.Error(), err)
 		return
 	} else if offerInstanceID == "" {
 		err := fmt.Errorf("The offer-id parameter cannot be empty")
 		logger.WithError(err).Error("Failed to retrieve offer for player.")
-		h.App.HandleError(w, http.StatusBadRequest, "The offer-id parameter cannot be empty.", err)
+		h.App.HandleError(w, http.StatusBadRequest, err.Error(), err)
 		return
 	}
 
@@ -248,6 +248,11 @@ func (h *OfferRequestHandler) offerInfo(w http.ResponseWriter, r *http.Request) 
 	})
 
 	if err != nil {
+		if modelNotFound, ok := err.(*e.ModelNotFoundError); ok {
+			logger.WithError(err).Error("Failed to find offer for player.")
+			h.App.HandleError(w, http.StatusNotFound, modelNotFound.Error(), modelNotFound)
+			return
+		}
 		logger.WithError(err).Error("Failed to retrieve offer for player.")
 		h.App.HandleError(w, http.StatusInternalServerError, "Failed to retrieve offer for player", err)
 		return

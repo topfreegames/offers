@@ -678,7 +678,7 @@ Offers API
         }
       ```
     * Header:
-      A max-age header is sent to indicate how long the response returned by get available offers can be cached.
+      A max-age header is sent to indicate how long the response returned by get offer info can be cached.
       ```
       Cache-Control: max-age=<seconds>
       ```

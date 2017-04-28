@@ -342,9 +342,8 @@ var _ = Describe("Offer Handler", func() {
 			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(obj["code"]).To(Equal("OFF-004"))
-			Expect(obj["error"]).To(Equal("The player-id parameter cannot be empty."))
+			Expect(obj["error"]).To(Equal("The player-id parameter cannot be empty"))
 			Expect(obj["description"]).To(Equal("The player-id parameter cannot be empty"))
-
 		})
 
 		It("should return status code 400 if game-id is not informed available offers", func() {
@@ -359,7 +358,7 @@ var _ = Describe("Offer Handler", func() {
 			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(obj["code"]).To(Equal("OFF-004"))
-			Expect(obj["error"]).To(Equal("The game-id parameter cannot be empty."))
+			Expect(obj["error"]).To(Equal("The game-id parameter cannot be empty"))
 			Expect(obj["description"]).To(Equal("The game-id parameter cannot be empty"))
 		})
 
@@ -1302,7 +1301,6 @@ var _ = Describe("Offer Handler", func() {
 			var jsonBody map[string]interface{}
 
 			app.Router.ServeHTTP(recorder, request)
-			fmt.Println(recorder.Body)
 			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
 			err := json.Unmarshal(recorder.Body.Bytes(), &jsonBody)
 			Expect(err).NotTo(HaveOccurred())
@@ -1332,7 +1330,7 @@ var _ = Describe("Offer Handler", func() {
 			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(obj["code"]).To(Equal("OFF-004"))
-			Expect(obj["error"]).To(Equal("The player-id parameter cannot be empty."))
+			Expect(obj["error"]).To(Equal("The player-id parameter cannot be empty"))
 			Expect(obj["description"]).To(Equal("The player-id parameter cannot be empty"))
 		})
 
@@ -1349,7 +1347,7 @@ var _ = Describe("Offer Handler", func() {
 			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(obj["code"]).To(Equal("OFF-004"))
-			Expect(obj["error"]).To(Equal("The game-id parameter cannot be empty."))
+			Expect(obj["error"]).To(Equal("The game-id parameter cannot be empty"))
 			Expect(obj["description"]).To(Equal("The game-id parameter cannot be empty"))
 		})
 
@@ -1366,8 +1364,20 @@ var _ = Describe("Offer Handler", func() {
 			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(obj["code"]).To(Equal("OFF-004"))
-			Expect(obj["error"]).To(Equal("The offer-id parameter cannot be empty."))
+			Expect(obj["error"]).To(Equal("The offer-id parameter cannot be empty"))
 			Expect(obj["description"]).To(Equal("The offer-id parameter cannot be empty"))
+		})
+
+		It("should return status code 404 if offer does not exist", func() {
+			gameID := "offers-game"
+			offerInstanceID := "eb7e8d2a-2739-4da3-aa31-babaca3bdad7"
+			playerID := "player-1"
+			url := fmt.Sprintf("/offer-info?game-id=%s&offer-id=%s&player-id=%s", gameID, offerInstanceID, playerID)
+			request, _ := http.NewRequest("GET", url, nil)
+
+			app.Router.ServeHTTP(recorder, request)
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
+			Expect(recorder.Code).To(Equal(http.StatusNotFound))
 		})
 
 		It("should return status code of 500 if some error occurred", func() {
