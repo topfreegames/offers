@@ -32,6 +32,8 @@ func (h *OfferRequestHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		h.claimOffer(w, r)
 	case "impressions":
 		h.viewOffer(w, r)
+	case "offer-info":
+		h.offerInfo(w, r)
 	}
 }
 
@@ -49,12 +51,12 @@ func (h *OfferRequestHandler) getOffers(w http.ResponseWriter, r *http.Request) 
 	if playerID == "" {
 		err := fmt.Errorf("The player-id parameter cannot be empty")
 		logger.WithError(err).Error("Failed to retrieve offer for player.")
-		h.App.HandleError(w, http.StatusBadRequest, "The player-id parameter cannot be empty.", err)
+		h.App.HandleError(w, http.StatusBadRequest, err.Error(), err)
 		return
 	} else if gameID == "" {
 		err := fmt.Errorf("The game-id parameter cannot be empty")
 		logger.WithError(err).Error("Failed to retrieve offer for player.")
-		h.App.HandleError(w, http.StatusBadRequest, "The game-id parameter cannot be empty.", err)
+		h.App.HandleError(w, http.StatusBadRequest, err.Error(), err)
 		return
 	}
 	currentTime := h.App.Clock.GetTime()
@@ -80,7 +82,7 @@ func (h *OfferRequestHandler) getOffers(w http.ResponseWriter, r *http.Request) 
 	})
 
 	if err != nil {
-		logger.WithError(err).Error("Failed to retrieve offer for player.")
+		logger.WithError(err).Error("Failed to retrieve offers for player.")
 		h.App.HandleError(w, http.StatusInternalServerError, "Failed to retrieve offer for player", err)
 		return
 	}
@@ -206,4 +208,81 @@ func (h *OfferRequestHandler) viewOffer(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	WriteBytes(w, http.StatusOK, bytesRes)
+}
+
+func (h *OfferRequestHandler) offerInfo(w http.ResponseWriter, r *http.Request) {
+	mr := metricsReporterFromCtx(r.Context())
+	playerID := r.URL.Query().Get("player-id")
+	gameID := r.URL.Query().Get("game-id")
+	offerInstanceID := r.URL.Query().Get("offer-id")
+	logger := h.App.Logger.WithFields(logrus.Fields{
+		"source":          "offerHandler",
+		"operation":       "offerInfo",
+		"gameID":          gameID,
+		"playerID":        playerID,
+		"offerInstanceID": offerInstanceID,
+	})
+
+	if playerID == "" {
+		err := fmt.Errorf("The player-id parameter cannot be empty")
+		logger.WithError(err).Error("Failed to retrieve offer for player.")
+		h.App.HandleError(w, http.StatusBadRequest, err.Error(), err)
+		return
+	} else if gameID == "" {
+		err := fmt.Errorf("The game-id parameter cannot be empty")
+		logger.WithError(err).Error("Failed to retrieve offer for player.")
+		h.App.HandleError(w, http.StatusBadRequest, err.Error(), err)
+		return
+	} else if offerInstanceID == "" {
+		err := fmt.Errorf("The offer-id parameter cannot be empty")
+		logger.WithError(err).Error("Failed to retrieve offer for player.")
+		h.App.HandleError(w, http.StatusBadRequest, err.Error(), err)
+		return
+	}
+
+	var err error
+	var offer *models.OfferToReturn
+	err = mr.WithSegment(models.SegmentModel, func() error {
+		offer, err = models.GetOfferInfo(h.App.DB, h.App.RedisClient, gameID, playerID, offerInstanceID, h.App.OffersCacheMaxAge, mr)
+		return err
+	})
+
+	if err != nil {
+		if modelNotFound, ok := err.(*e.ModelNotFoundError); ok {
+			logger.WithError(err).Error("Failed to find offer for player.")
+			h.App.HandleError(w, http.StatusNotFound, modelNotFound.Error(), modelNotFound)
+			return
+		}
+		logger.WithError(err).Error("Failed to retrieve offer for player.")
+		h.App.HandleError(w, http.StatusInternalServerError, "Failed to retrieve offer for player", err)
+		return
+	}
+
+	bytes, err := json.Marshal(offer)
+	if err != nil {
+		logger.WithError(err).Error("Failed to parse structs to JSON.")
+		h.App.HandleError(w, http.StatusInternalServerError, "Failed to parse structs to JSON", err)
+		return
+	}
+
+	maxAge := h.App.MaxAge
+	var game *models.Game
+	err = mr.WithSegment(models.SegmentModel, func() error {
+		game, err = models.GetGameByID(h.App.DB, gameID, mr)
+		return err
+	})
+	metadata, err := game.GetMetadata()
+	if err == nil {
+		if val, ok := metadata["cacheMaxAge"]; ok {
+			if maxAgeFromMeta, ok := val.(float64); ok {
+				maxAge = int64(maxAgeFromMeta)
+			}
+		}
+	} else {
+		logger.WithError(err).Warn("Failed to get game metadata.")
+	}
+	w.Header().Set("Cache-Control", fmt.Sprintf("max-age=%d", maxAge))
+
+	logger.Info("Retrieved player offer successfully")
+	WriteBytes(w, http.StatusOK, bytes)
 }
