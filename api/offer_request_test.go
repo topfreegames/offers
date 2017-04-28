@@ -1291,4 +1291,108 @@ var _ = Describe("Offer Handler", func() {
 			Expect(recorder.Code).To(Equal(http.StatusMovedPermanently))
 		})
 	})
+
+	Describe("GET /offer-info", func() {
+		It("should return offer info", func() {
+			playerID := "player-1"
+			gameID := "offers-game"
+			offerInstanceID := "eb7e8d2a-2739-4da3-aa31-7970b63bdad7"
+			url := fmt.Sprintf("/offer-info?player-id=%s&game-id=%s&offer-id=%s", playerID, gameID, offerInstanceID)
+			request, _ := http.NewRequest("GET", url, nil)
+			var jsonBody map[string]interface{}
+
+			app.Router.ServeHTTP(recorder, request)
+			fmt.Println(recorder.Body)
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
+			err := json.Unmarshal(recorder.Body.Bytes(), &jsonBody)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(recorder.Code).To(Equal(http.StatusOK))
+			Expect(jsonBody).To(HaveKey("id"))
+			Expect(jsonBody).To(HaveKey("productId"))
+			Expect(jsonBody).To(HaveKey("contents"))
+			Expect(jsonBody).To(HaveKey("metadata"))
+			Expect(jsonBody).To(HaveKey("expireAt"))
+			Expect(jsonBody["id"].(string)).To(Equal(offerInstanceID))
+			Expect(jsonBody["productId"].(string)).To(Equal("com.tfg.sample"))
+			Expect(int64(jsonBody["expireAt"].(float64))).To(Equal(int64(1486679000)))
+			maxAge := app.MaxAge
+			Expect(recorder.Header().Get("Cache-Control")).To(Equal(fmt.Sprintf("max-age=%d", maxAge)))
+		})
+
+		It("should return status code 400 if player-id is not informed", func() {
+			gameID := "offers-game"
+			offerInstanceID := "eb7e8d2a-2739-4da3-aa31-7970b63bdad7"
+			url := fmt.Sprintf("/offer-info?game-id=%s&offer-id=%s", gameID, offerInstanceID)
+			request, _ := http.NewRequest("GET", url, nil)
+
+			app.Router.ServeHTTP(recorder, request)
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
+			Expect(recorder.Code).To(Equal(http.StatusBadRequest))
+			var obj map[string]interface{}
+			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(obj["code"]).To(Equal("OFF-004"))
+			Expect(obj["error"]).To(Equal("The player-id parameter cannot be empty."))
+			Expect(obj["description"]).To(Equal("The player-id parameter cannot be empty"))
+		})
+
+		It("should return status code 400 if game-id is not informed", func() {
+			playerID := "player-1"
+			offerInstanceID := "eb7e8d2a-2739-4da3-aa31-7970b63bdad7"
+			url := fmt.Sprintf("/offer-info?player-id=%s&offer-id=%s", playerID, offerInstanceID)
+			request, _ := http.NewRequest("GET", url, nil)
+
+			app.Router.ServeHTTP(recorder, request)
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
+			Expect(recorder.Code).To(Equal(http.StatusBadRequest))
+			var obj map[string]interface{}
+			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(obj["code"]).To(Equal("OFF-004"))
+			Expect(obj["error"]).To(Equal("The game-id parameter cannot be empty."))
+			Expect(obj["description"]).To(Equal("The game-id parameter cannot be empty"))
+		})
+
+		It("should return status code 400 if offer-id is not informed", func() {
+			gameID := "offers-game"
+			playerID := "player-1"
+			url := fmt.Sprintf("/offer-info?player-id=%s&game-id=%s", playerID, gameID)
+			request, _ := http.NewRequest("GET", url, nil)
+
+			app.Router.ServeHTTP(recorder, request)
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
+			Expect(recorder.Code).To(Equal(http.StatusBadRequest))
+			var obj map[string]interface{}
+			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(obj["code"]).To(Equal("OFF-004"))
+			Expect(obj["error"]).To(Equal("The offer-id parameter cannot be empty."))
+			Expect(obj["description"]).To(Equal("The offer-id parameter cannot be empty"))
+		})
+
+		It("should return status code of 500 if some error occurred", func() {
+			playerID := "player-1"
+			gameID := "offers-game"
+			offerInstanceID := "eb7e8d2a-2739-4da3-aa31-7970b63bdad7"
+			url := fmt.Sprintf("/offer-info?player-id=%s&game-id=%s&offer-id=%s", playerID, gameID, offerInstanceID)
+			request, _ := http.NewRequest("GET", url, nil)
+
+			oldDB := app.DB
+			db, err := GetTestDB()
+			Expect(err).NotTo(HaveOccurred())
+			app.DB = db
+			app.DB.(*runner.DB).DB.Close() // make DB connection unavailable
+			app.Router.ServeHTTP(recorder, request)
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
+
+			Expect(recorder.Code).To(Equal(http.StatusInternalServerError))
+			var obj map[string]interface{}
+			err = json.Unmarshal([]byte(recorder.Body.String()), &obj)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(obj["code"]).To(Equal("OFF-004"))
+			Expect(obj["error"]).To(Equal("Failed to retrieve offer for player"))
+			Expect(obj["description"]).To(Equal("sql: database is closed"))
+			app.DB = oldDB // avoid errors in after each
+		})
+	})
 })

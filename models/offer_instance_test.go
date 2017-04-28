@@ -974,6 +974,60 @@ var _ = Describe("Offer Instance Model", func() {
 		})
 	})
 
+	Describe("Get offer info", func() {
+		It("should return offer info for an already seen offer", func() {
+			//Given
+			playerID := "player-1"
+			gameID := defaultGameID
+			offerInstanceID := "eb7e8d2a-2739-4da3-aa31-7970b63bdad7"
+
+			//When
+			offerInstance, err := models.GetOfferInfo(db, redisClient, gameID, playerID, offerInstanceID, expireDuration, nil)
+
+			//Then
+			Expect(err).NotTo(HaveOccurred())
+			Expect(offerInstance.ID).To(Equal(offerInstanceID))
+			Expect(offerInstance.ProductID).To(Equal("com.tfg.sample"))
+			Expect(offerInstance.Contents).To(Equal(dat.JSON([]byte(`{"gems": 5, "gold": 100}`))))
+			Expect(offerInstance.Metadata).To(Equal(dat.JSON([]byte(`{}`))))
+			Expect(offerInstance.ExpireAt).To(Equal(int64(1486679000)))
+		})
+
+		It("should error if gameID doesn't exist", func() {
+			//Given
+			playerID := "player-1"
+			gameID := "non-existing-game"
+			offerInstanceID := "eb7e8d2a-2739-4da3-aa31-7970b63bdad7"
+
+			//When
+			_, err := models.GetOfferInfo(db, redisClient, gameID, playerID, offerInstanceID, expireDuration, nil)
+
+			//Then
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(Equal("OfferInstance was not found with specified filters."))
+		})
+
+		It("should fail if some error in the database", func() {
+			//Given
+			playerID := "player-1"
+			gameID := "non-existing-game"
+			offerInstanceID := "eb7e8d2a-2739-4da3-aa31-7970b63bdad7"
+
+			oldDB := db
+			defer func() {
+				db = oldDB // avoid errors in after each
+			}()
+			db, err := GetTestDB()
+			Expect(err).NotTo(HaveOccurred())
+			db.(*runner.DB).DB.Close() // make DB connection unavailable
+
+			//When
+			_, err = models.GetOfferInfo(db, redisClient, gameID, playerID, offerInstanceID, expireDuration, nil)
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(Equal("sql: database is closed"))
+		})
+	})
+
 	Describe("Claim and GetAvailableOffers integrated", func() {
 		It("should not return consumed offer after it has been updated", func() {
 			offerID := "a2539a8c-55f2-4539-a8c0-929b240d8c80"

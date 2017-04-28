@@ -181,6 +181,15 @@ func (a *App) getRouter() *mux.Router {
 		NewValidationMiddleware(func() interface{} { return &models.OfferImpressionPayload{} }),
 	).ServeHTTP).Methods("PUT").Name("offer-requests")
 
+	r.Handle("/offer-info", Chain(
+		&OfferRequestHandler{App: a, Method: "offer-info"},
+		&SentryMiddleware{},
+		&NewRelicMiddleware{App: a},
+		&AuthMiddleware{App: a},
+		&LoggingMiddleware{App: a},
+		&VersionMiddleware{},
+	)).Methods("GET").Name("offer-requests")
+
 	return r
 }
 

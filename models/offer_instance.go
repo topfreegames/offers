@@ -43,11 +43,11 @@ type OfferInstanceOffer struct {
 
 //OfferToReturn has the fields for the returned offer
 type OfferToReturn struct {
-	ID        string   `json:"id"`
-	ProductID string   `json:"productId"`
-	Contents  dat.JSON `json:"contents"`
-	Metadata  dat.JSON `json:"metadata"`
-	ExpireAt  int64    `json:"expireAt"`
+	ID        string   `db:"id" json:"id"`
+	ProductID string   `db:"product_id" json:"productId"`
+	Contents  dat.JSON `db:"contents" json:"contents"`
+	Metadata  dat.JSON `db:"metadata" json:"metadata"`
+	ExpireAt  int64    `db:"expire_at" json:"expireAt"`
 }
 
 //FrequencyOrPeriod is the struct for basic Frequency and Period types
@@ -594,4 +594,45 @@ func filterOffersByFrequencyAndPeriod(
 	}
 
 	return filteredOffers, nil
+}
+
+func getOfferToReturn(
+	db runner.Connection,
+	gameID, playerID, offerID string,
+	mr *MixedMetricsReporter,
+) (*OfferToReturn, error) {
+	var offerInstance OfferToReturn
+
+	err := mr.WithDatastoreSegment("offer_instances", SegmentSelect, func() error {
+		return db.
+			Select("oi.id, oi.product_id, oi.contents, o.metadata, o.trigger#>>'{to}' AS expire_at").
+			From("offer_instances oi JOIN offers o ON (oi.offer_id=o.id)").
+			Where("oi.id=$1 AND oi.game_id=$2 AND oi.player_id=$3", offerID, gameID, playerID).
+			QueryStruct(&offerInstance)
+	})
+
+	err = HandleNotFoundError("OfferInstance", map[string]interface{}{
+		"GameID":   gameID,
+		"ID":       offerID,
+		"PlayerID": playerID,
+	}, err)
+
+	return &offerInstance, err
+}
+
+//GetOfferInfo returns the offers that match the criteria of enabled offer templates
+func GetOfferInfo(
+	db runner.Connection,
+	redisClient *util.RedisClient,
+	gameID, playerID, offerInstanceID string,
+	expireDuration time.Duration,
+	mr *MixedMetricsReporter,
+) (*OfferToReturn, error) {
+	offer, err := getOfferToReturn(db, gameID, playerID, offerInstanceID, mr)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return offer, nil
 }

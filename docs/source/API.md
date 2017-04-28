@@ -532,7 +532,7 @@ Offers API
         }
       ```
 
-      if the player can still see the offer
+      if the player can no longer see the offer
       ```
         {
           "contents": [json]
@@ -551,7 +551,7 @@ Offers API
         }
       ```
 
-      if the player can still see the offer
+      if the player can no longer see the offer
       ```
         {
           "contents": [json]
@@ -659,3 +659,40 @@ Offers API
           "description": [string]  // error description
         }
         ```
+
+  ### Get Offer Info
+  `GET /offer-info?player-id=<required-player-id>&game-id=<required-game-id>&offer-id=<required-offer-id>`
+
+  Gets information about a specific offer. This route can be used by a player that for some reason lost the information of a still valid offer and wants to retrieve it. The success response is a JSON object with the offer's attributes.  
+
+  * Success Response
+    * Code: `200`
+    * Content:
+      ```
+        {
+            "id":                   [uuidv4], // offer id
+            "productId":            [string], // required, 255 characters max
+            "contents":             [json],   // offer contents as registered in the offer template
+            "metadata":             [json],   // offer metadata as registered in the offer template
+            "expireAt":             [int64]   // timestamp (seconds since epoch) until when the offer is valid
+        }
+      ```
+    * Header:
+      A max-age header is sent to indicate how long the response returned by get available offers can be cached.
+      ```
+      Cache-Control: max-age=<seconds>
+      ```
+
+  * Error Response
+    * Code: `400`, if player-id is not informed
+    * Code: `400`, if game-id is not informed
+    * Code: `400`, if offer-id is not informed
+    * Code: `500`, if server failed in any other way
+    * Content:
+      ```
+      {
+        "error": [string],       // error
+        "code":  [string],       // error code
+        "description": [string]  // error description
+      }
+      ```
