@@ -687,7 +687,8 @@ Offers API
     * Code: `400`, if player-id is not informed
     * Code: `400`, if game-id is not informed
     * Code: `400`, if offer-id is not informed
-    * Code: `500`, if server failed in any other way
+    * Code: `404`, if the offer was not found
+    * Code: `500`, if server failed in any other way
     * Content:
       ```
       {
