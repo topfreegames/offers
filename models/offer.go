@@ -71,7 +71,8 @@ func buildScope(enabledOffers string, filterAttrs map[string]string) string {
 				(filters::json#>>'{"%[1]s"}') IS NULL OR
 				((filters::json#>>'{"%[1]s",eq}') IS NOT NULL AND (filters::json#>>'{"%[1]s",eq}') = '%[2]s') OR
 				((filters::json#>>'{"%[1]s",neq}') IS NOT NULL AND (filters::json#>>'{"%[1]s",neq}') != '%[2]s') OR
-				(((filters::json#>>'{"%[1]s",geq}') IS NULL OR %[3]f >= (filters::json#>>'{"%[1]s",geq}')::float) AND
+				(((filters::json#>>'{"%[1]s",geq}') IS NOT NULL OR (filters::json#>>'{"%[1]s",geq}') IS NOT NULL) AND
+				((filters::json#>>'{"%[1]s",geq}') IS NULL OR %[3]f >= (filters::json#>>'{"%[1]s",geq}')::float) AND
 				((filters::json#>>'{"%[1]s",lt}') IS NULL OR %[3]f < (filters::json#>>'{"%[1]s",lt}')::float))
 			)`
 			subQuery = fmt.Sprintf(rawSubQuery, k, v, f)

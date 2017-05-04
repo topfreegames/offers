@@ -711,7 +711,7 @@ var _ = Describe("Offer Instance Model", func() {
 			gameID := filterGameID
 			currentTime := time.Unix(1486678000, 0)
 			filterAttrs := map[string]string{
-				"level": "1.0",
+				"level": "1",
 				"key2":  "1.2",
 				"key3":  "1",
 			}
@@ -745,7 +745,7 @@ var _ = Describe("Offer Instance Model", func() {
 			gameID := filterGameID
 			currentTime := time.Unix(1486678000, 0)
 			filterAttrs := map[string]string{
-				"level": "3.0",
+				"level": "3",
 				"key2":  "1.2",
 			}
 
