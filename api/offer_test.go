@@ -1046,23 +1046,177 @@ var _ = Describe("Offer Template Handler", func() {
 			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
 
 			Expect(recorder.Code).To(Equal(http.StatusOK))
-			var obj []map[string]interface{}
+			var obj map[string]interface{}
+			err := json.Unmarshal(recorder.Body.Bytes(), &obj)
+			Expect(err).NotTo(HaveOccurred())
+
+			offers := obj["offers"].([]interface{})
+			Expect(offers).To(HaveLen(5))
+			for i := 0; i < len(obj); i++ {
+				offer := offers[i].(map[string]interface{})
+				Expect(offer).To(HaveKey("id"))
+				Expect(offer).To(HaveKey("name"))
+				Expect(offer).To(HaveKey("productId"))
+				Expect(offer).To(HaveKey("gameId"))
+				Expect(offer).To(HaveKey("contents"))
+				Expect(offer).To(HaveKey("metadata"))
+				Expect(offer).To(HaveKey("enabled"))
+				Expect(offer).To(HaveKey("placement"))
+				Expect(offer).To(HaveKey("period"))
+				Expect(offer).To(HaveKey("frequency"))
+				Expect(offer).To(HaveKey("trigger"))
+			}
+
+			pages := obj["pages"].(float64)
+			Expect(pages).To(Equal(float64(1)))
+		})
+
+		It("should return two offers with limit 2 and no offset", func() {
+			limit := 2
+			url := fmt.Sprintf("/offers?game-id=offers-game&limit=%d", limit)
+			request, _ := http.NewRequest("GET", url, nil)
+
+			app.Router.ServeHTTP(recorder, request)
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
+
+			Expect(recorder.Code).To(Equal(http.StatusOK))
+			var obj map[string]interface{}
+			err := json.Unmarshal(recorder.Body.Bytes(), &obj)
+			Expect(err).NotTo(HaveOccurred())
+
+			offers := obj["offers"].([]interface{})
+			Expect(offers).To(HaveLen(2))
+
+			pages := obj["pages"].(float64)
+			Expect(pages).To(Equal(float64(3)))
+		})
+
+		It("should return no offers if limit is 0", func() {
+			limit := 0
+			url := fmt.Sprintf("/offers?game-id=offers-game&limit=%d", limit)
+			request, _ := http.NewRequest("GET", url, nil)
+
+			app.Router.ServeHTTP(recorder, request)
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
+
+			Expect(recorder.Code).To(Equal(http.StatusNoContent))
+			var obj map[string]interface{}
+			err := json.Unmarshal(recorder.Body.Bytes(), &obj)
+			Expect(err).NotTo(HaveOccurred())
+
+			offers := obj["offers"].([]interface{})
+			Expect(offers).To(HaveLen(0))
+
+			pages := obj["pages"].(float64)
+			Expect(pages).To(Equal(float64(0)))
+		})
+
+		It("should return three offers with no limit and offset 2", func() {
+			offset := 2
+			url := fmt.Sprintf("/offers?game-id=offers-game&offset=%d", offset)
+			request, _ := http.NewRequest("GET", url, nil)
+
+			app.Router.ServeHTTP(recorder, request)
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
+
+			Expect(recorder.Code).To(Equal(http.StatusOK))
+			var obj map[string]interface{}
+			err := json.Unmarshal(recorder.Body.Bytes(), &obj)
+			Expect(err).NotTo(HaveOccurred())
+
+			offers := obj["offers"].([]interface{})
+			Expect(offers).To(HaveLen(3))
+
+			pages := obj["pages"].(float64)
+			Expect(pages).To(Equal(float64(1)))
+		})
+
+		It("should return three offers with no limit and offset 2", func() {
+			offset := 2
+			url := fmt.Sprintf("/offers?game-id=offers-game&offset=%d", offset)
+			request, _ := http.NewRequest("GET", url, nil)
+
+			app.Router.ServeHTTP(recorder, request)
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
+
+			Expect(recorder.Code).To(Equal(http.StatusOK))
+			var obj map[string]interface{}
+			err := json.Unmarshal(recorder.Body.Bytes(), &obj)
+			Expect(err).NotTo(HaveOccurred())
+
+			offers := obj["offers"].([]interface{})
+			Expect(offers).To(HaveLen(3))
+
+			pages := obj["pages"].(float64)
+			Expect(pages).To(Equal(float64(1)))
+		})
+
+		It("should return error if limit is negative", func() {
+			limit := -1
+			url := fmt.Sprintf("/offers?game-id=offers-game&limit=%d", limit)
+			request, _ := http.NewRequest("GET", url, nil)
+
+			app.Router.ServeHTTP(recorder, request)
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
+
+			Expect(recorder.Code).To(Equal(http.StatusBadRequest))
+			var obj map[string]interface{}
+			err := json.Unmarshal(recorder.Body.Bytes(), &obj)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(obj["code"]).To(Equal("OFF-004"))
+			Expect(obj["error"]).To(Equal("The limit parameter must be an uint."))
+			Expect(obj["description"]).To(Equal("strconv.ParseUint: parsing \"-1\": invalid syntax"))
+		})
+
+		It("should return error if limit is not a number", func() {
+			limit := "qwerty"
+			url := fmt.Sprintf("/offers?game-id=offers-game&limit=%s", limit)
+			request, _ := http.NewRequest("GET", url, nil)
+
+			app.Router.ServeHTTP(recorder, request)
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
+
+			Expect(recorder.Code).To(Equal(http.StatusBadRequest))
+			var obj map[string]interface{}
 			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
 			Expect(err).NotTo(HaveOccurred())
-			Expect(obj).To(HaveLen(5))
-			for i := 0; i < len(obj); i++ {
-				Expect(obj[i]).To(HaveKey("id"))
-				Expect(obj[i]).To(HaveKey("name"))
-				Expect(obj[i]).To(HaveKey("productId"))
-				Expect(obj[i]).To(HaveKey("gameId"))
-				Expect(obj[i]).To(HaveKey("contents"))
-				Expect(obj[i]).To(HaveKey("metadata"))
-				Expect(obj[i]).To(HaveKey("enabled"))
-				Expect(obj[i]).To(HaveKey("placement"))
-				Expect(obj[i]).To(HaveKey("period"))
-				Expect(obj[i]).To(HaveKey("frequency"))
-				Expect(obj[i]).To(HaveKey("trigger"))
-			}
+			Expect(obj["code"]).To(Equal("OFF-004"))
+			Expect(obj["error"]).To(Equal("The limit parameter must be an uint."))
+			Expect(obj["description"]).To(Equal("strconv.ParseUint: parsing \"qwerty\": invalid syntax"))
+		})
+
+		It("should return error if offset is negative", func() {
+			offset := -1
+			url := fmt.Sprintf("/offers?game-id=offers-game&offset=%d", offset)
+			request, _ := http.NewRequest("GET", url, nil)
+
+			app.Router.ServeHTTP(recorder, request)
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
+
+			Expect(recorder.Code).To(Equal(http.StatusBadRequest))
+			var obj map[string]interface{}
+			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(obj["code"]).To(Equal("OFF-004"))
+			Expect(obj["error"]).To(Equal("The offset parameter must be an uint."))
+			Expect(obj["description"]).To(Equal("strconv.ParseUint: parsing \"-1\": invalid syntax"))
+		})
+
+		It("should return error if offset is not a number", func() {
+			offset := "qwerty"
+			url := fmt.Sprintf("/offers?game-id=offers-game&offset=%s", offset)
+			request, _ := http.NewRequest("GET", url, nil)
+
+			app.Router.ServeHTTP(recorder, request)
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
+
+			Expect(recorder.Code).To(Equal(http.StatusBadRequest))
+			var obj map[string]interface{}
+			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(obj["code"]).To(Equal("OFF-004"))
+			Expect(obj["error"]).To(Equal("The offset parameter must be an uint."))
+			Expect(obj["description"]).To(Equal("strconv.ParseUint: parsing \"qwerty\": invalid syntax"))
 		})
 
 		It("should return empty list if no offers", func() {
@@ -1070,8 +1224,17 @@ var _ = Describe("Offer Template Handler", func() {
 
 			app.Router.ServeHTTP(recorder, request)
 			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
-			Expect(recorder.Code).To(Equal(http.StatusOK))
-			Expect(recorder.Body.String()).To(Equal("[]"))
+			Expect(recorder.Code).To(Equal(http.StatusNoContent))
+
+			var obj map[string]interface{}
+			err := json.Unmarshal(recorder.Body.Bytes(), &obj)
+			Expect(err).NotTo(HaveOccurred())
+
+			offers := obj["offers"].([]interface{})
+			Expect(offers).To(HaveLen(0))
+
+			pages := obj["pages"].(float64)
+			Expect(pages).To(Equal(float64(0)))
 		})
 
 		It("should return status code of 400 if game-id is not provided", func() {
