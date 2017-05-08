@@ -1099,7 +1099,7 @@ var _ = Describe("Offer Template Handler", func() {
 			app.Router.ServeHTTP(recorder, request)
 			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
 
-			Expect(recorder.Code).To(Equal(http.StatusNoContent))
+			Expect(recorder.Code).To(Equal(http.StatusOK))
 			var obj map[string]interface{}
 			err := json.Unmarshal(recorder.Body.Bytes(), &obj)
 			Expect(err).NotTo(HaveOccurred())
@@ -1224,7 +1224,7 @@ var _ = Describe("Offer Template Handler", func() {
 
 			app.Router.ServeHTTP(recorder, request)
 			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
-			Expect(recorder.Code).To(Equal(http.StatusNoContent))
+			Expect(recorder.Code).To(Equal(http.StatusOK))
 
 			var obj map[string]interface{}
 			err := json.Unmarshal(recorder.Body.Bytes(), &obj)

@@ -44,6 +44,13 @@ type App struct {
 	Server            *http.Server
 	Cache             *cache.Cache
 	OffersCacheMaxAge time.Duration
+	Pagination        *Pagination
+}
+
+//Pagination holds the page size (limit) and the offset that is the page number
+type Pagination struct {
+	Limit  uint64
+	Offset uint64
 }
 
 //NewApp ctor
@@ -214,9 +221,19 @@ func (a *App) configureApp() error {
 	a.configureSentry()
 
 	a.MaxAge = a.Config.GetInt64("cache.maxAgeSeconds")
+	a.configurePagination()
 	a.configureServer()
 	a.configureCache()
 	return nil
+}
+
+func (a *App) configurePagination() {
+	limit := uint64(a.Config.GetInt64("pagination.limit"))
+	offset := uint64(a.Config.GetInt64("pagination.offset"))
+	a.Pagination = &Pagination{
+		Limit:  limit,
+		Offset: offset,
+	}
 }
 
 func (a *App) configureCache() {

@@ -185,20 +185,27 @@ func (g *OfferHandler) list(w http.ResponseWriter, r *http.Request) {
 
 	var limit uint64
 	if limitStr == "" {
-		limit = 50
-	} else if limit, err = strconv.ParseUint(limitStr, 10, 64); err != nil {
-		logger.WithError(err).Error("List game offers failed.")
-		g.App.HandleError(w, http.StatusBadRequest, "The limit parameter must be an uint.", err)
-		return
+		limit = g.App.Pagination.Limit
+	} else {
+		var err error
+		limit, err = strconv.ParseUint(limitStr, 10, 64)
+		if err != nil {
+			logger.WithError(err).Error("List game offers failed.")
+			g.App.HandleError(w, http.StatusBadRequest, "The limit parameter must be an uint.", err)
+			return
+		}
 	}
 
 	var offset uint64
 	if offsetStr == "" {
-		offset = 0
-	} else if offset, err = strconv.ParseUint(offsetStr, 10, 64); err != nil {
-		logger.WithError(err).Error("List game offers failed.")
-		g.App.HandleError(w, http.StatusBadRequest, "The offset parameter must be an uint.", err)
-		return
+		offset = g.App.Pagination.Offset
+	} else {
+		offset, err = strconv.ParseUint(offsetStr, 10, 64)
+		if err != nil {
+			logger.WithError(err).Error("List game offers failed.")
+			g.App.HandleError(w, http.StatusBadRequest, "The offset parameter must be an uint.", err)
+			return
+		}
 	}
 
 	var offers []*models.Offer
@@ -221,10 +228,5 @@ func (g *OfferHandler) list(w http.ResponseWriter, r *http.Request) {
 	}
 
 	bts, _ := json.Marshal(responseObj)
-	status := http.StatusOK
-	if len(offers) == 0 {
-		status = http.StatusNoContent
-	}
-
-	WriteBytes(w, status, bts)
+	WriteBytes(w, http.StatusOK, bts)
 }

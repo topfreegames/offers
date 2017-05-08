@@ -20,3 +20,6 @@ cache:
 offersCache:
   maxAgeSeconds: 300
   cleanupInterval: 30
+pagination:
+  limit: 50
+  offset: 0
