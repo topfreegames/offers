@@ -7,7 +7,11 @@
 
 package api
 
-import "net/http"
+import (
+	"net/http"
+
+	"github.com/topfreegames/offers/metadata"
+)
 
 // VersionMiddleware adds the version to the request
 type VersionMiddleware struct {
@@ -16,7 +20,7 @@ type VersionMiddleware struct {
 
 //ServeHTTP method
 func (m *VersionMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("X-Offers-Version", "0.1.0")
+	w.Header().Set("X-Offers-Version", metadata.Version)
 	m.next.ServeHTTP(w, r)
 }
 
