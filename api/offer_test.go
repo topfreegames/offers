@@ -1111,8 +1111,8 @@ var _ = Describe("Offer Template Handler", func() {
 			Expect(pages).To(Equal(float64(0)))
 		})
 
-		It("should return three offers with no limit and offset 2", func() {
-			offset := 2
+		It("should return no offers with no limit and offset 1 (second page)", func() {
+			offset := 1
 			url := fmt.Sprintf("/offers?game-id=offers-game&offset=%d", offset)
 			request, _ := http.NewRequest("GET", url, nil)
 
@@ -1125,27 +1125,7 @@ var _ = Describe("Offer Template Handler", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			offers := obj["offers"].([]interface{})
-			Expect(offers).To(HaveLen(3))
-
-			pages := obj["pages"].(float64)
-			Expect(pages).To(Equal(float64(1)))
-		})
-
-		It("should return three offers with no limit and offset 2", func() {
-			offset := 2
-			url := fmt.Sprintf("/offers?game-id=offers-game&offset=%d", offset)
-			request, _ := http.NewRequest("GET", url, nil)
-
-			app.Router.ServeHTTP(recorder, request)
-			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
-
-			Expect(recorder.Code).To(Equal(http.StatusOK))
-			var obj map[string]interface{}
-			err := json.Unmarshal(recorder.Body.Bytes(), &obj)
-			Expect(err).NotTo(HaveOccurred())
-
-			offers := obj["offers"].([]interface{})
-			Expect(offers).To(HaveLen(3))
+			Expect(offers).To(BeEmpty())
 
 			pages := obj["pages"].(float64)
 			Expect(pages).To(Equal(float64(1)))

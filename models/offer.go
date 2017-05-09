@@ -152,22 +152,8 @@ func ListOffers(
 	mr *MixedMetricsReporter,
 ) ([]*Offer, int, error) {
 	offers := []*Offer{}
-	err := mr.WithDatastoreSegment("offers", SegmentSelect, func() error {
-		return db.
-			Select("*").
-			From("offers").
-			Where("game_id = $1", gameID).
-			OrderBy("created_at").
-			Limit(limit).
-			Offset(offset).
-			QueryStructs(&offers)
-	})
-	if err != nil {
-		return offers, 0, err
-	}
-
 	var numberOffers int
-	err = mr.WithDatastoreSegment("offers", SegmentSelect, func() error {
+	err := mr.WithDatastoreSegment("offers", SegmentSelect, func() error {
 		return db.
 			Select("COUNT(*)").
 			From("offers").
@@ -183,6 +169,21 @@ func ListOffers(
 		pages = numberOffers / int(limit)
 		if numberOffers%int(limit) != 0 {
 			pages = pages + 1
+		}
+
+		start := offset * limit
+		err = mr.WithDatastoreSegment("offers", SegmentSelect, func() error {
+			return db.
+				Select("*").
+				From("offers").
+				Where("game_id = $1", gameID).
+				OrderBy("created_at").
+				Limit(limit).
+				Offset(start).
+				QueryStructs(&offers)
+		})
+		if err != nil {
+			return offers, 0, err
 		}
 	}
 

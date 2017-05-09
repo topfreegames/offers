@@ -201,13 +201,13 @@ var _ = Describe("Offer Models", func() {
 			Expect(pages).To(Equal(pages))
 		})
 
-		It("should return one offer with limit 2 and offset 4", func() {
+		It("should return no offer with limit 2 and offset 3", func() {
 			var limit uint64 = 2
-			var offset uint64 = 4
+			var offset uint64 = 3
 			var pages int = 5/2 + 1
 			games, pages, err := models.ListOffers(db, "offers-game", limit, offset, nil)
 			Expect(err).NotTo(HaveOccurred())
-			Expect(games).To(HaveLen(1))
+			Expect(games).To(BeEmpty())
 			Expect(pages).To(Equal(pages))
 		})
 
