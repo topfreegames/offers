@@ -13,6 +13,7 @@ import (
 	"github.com/satori/go.uuid"
 	"github.com/topfreegames/offers/models"
 	. "github.com/topfreegames/offers/testing"
+	oTesting "github.com/topfreegames/offers/testing"
 	"gopkg.in/mgutz/dat.v2/dat"
 	runner "gopkg.in/mgutz/dat.v2/sqlx-runner"
 	"time"
@@ -173,15 +174,63 @@ var _ = Describe("Offer Models", func() {
 
 	Describe("List offers", func() {
 		It("Should return the full list of offers for a game", func() {
-			games, err := models.ListOffers(db, "offers-game", nil)
+			var limit uint64 = 5
+			var offset uint64 = 0
+			games, pages, err := models.ListOffers(db, "offers-game", limit, offset, nil)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(games).To(HaveLen(5))
+			Expect(pages).To(Equal(1))
 		})
 
 		It("should return empty list if non-existing game id", func() {
-			games, err := models.ListOffers(db, "non-existing-game", nil)
+			var limit uint64 = 5
+			var offset uint64 = 0
+			games, pages, err := models.ListOffers(db, "non-existing-game", limit, offset, nil)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(games).To(HaveLen(0))
+			Expect(pages).To(Equal(0))
+		})
+
+		It("should return two offers with limit 2 and offset 0", func() {
+			var limit uint64 = 2
+			var offset uint64 = 0
+			var pages int = 5/2 + 1
+			games, pages, err := models.ListOffers(db, "offers-game", limit, offset, nil)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(games).To(HaveLen(2))
+			Expect(pages).To(Equal(pages))
+		})
+
+		It("should return one offer with limit 2 and offset 4", func() {
+			var limit uint64 = 2
+			var offset uint64 = 4
+			var pages int = 5/2 + 1
+			games, pages, err := models.ListOffers(db, "offers-game", limit, offset, nil)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(games).To(HaveLen(1))
+			Expect(pages).To(Equal(pages))
+		})
+
+		It("should return 0 pages if limit is 0", func() {
+			var limit uint64 = 0
+			var offset uint64 = 0
+			var pages int = 0
+			games, pages, err := models.ListOffers(db, "offers-game", limit, offset, nil)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(games).To(HaveLen(0))
+			Expect(pages).To(Equal(pages))
+		})
+
+		It("should return error if db isn't connected", func() {
+			db, err := oTesting.GetTestDB()
+			Expect(err).NotTo(HaveOccurred())
+			err = db.(*runner.DB).DB.Close()
+			Expect(err).NotTo(HaveOccurred())
+
+			var limit uint64 = 10
+			var offset uint64 = 0
+			_, _, err = models.ListOffers(db, "offers-game", limit, offset, nil)
+			Expect(err).To(HaveOccurred())
 		})
 	})
 

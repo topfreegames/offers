@@ -23,3 +23,6 @@ offersCache:
 basicauth:
   username: user
   password: pass
+pagination:
+  limit: 50
+  offset: 0

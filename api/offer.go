@@ -11,6 +11,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/topfreegames/offers/errors"
@@ -160,7 +161,12 @@ func (g *OfferHandler) updateOffer(w http.ResponseWriter, r *http.Request) {
 
 func (g *OfferHandler) list(w http.ResponseWriter, r *http.Request) {
 	mr := metricsReporterFromCtx(r.Context())
-	gameID := r.URL.Query().Get("game-id")
+
+	vars := r.URL.Query()
+	gameID := vars.Get("game-id")
+	limitStr := vars.Get("limit")
+	offsetStr := vars.Get("offset")
+	var err error
 	userEmail := userEmailFromContext(r.Context())
 
 	logger := g.App.Logger.WithFields(logrus.Fields{
@@ -177,10 +183,35 @@ func (g *OfferHandler) list(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var err error
+	var limit uint64
+	if limitStr == "" {
+		limit = g.App.Pagination.Limit
+	} else {
+		var err error
+		limit, err = strconv.ParseUint(limitStr, 10, 64)
+		if err != nil {
+			logger.WithError(err).Error("List game offers failed.")
+			g.App.HandleError(w, http.StatusBadRequest, "The limit parameter must be an uint.", err)
+			return
+		}
+	}
+
+	var offset uint64
+	if offsetStr == "" {
+		offset = g.App.Pagination.Offset
+	} else {
+		offset, err = strconv.ParseUint(offsetStr, 10, 64)
+		if err != nil {
+			logger.WithError(err).Error("List game offers failed.")
+			g.App.HandleError(w, http.StatusBadRequest, "The offset parameter must be an uint.", err)
+			return
+		}
+	}
+
 	var offers []*models.Offer
+	var pages int
 	err = mr.WithSegment(models.SegmentModel, func() error {
-		offers, err = models.ListOffers(g.App.DB, gameID, mr)
+		offers, pages, err = models.ListOffers(g.App.DB, gameID, limit, offset, mr)
 		return err
 	})
 
@@ -191,10 +222,11 @@ func (g *OfferHandler) list(w http.ResponseWriter, r *http.Request) {
 	}
 
 	logger.Info("Listed game offers successfully.")
-	if len(offers) == 0 {
-		Write(w, http.StatusOK, "[]")
-		return
+	responseObj := map[string]interface{}{
+		"offers": offers,
+		"pages":  pages,
 	}
-	bytes, _ := json.Marshal(offers)
-	WriteBytes(w, http.StatusOK, bytes)
+
+	bts, _ := json.Marshal(responseObj)
+	WriteBytes(w, http.StatusOK, bts)
 }

@@ -397,7 +397,10 @@ Offers API
       ```
 
   ### List Offers
-  `GET /offers?game-id=<required-game-id>`
+  `GET /offers?game-id=<required-game-id>&limit=<optional-limit>&offset=<optional-offset>`
+  * game-id: the given game id.
+  * limit: how many offers will be returned (the page size); default is 50.
+  * offset: the page number; default is 0.
 
   Lists all game's offers.
 
@@ -408,34 +411,38 @@ Offers API
     * Content:
 
     ```
-    [    
-      {
-        "id":        [uuidv4],   // offer template unique identifier
-        "key":       [uuidv4],
-        "name":      [string],
-        "productId": [string],
-        "gameId":    [string],
-        "contents":  [json],  
-        "metadata":  [json],  
-        "placement": [string],
-        "period":    {        
-          "every": [string],  
-          "max":   [int]      
-        },   
-        "frequency": {        
-          "every": [string],  
-          "max":   [int]      
-        },   
-        "trigger":   {        
-          "from":  [int],     
-          "to":    [int]      
+    {
+      "offers": [    
+        {
+          "id":        [uuidv4],   // offer template unique identifier
+          "key":       [uuidv4],
+          "name":      [string],
+          "productId": [string],
+          "gameId":    [string],
+          "contents":  [json],  
+          "metadata":  [json],  
+          "placement": [string],
+          "period":    {        
+            "every": [string],  
+            "max":   [int]      
+          },   
+          "frequency": {        
+            "every": [string],  
+            "max":   [int]      
+          },   
+          "trigger":   {        
+            "from":  [int],     
+            "to":    [int]      
+          },
+          "enabled":   [bool],
+          "version":   [int],
+          "filters":   [json]
         },
-        "enabled":   [bool],
-        "version":   [int],
-        "filters":   [json]
-      },
-      ...
-    ]
+        ...
+      ],
+      "pages": [int]
+    }
+    
     ```
 
   * Error response

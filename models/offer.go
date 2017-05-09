@@ -144,16 +144,49 @@ func GetEnabledOffers(db runner.Connection, gameID string, offersCache *cache.Ca
 }
 
 //ListOffers returns all the offer templates for a given game
-func ListOffers(db runner.Connection, gameID string, mr *MixedMetricsReporter) ([]*Offer, error) {
-	var offers []*Offer
+//return the number of pages using the number of offers and given the limit for each page
+func ListOffers(
+	db runner.Connection,
+	gameID string,
+	limit, offset uint64,
+	mr *MixedMetricsReporter,
+) ([]*Offer, int, error) {
+	offers := []*Offer{}
 	err := mr.WithDatastoreSegment("offers", SegmentSelect, func() error {
 		return db.
 			Select("*").
 			From("offers").
 			Where("game_id = $1", gameID).
+			OrderBy("created_at").
+			Limit(limit).
+			Offset(offset).
 			QueryStructs(&offers)
 	})
-	return offers, err
+	if err != nil {
+		return offers, 0, err
+	}
+
+	var numberOffers int
+	err = mr.WithDatastoreSegment("offers", SegmentSelect, func() error {
+		return db.
+			Select("COUNT(*)").
+			From("offers").
+			Where("game_id = $1", gameID).
+			QueryScalar(&numberOffers)
+	})
+	if err != nil {
+		return offers, 0, err
+	}
+
+	var pages int
+	if limit != 0 {
+		pages = numberOffers / int(limit)
+		if numberOffers%int(limit) != 0 {
+			pages = pages + 1
+		}
+	}
+
+	return offers, pages, nil
 }
 
 // InsertOffer inserts a new offer template into DB
