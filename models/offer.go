@@ -60,17 +60,17 @@ func buildScope(enabledOffers string, filterAttrs map[string]string) string {
 		}
 		rawSubQuery := `
 		AND (
-			(filters::json#>>'{"%[1]s"}') IS NULL OR
-			((filters::json#>>'{"%[1]s",eq}') IS NOT NULL AND (filters::json#>>'{"%[1]s",eq}') = '%[2]s') OR
-			((filters::json#>>'{"%[1]s",neq}') IS NOT NULL AND (filters::json#>>'{"%[1]s",neq}') != '%[2]s')
+			NOT (filters ? '%[1]s') OR
+			filters @> '{"%[1]s": {"eq": "%[2]s"}}' OR
+			filters @> '{"%[1]s": {"neq": "%[2]s"}}'
 		)`
 		subQuery := fmt.Sprintf(rawSubQuery, k, v)
 		if f, err := strconv.ParseFloat(v, 64); err == nil {
 			rawSubQuery = `
 			AND (
-				(filters::json#>>'{"%[1]s"}') IS NULL OR
-				((filters::json#>>'{"%[1]s",eq}') IS NOT NULL AND (filters::json#>>'{"%[1]s",eq}') = '%[2]s') OR
-				((filters::json#>>'{"%[1]s",neq}') IS NOT NULL AND (filters::json#>>'{"%[1]s",neq}') != '%[2]s') OR
+				NOT (filters ? '%[1]s') OR
+				filters @> '{"%[1]s": {"eq": "%[2]s"}}' OR
+				filters @> '{"%[1]s": {"neq": "%[2]s"}}' OR
 				(((filters::json#>>'{"%[1]s",geq}') IS NOT NULL OR (filters::json#>>'{"%[1]s",geq}') IS NOT NULL) AND
 				((filters::json#>>'{"%[1]s",geq}') IS NULL OR %[3]f >= (filters::json#>>'{"%[1]s",geq}')::float) AND
 				((filters::json#>>'{"%[1]s",lt}') IS NULL OR %[3]f < (filters::json#>>'{"%[1]s",lt}')::float))

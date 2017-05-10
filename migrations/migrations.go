@@ -4,6 +4,7 @@
 // migrations/0002-CreateOffersTable.sql
 // migrations/0003-CreateOfferIntancesTable.sql
 // migrations/0004-AddFilterToOffers.sql
+// migrations/0005-AddGINIndexToOffers.sql
 // DO NOT EDIT!
 
 package migrations
@@ -151,6 +152,26 @@ func migrations0004AddfiltertooffersSql() (*asset, error) {
 	return a, nil
 }
 
+var _migrations0005AddginindextooffersSql = []byte("\x1f\x8b\x08\x00\x00\x00\x00\x00\x00\xff\x72\x0e\x72\x75\x0c\x71\x55\xf0\xf4\x73\x71\x8d\x50\xc8\x4c\xa9\x48\xcf\xcc\x53\xf0\xf7\x53\xc8\x4f\x4b\x4b\x2d\x2a\x56\x08\x0d\xf6\xf4\x73\x57\x70\xf7\xf4\x53\xd0\x48\xcb\xcc\x29\x49\x2d\x2a\xd6\xb4\xe6\x02\x04\x00\x00\xff\xff\xe5\xe8\x31\x68\x33\x00\x00\x00")
+
+func migrations0005AddginindextooffersSqlBytes() ([]byte, error) {
+	return bindataRead(
+		_migrations0005AddginindextooffersSql,
+		"migrations/0005-AddGINIndexToOffers.sql",
+	)
+}
+
+func migrations0005AddginindextooffersSql() (*asset, error) {
+	bytes, err := migrations0005AddginindextooffersSqlBytes()
+	if err != nil {
+		return nil, err
+	}
+
+	info := bindataFileInfo{name: "migrations/0005-AddGINIndexToOffers.sql", size: 51, mode: os.FileMode(420), modTime: time.Unix(1494437198, 0)}
+	a := &asset{bytes: bytes, info: info}
+	return a, nil
+}
+
 // Asset loads and returns the asset for the given name.
 // It returns an error if the asset could not be found or
 // could not be loaded.
@@ -207,6 +228,7 @@ var _bindata = map[string]func() (*asset, error){
 	"migrations/0002-CreateOffersTable.sql": migrations0002CreateofferstableSql,
 	"migrations/0003-CreateOfferIntancesTable.sql": migrations0003CreateofferintancestableSql,
 	"migrations/0004-AddFilterToOffers.sql": migrations0004AddfiltertooffersSql,
+	"migrations/0005-AddGINIndexToOffers.sql": migrations0005AddginindextooffersSql,
 }
 
 // AssetDir returns the file names below a certain
@@ -254,6 +276,7 @@ var _bintree = &bintree{nil, map[string]*bintree{
 		"0002-CreateOffersTable.sql": &bintree{migrations0002CreateofferstableSql, map[string]*bintree{}},
 		"0003-CreateOfferIntancesTable.sql": &bintree{migrations0003CreateofferintancestableSql, map[string]*bintree{}},
 		"0004-AddFilterToOffers.sql": &bintree{migrations0004AddfiltertooffersSql, map[string]*bintree{}},
+		"0005-AddGINIndexToOffers.sql": &bintree{migrations0005AddginindextooffersSql, map[string]*bintree{}},
 	}},
 }}
 
