@@ -124,14 +124,7 @@ var _ = Describe("Offer Handler", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(recorder.Code).To(Equal(http.StatusOK))
 			Expect(jsonBody).NotTo(HaveKey("popup"))
-			Expect(jsonBody).To(HaveKey("store"))
-			store := jsonBody["store"]
-			Expect(store).To(HaveLen(1))
-			Expect(store[0]).To(HaveKey("id"))
-			Expect(store[0]).To(HaveKey("productId"))
-			Expect(store[0]).To(HaveKey("contents"))
-			Expect(store[0]).To(HaveKey("metadata"))
-			Expect(store[0]).To(HaveKey("expireAt"))
+			Expect(jsonBody).NotTo(HaveKey("store"))
 			maxAge := app.MaxAge
 			Expect(recorder.Header().Get("Cache-Control")).To(Equal(fmt.Sprintf("max-age=%d", maxAge)))
 		})

@@ -60,7 +60,6 @@ func buildScope(enabledOffers string, filterAttrs map[string]string) string {
 		}
 		rawSubQuery := `
 		AND (
-			NOT (filters ? '%[1]s') OR
 			filters @> '{"%[1]s": {"eq": "%[2]s"}}' OR
 			filters @> '{"%[1]s": {"neq": "%[2]s"}}'
 		)`
@@ -68,7 +67,6 @@ func buildScope(enabledOffers string, filterAttrs map[string]string) string {
 		if f, err := strconv.ParseFloat(v, 64); err == nil {
 			rawSubQuery = `
 			AND (
-				NOT (filters ? '%[1]s') OR
 				filters @> '{"%[1]s": {"eq": "%[2]s"}}' OR
 				filters @> '{"%[1]s": {"neq": "%[2]s"}}' OR
 				(((filters::json#>>'{"%[1]s",geq}') IS NOT NULL OR (filters::json#>>'{"%[1]s",geq}') IS NOT NULL) AND

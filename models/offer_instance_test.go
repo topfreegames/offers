@@ -712,8 +712,6 @@ var _ = Describe("Offer Instance Model", func() {
 			currentTime := time.Unix(1486678000, 0)
 			filterAttrs := map[string]string{
 				"level": "1",
-				"key2":  "1.2",
-				"key3":  "1",
 			}
 
 			//When
@@ -721,7 +719,7 @@ var _ = Describe("Offer Instance Model", func() {
 
 			//Then
 			Expect(err).NotTo(HaveOccurred())
-			Expect(offerInstances).To(HaveLen(2))
+			Expect(offerInstances).To(HaveLen(1))
 			Expect(offerInstances).To(HaveKey("popup"))
 			Expect(offerInstances["popup"]).To(HaveLen(1))
 			Expect(offerInstances["popup"][0].ID).To(Equal("33f9bbc1-5e9e-4a80-ae95-8d74d8774629"))
@@ -729,14 +727,6 @@ var _ = Describe("Offer Instance Model", func() {
 			Expect(offerInstances["popup"][0].Contents).To(Equal(dat.JSON([]byte(`{"gems": 5, "gold": 100}`))))
 			Expect(offerInstances["popup"][0].Metadata).To(Equal(dat.JSON([]byte(`{}`))))
 			Expect(offerInstances["popup"][0].ExpireAt).To(Equal(int64(1486679000)))
-
-			Expect(offerInstances).To(HaveKey("store"))
-			Expect(offerInstances["store"]).To(HaveLen(1))
-			Expect(offerInstances["store"][0].ID).To(Equal("0eebb309-753c-4736-98f1-5be851e1ac4d"))
-			Expect(offerInstances["store"][0].ProductID).To(Equal("com.tfg.sample"))
-			Expect(offerInstances["store"][0].Contents).To(Equal(dat.JSON([]byte(`{"gems": 5, "gold": 100}`))))
-			Expect(offerInstances["store"][0].Metadata).To(Equal(dat.JSON([]byte(`{}`))))
-			Expect(offerInstances["store"][0].ExpireAt).To(Equal(int64(1486679000)))
 		})
 
 		It("should return a list of offer templates for each available placement when with filters not matching", func() {
@@ -746,7 +736,6 @@ var _ = Describe("Offer Instance Model", func() {
 			currentTime := time.Unix(1486678000, 0)
 			filterAttrs := map[string]string{
 				"level": "3",
-				"key2":  "1.2",
 			}
 
 			//When
@@ -754,18 +743,10 @@ var _ = Describe("Offer Instance Model", func() {
 
 			//Then
 			Expect(err).NotTo(HaveOccurred())
-			Expect(offerInstances).To(HaveLen(1))
-
-			Expect(offerInstances).To(HaveKey("store"))
-			Expect(offerInstances["store"]).To(HaveLen(1))
-			Expect(offerInstances["store"][0].ID).To(Equal("0eebb309-753c-4736-98f1-5be851e1ac4d"))
-			Expect(offerInstances["store"][0].ProductID).To(Equal("com.tfg.sample"))
-			Expect(offerInstances["store"][0].Contents).To(Equal(dat.JSON([]byte(`{"gems": 5, "gold": 100}`))))
-			Expect(offerInstances["store"][0].Metadata).To(Equal(dat.JSON([]byte(`{}`))))
-			Expect(offerInstances["store"][0].ExpireAt).To(Equal(int64(1486679000)))
+			Expect(offerInstances).To(HaveLen(0))
 		})
 
-		It("should return a list of offer templates for each available placement when with filters but offer has no filters", func() {
+		XIt("should return a list of offer templates for each available placement when with filters but offer has no filters", func() {
 			//Given
 			playerID := "player-1"
 			gameID := defaultGameID
