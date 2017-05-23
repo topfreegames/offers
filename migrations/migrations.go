@@ -87,7 +87,7 @@ func migrations0001CreategamestableSql() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "migrations/0001-CreateGamesTable.sql", size: 292, mode: os.FileMode(420), modTime: time.Unix(1493062244, 0)}
+	info := bindataFileInfo{name: "migrations/0001-CreateGamesTable.sql", size: 292, mode: os.FileMode(420), modTime: time.Unix(1495549017, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -107,7 +107,7 @@ func migrations0002CreateofferstableSql() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "migrations/0002-CreateOffersTable.sql", size: 692, mode: os.FileMode(420), modTime: time.Unix(1494438399, 0)}
+	info := bindataFileInfo{name: "migrations/0002-CreateOffersTable.sql", size: 692, mode: os.FileMode(420), modTime: time.Unix(1495549017, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -127,7 +127,7 @@ func migrations0003CreateofferintancestableSql() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "migrations/0003-CreateOfferIntancesTable.sql", size: 597, mode: os.FileMode(420), modTime: time.Unix(1493062244, 0)}
+	info := bindataFileInfo{name: "migrations/0003-CreateOfferIntancesTable.sql", size: 597, mode: os.FileMode(420), modTime: time.Unix(1495549017, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -147,7 +147,7 @@ func migrations0004AddfiltertooffersSql() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "migrations/0004-AddFilterToOffers.sql", size: 75, mode: os.FileMode(420), modTime: time.Unix(1493320856, 0)}
+	info := bindataFileInfo{name: "migrations/0004-AddFilterToOffers.sql", size: 75, mode: os.FileMode(420), modTime: time.Unix(1495549017, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -167,7 +167,7 @@ func migrations0005AddginindextooffersSql() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "migrations/0005-AddGINIndexToOffers.sql", size: 51, mode: os.FileMode(420), modTime: time.Unix(1494437198, 0)}
+	info := bindataFileInfo{name: "migrations/0005-AddGINIndexToOffers.sql", size: 51, mode: os.FileMode(420), modTime: time.Unix(1495549017, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }

@@ -9,7 +9,7 @@ package util
 import (
 	"fmt"
 
-	redis "gopkg.in/redis.v5"
+	redis "github.com/go-redis/redis"
 
 	"github.com/Sirupsen/logrus"
 )

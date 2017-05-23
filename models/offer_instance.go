@@ -13,11 +13,11 @@ import (
 	"strings"
 	"time"
 
+	redis "github.com/go-redis/redis"
 	"github.com/pmylund/go-cache"
 	"github.com/topfreegames/offers/util"
 	"gopkg.in/mgutz/dat.v2/dat"
 	runner "gopkg.in/mgutz/dat.v2/sqlx-runner"
-	redis "gopkg.in/redis.v5"
 )
 
 //OfferInstance represents a tenant in offers API it cannot be updated, only inserted
