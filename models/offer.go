@@ -189,7 +189,7 @@ func ListOffers(
 }
 
 // InsertOffer inserts a new offer template into DB
-func InsertOffer(db runner.Connection, offer *Offer, mr *MixedMetricsReporter) (*Offer, error) {
+func InsertOffer(db runner.Connection, offer *Offer, offersCache *cache.Cache, mr *MixedMetricsReporter) (*Offer, error) {
 	if offer.Metadata == nil {
 		offer.Metadata = dat.JSON([]byte(`{}`))
 	}
@@ -207,11 +207,15 @@ func InsertOffer(db runner.Connection, offer *Offer, mr *MixedMetricsReporter) (
 	})
 
 	foreignKeyErr := HandleForeignKeyViolationError("Offer", err)
+	if err == nil {
+		enabledOffersKey := GetEnabledOffersKey(offer.GameID)
+		offersCache.Delete(enabledOffersKey)
+	}
 	return offer, foreignKeyErr
 }
 
 // UpdateOffer updates a given offer
-func UpdateOffer(db runner.Connection, offer *Offer, mr *MixedMetricsReporter) (*Offer, error) {
+func UpdateOffer(db runner.Connection, offer *Offer, offersCache *cache.Cache, mr *MixedMetricsReporter) (*Offer, error) {
 	prevOffer, err := GetOfferByID(db, offer.GameID, offer.ID, mr)
 	if err != nil {
 		return nil, err
@@ -243,11 +247,15 @@ func UpdateOffer(db runner.Connection, offer *Offer, mr *MixedMetricsReporter) (
 			Returning("id, version").
 			QueryStruct(offer)
 	})
+	if err == nil {
+		enabledOffersKey := GetEnabledOffersKey(offer.GameID)
+		offersCache.Delete(enabledOffersKey)
+	}
 	return offer, err
 }
 
 //SetEnabledOffer can enable or disable an offer template
-func SetEnabledOffer(db runner.Connection, gameID, id string, enabled bool, mr *MixedMetricsReporter) error {
+func SetEnabledOffer(db runner.Connection, gameID, id string, enabled bool, offersCache *cache.Cache, mr *MixedMetricsReporter) error {
 	var offerTemplate Offer
 	err := mr.WithDatastoreSegment("offers", SegmentUpdate, func() error {
 		return db.
@@ -262,6 +270,9 @@ func SetEnabledOffer(db runner.Connection, gameID, id string, enabled bool, mr *
 		"ID":     id,
 		"GameID": gameID,
 	}, err)
-
+	if err == nil {
+		enabledOffersKey := GetEnabledOffersKey(gameID)
+		offersCache.Delete(enabledOffersKey)
+	}
 	return err
 }

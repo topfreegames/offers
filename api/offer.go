@@ -59,7 +59,7 @@ func (g *OfferHandler) insertOffer(w http.ResponseWriter, r *http.Request) {
 
 	var err error
 	err = mr.WithSegment(models.SegmentModel, func() error {
-		offer, err = models.InsertOffer(g.App.DB, offer, mr)
+		offer, err = models.InsertOffer(g.App.DB, offer, g.App.Cache, mr)
 		return err
 	})
 
@@ -101,7 +101,7 @@ func (g *OfferHandler) setEnabledOffer(w http.ResponseWriter, r *http.Request, e
 
 	var err error
 	err = mr.WithSegment(models.SegmentModel, func() error {
-		return models.SetEnabledOffer(g.App.DB, gameID, offerID, enable, mr)
+		return models.SetEnabledOffer(g.App.DB, gameID, offerID, enable, g.App.Cache, mr)
 	})
 
 	if err != nil {
@@ -134,7 +134,7 @@ func (g *OfferHandler) updateOffer(w http.ResponseWriter, r *http.Request) {
 
 	var err error
 	err = mr.WithSegment(models.SegmentModel, func() error {
-		offer, err = models.UpdateOffer(g.App.DB, offer, mr)
+		offer, err = models.UpdateOffer(g.App.DB, offer, g.App.Cache, mr)
 		return err
 	})
 	if err != nil {

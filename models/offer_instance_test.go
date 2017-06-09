@@ -1037,7 +1037,7 @@ var _ = Describe("Offer Instance Model", func() {
 
 			// Update its contents and insert with same key
 			offer.Contents = dat.JSON([]byte(`{ "somethingNew": 100 }`))
-			offer, err = models.UpdateOffer(db, offer, nil)
+			offer, err = models.UpdateOffer(db, offer, offersCache, nil)
 			Expect(err).NotTo(HaveOccurred())
 
 			// Should not return the popup offer, since it was claimed for the first time
@@ -1073,7 +1073,7 @@ var _ = Describe("Offer Instance Model", func() {
 			err = db.SQL("SELECT * FROM offers WHERE id = $1 AND game_id = $2", offerID, gameID).QueryStruct(offer)
 			Expect(err).NotTo(HaveOccurred())
 			offer.Contents = dat.JSON([]byte(`{ "somethingNew": 100 }`))
-			offer, err = models.UpdateOffer(db, offer, nil)
+			offer, err = models.UpdateOffer(db, offer, offersCache, nil)
 			Expect(err).NotTo(HaveOccurred())
 
 			// Get offer

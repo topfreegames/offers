@@ -8,6 +8,8 @@
 package models_test
 
 import (
+	"time"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/satori/go.uuid"
@@ -16,7 +18,6 @@ import (
 	oTesting "github.com/topfreegames/offers/testing"
 	"gopkg.in/mgutz/dat.v2/dat"
 	runner "gopkg.in/mgutz/dat.v2/sqlx-runner"
-	"time"
 )
 
 const (
@@ -74,12 +75,33 @@ var _ = Describe("Offer Models", func() {
 				Placement: "popup",
 			}
 
-			offer, err := models.InsertOffer(db, offer, nil)
+			offer, err := models.InsertOffer(db, offer, offersCache, nil)
 
 			Expect(err).NotTo(HaveOccurred())
 			Expect(offer.ID).NotTo(Equal(""))
 			Expect(offer.Enabled).To(BeTrue())
 			Expect(offer.Version).To(Equal(1))
+		})
+
+		It("should succeed and reset offers cache", func() {
+			offer := &models.Offer{
+				Name:      "offer-1",
+				ProductID: "com.tfg.example",
+				GameID:    "game-id",
+				Contents:  dat.JSON([]byte(`{"gems": 5, "gold": 100}`)),
+				Period:    dat.JSON([]byte(`{"every": "10m"}`)),
+				Frequency: dat.JSON([]byte(`{"every": "24h"}`)),
+				Trigger:   dat.JSON([]byte(`{"from": 1487280506875}`)),
+				Placement: "popup",
+			}
+			enabledOffersKey := models.GetEnabledOffersKey(offer.GameID)
+			offersCache.Set(enabledOffersKey, []*models.Offer{offer}, time.Minute)
+
+			_, err := models.InsertOffer(db, offer, offersCache, nil)
+			Expect(err).NotTo(HaveOccurred())
+
+			_, found := offersCache.Get(enabledOffersKey)
+			Expect(found).To(BeFalse())
 		})
 
 		It("should create an offer with valid parameters, including filters and metadata", func() {
@@ -96,7 +118,7 @@ var _ = Describe("Offer Models", func() {
 				Filters:   dat.JSON([]byte(`{"level": {"geq": 1.0, "lt": 3.0}}`)),
 			}
 
-			offer, err := models.InsertOffer(db, offer, nil)
+			offer, err := models.InsertOffer(db, offer, offersCache, nil)
 
 			Expect(err).NotTo(HaveOccurred())
 			Expect(offer.ID).NotTo(Equal(""))
@@ -116,7 +138,7 @@ var _ = Describe("Offer Models", func() {
 				Placement: "popup",
 			}
 
-			offer, err := models.InsertOffer(db, offer, nil)
+			offer, err := models.InsertOffer(db, offer, offersCache, nil)
 
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(Equal(`Offer could not be saved due to: insert or update on table "offers" violates foreign key constraint "offers_game_id_fkey"`))
@@ -140,7 +162,7 @@ var _ = Describe("Offer Models", func() {
 			}
 
 			//When
-			_, err := models.InsertOffer(db, offer, nil)
+			_, err := models.InsertOffer(db, offer, offersCache, nil)
 
 			//Then
 			Expect(err).To(HaveOccurred())
@@ -166,9 +188,29 @@ var _ = Describe("Offer Models", func() {
 				Placement: "popup",
 			}
 
-			_, err = models.InsertOffer(db, offer, nil)
+			_, err = models.InsertOffer(db, offer, offersCache, nil)
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(Equal("sql: database is closed"))
+		})
+
+		It("should fail and not reset offers cache", func() {
+			//Given
+			offer := &models.Offer{
+				Name:      "offer-1",
+				ProductID: "com.tfg.example",
+				GameID:    "game-id",
+			}
+			enabledOffersKey := models.GetEnabledOffersKey(offer.GameID)
+			offersCache.Set(enabledOffersKey, "cached-stuff", time.Minute)
+
+			//When
+			_, err := models.InsertOffer(db, offer, offersCache, nil)
+
+			//Then
+			Expect(err).To(HaveOccurred())
+
+			_, found := offersCache.Get(enabledOffersKey)
+			Expect(found).To(BeTrue())
 		})
 	})
 
@@ -300,7 +342,7 @@ var _ = Describe("Offer Models", func() {
 			var offer models.Offer
 
 			//When
-			err := models.SetEnabledOffer(db, gameID, offerID, enabled, nil)
+			err := models.SetEnabledOffer(db, gameID, offerID, enabled, offersCache, nil)
 			Expect(err).NotTo(HaveOccurred())
 			err = db.SQL("SELECT enabled FROM offers WHERE game_id=$1 AND id=$2", gameID, offerID).QueryStruct(&offer)
 			Expect(err).NotTo(HaveOccurred())
@@ -317,7 +359,7 @@ var _ = Describe("Offer Models", func() {
 			var offer models.Offer
 
 			//When
-			err := models.SetEnabledOffer(db, gameID, offerID, enabled, nil)
+			err := models.SetEnabledOffer(db, gameID, offerID, enabled, offersCache, nil)
 			Expect(err).NotTo(HaveOccurred())
 			err = db.SQL("SELECT enabled FROM offers WHERE game_id=$1 AND id=$2", gameID, offerID).QueryStruct(&offer)
 			Expect(err).NotTo(HaveOccurred())
@@ -334,13 +376,31 @@ var _ = Describe("Offer Models", func() {
 			var offer models.Offer
 
 			//When
-			err := models.SetEnabledOffer(db, gameID, offerID, enabled, nil)
+			err := models.SetEnabledOffer(db, gameID, offerID, enabled, offersCache, nil)
 			Expect(err).NotTo(HaveOccurred())
 			err = db.SQL("SELECT enabled FROM offers WHERE game_id=$1 AND id=$2", gameID, offerID).QueryStruct(&offer)
 			Expect(err).NotTo(HaveOccurred())
 
 			//Then
 			Expect(offer.Enabled).To(BeTrue())
+		})
+
+		It("should succeed and reset offers cache", func() {
+			//Given
+			offerID := defaultOfferID
+			gameID := defaultGameID
+			enabled := true
+
+			enabledOffersKey := models.GetEnabledOffersKey(gameID)
+			offersCache.Set(enabledOffersKey, "something", time.Minute)
+
+			//When
+			err := models.SetEnabledOffer(db, gameID, offerID, enabled, offersCache, nil)
+			Expect(err).NotTo(HaveOccurred())
+
+			//Then
+			_, found := offersCache.Get(enabledOffersKey)
+			Expect(found).To(BeFalse())
 		})
 
 		It("should return error if id doesn't exist", func() {
@@ -350,7 +410,7 @@ var _ = Describe("Offer Models", func() {
 			enabled := true
 
 			//When
-			err := models.SetEnabledOffer(db, gameID, offerID, enabled, nil)
+			err := models.SetEnabledOffer(db, gameID, offerID, enabled, offersCache, nil)
 
 			//Then
 			Expect(err).To(HaveOccurred())
@@ -363,10 +423,29 @@ var _ = Describe("Offer Models", func() {
 			enabled := true
 
 			//When
-			err := models.SetEnabledOffer(db, gameID, offerID, enabled, nil)
+			err := models.SetEnabledOffer(db, gameID, offerID, enabled, offersCache, nil)
 
 			//Then
 			Expect(err).To(HaveOccurred())
+		})
+
+		It("should fail and not reset offers cache", func() {
+			//Given
+			offerID := uuid.NewV4().String()
+			gameID := defaultGameID
+			enabled := true
+
+			enabledOffersKey := models.GetEnabledOffersKey(gameID)
+			offersCache.Set(enabledOffersKey, "cached-stuff", time.Minute)
+
+			//When
+			err := models.SetEnabledOffer(db, gameID, offerID, enabled, offersCache, nil)
+
+			//Then
+			Expect(err).To(HaveOccurred())
+
+			_, found := offersCache.Get(enabledOffersKey)
+			Expect(found).To(BeTrue())
 		})
 	})
 
@@ -382,7 +461,7 @@ var _ = Describe("Offer Models", func() {
 				Trigger:   dat.JSON([]byte(`{"from": 1487280506875}`)),
 				Placement: "popup",
 			}
-			createdOffer, err := models.InsertOffer(db, offer, nil)
+			createdOffer, err := models.InsertOffer(db, offer, offersCache, nil)
 			Expect(err).NotTo(HaveOccurred())
 
 			offerUpdate := &models.Offer{
@@ -397,7 +476,7 @@ var _ = Describe("Offer Models", func() {
 				Placement: "store",
 			}
 
-			updatedOffer, err := models.UpdateOffer(db, offerUpdate, nil)
+			updatedOffer, err := models.UpdateOffer(db, offerUpdate, offersCache, nil)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(updatedOffer.ID).To(Equal(offerUpdate.ID))
 			Expect(updatedOffer.Version).To(Equal(createdOffer.Version + 1))
@@ -427,7 +506,7 @@ var _ = Describe("Offer Models", func() {
 				Trigger:   dat.JSON([]byte(`{"from": 1487280506875}`)),
 				Placement: "popup",
 			}
-			createdOffer, err := models.InsertOffer(db, offer, nil)
+			createdOffer, err := models.InsertOffer(db, offer, offersCache, nil)
 			Expect(err).NotTo(HaveOccurred())
 
 			offerUpdate := &models.Offer{
@@ -444,7 +523,7 @@ var _ = Describe("Offer Models", func() {
 				Placement: "store",
 			}
 
-			updatedOffer, err := models.UpdateOffer(db, offerUpdate, nil)
+			updatedOffer, err := models.UpdateOffer(db, offerUpdate, offersCache, nil)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(updatedOffer.ID).To(Equal(offerUpdate.ID))
 			Expect(updatedOffer.Version).To(Equal(createdOffer.Version + 1))
@@ -465,6 +544,40 @@ var _ = Describe("Offer Models", func() {
 			Expect(dbOffer.Version).To(Equal(createdOffer.Version + 1))
 		})
 
+		It("should succeed and reset offers cache", func() {
+			offer := &models.Offer{
+				Name:      "offer-1",
+				ProductID: "com.tfg.example",
+				GameID:    "game-id",
+				Contents:  dat.JSON([]byte(`{"gems": 5, "gold": 100}`)),
+				Period:    dat.JSON([]byte(`{"every": "10m"}`)),
+				Frequency: dat.JSON([]byte(`{"every": "24h"}`)),
+				Trigger:   dat.JSON([]byte(`{"from": 1487280506875}`)),
+				Placement: "popup",
+			}
+			createdOffer, err := models.InsertOffer(db, offer, offersCache, nil)
+			Expect(err).NotTo(HaveOccurred())
+			enabledOffersKey := models.GetEnabledOffersKey(offer.GameID)
+			offersCache.Set(enabledOffersKey, []*models.Offer{offer}, time.Minute)
+
+			offerUpdate := &models.Offer{
+				ID:        createdOffer.ID,
+				GameID:    "game-id",
+				Name:      "offer-2",
+				ProductID: "com.tfg.example2",
+				Contents:  dat.JSON([]byte(`{"gems": 5}`)),
+				Period:    dat.JSON([]byte(`{"every": "1m"}`)),
+				Frequency: dat.JSON([]byte(`{"every": "2h"}`)),
+				Trigger:   dat.JSON([]byte(`{"from": 1111111111111}`)),
+				Placement: "store",
+			}
+
+			_, err = models.UpdateOffer(db, offerUpdate, offersCache, nil)
+			Expect(err).NotTo(HaveOccurred())
+			_, found := offersCache.Get(enabledOffersKey)
+			Expect(found).To(BeFalse())
+		})
+
 		It("should return error if game with given id does not exist", func() {
 			offer := &models.Offer{
 				Name:      "offer-1",
@@ -476,7 +589,7 @@ var _ = Describe("Offer Models", func() {
 				Trigger:   dat.JSON([]byte(`{"from": 1487280506875}`)),
 				Placement: "popup",
 			}
-			createdOffer, err := models.InsertOffer(db, offer, nil)
+			createdOffer, err := models.InsertOffer(db, offer, offersCache, nil)
 			Expect(err).NotTo(HaveOccurred())
 
 			offerUpdate := &models.Offer{
@@ -491,7 +604,7 @@ var _ = Describe("Offer Models", func() {
 				Placement: "store",
 			}
 
-			_, err = models.UpdateOffer(db, offerUpdate, nil)
+			_, err = models.UpdateOffer(db, offerUpdate, offersCache, nil)
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(Equal("Offer was not found with specified filters."))
 
@@ -515,7 +628,7 @@ var _ = Describe("Offer Models", func() {
 				Placement: "store",
 			}
 
-			_, err := models.UpdateOffer(db, offerUpdate, nil)
+			_, err := models.UpdateOffer(db, offerUpdate, offersCache, nil)
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(Equal("Offer was not found with specified filters."))
 		})
@@ -531,7 +644,7 @@ var _ = Describe("Offer Models", func() {
 				Trigger:   dat.JSON([]byte(`{"from": 1487280506875}`)),
 				Placement: "popup",
 			}
-			createdOffer, err := models.InsertOffer(db, offer, nil)
+			createdOffer, err := models.InsertOffer(db, offer, offersCache, nil)
 			Expect(err).NotTo(HaveOccurred())
 
 			offerUpdate := &models.Offer{
@@ -541,7 +654,7 @@ var _ = Describe("Offer Models", func() {
 				GameID:    "game-id",
 			}
 
-			_, err = models.UpdateOffer(db, offerUpdate, nil)
+			_, err = models.UpdateOffer(db, offerUpdate, offersCache, nil)
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(Equal(`pq: null value in column "period" violates not-null constraint`))
 		})
@@ -561,7 +674,7 @@ var _ = Describe("Offer Models", func() {
 				Trigger:   dat.JSON([]byte(`{"from": 1487280506875}`)),
 				Placement: "popup",
 			}
-			createdOffer, err := models.InsertOffer(db, offer, nil)
+			createdOffer, err := models.InsertOffer(db, offer, offersCache, nil)
 			Expect(err).NotTo(HaveOccurred())
 			db, err := GetTestDB()
 			Expect(err).NotTo(HaveOccurred())
@@ -578,9 +691,33 @@ var _ = Describe("Offer Models", func() {
 				Placement: "store",
 			}
 
-			_, err = models.UpdateOffer(db, offerUpdate, nil)
+			_, err = models.UpdateOffer(db, offerUpdate, offersCache, nil)
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(Equal("sql: database is closed"))
+		})
+
+		It("should fail and not reset offers cache", func() {
+
+			id := uuid.NewV4().String()
+			offerUpdate := &models.Offer{
+				ID:        id,
+				GameID:    "game-id",
+				Name:      "offer-2",
+				ProductID: "com.tfg.example2",
+				Contents:  dat.JSON([]byte(`{"gems": 5}`)),
+				Period:    dat.JSON([]byte(`{"every": "1m"}`)),
+				Frequency: dat.JSON([]byte(`{"every": "2h"}`)),
+				Trigger:   dat.JSON([]byte(`{"from": 1111111111111}`)),
+				Placement: "store",
+			}
+			enabledOffersKey := models.GetEnabledOffersKey(offerUpdate.GameID)
+			offersCache.Set(enabledOffersKey, "cached-stuff", time.Minute)
+
+			_, err := models.UpdateOffer(db, offerUpdate, offersCache, nil)
+			Expect(err).To(HaveOccurred())
+
+			_, found := offersCache.Get(enabledOffersKey)
+			Expect(found).To(BeTrue())
 		})
 	})
 })

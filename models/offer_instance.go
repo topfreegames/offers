@@ -374,7 +374,6 @@ func GetAvailableOffers(
 	offersByPlacement := make(map[string][]*OfferToReturn)
 
 	enabledOffers, err := GetEnabledOffers(db, gameID, offersCache, expireDuration, filterAttrs, mr)
-
 	if err != nil {
 		return nil, err
 	}
@@ -415,6 +414,9 @@ func GetAvailableOffers(
 	}
 
 	offerInstances, err = findOrCreateOfferInstance(db, offerInstances, t, mr)
+	if err != nil {
+		return nil, err
+	}
 
 	for _, offerInstance := range offerInstances {
 		offer := offers[offerInstance.OfferID]
@@ -463,7 +465,7 @@ func findOrCreateOfferInstance(
 	}
 
 	query := fmt.Sprintf(`
-	WITH 
+	WITH
 		sel AS (SELECT id, offer_id FROM offer_instances WHERE %s),
 		ins AS (INSERT INTO offer_instances(game_id, player_id, offer_id, offer_version, contents, product_id)
 						VALUES %s
@@ -473,8 +475,7 @@ func findOrCreateOfferInstance(
 	`, strings.Join(whereClause, " OR "), strings.Join(valueArgs, ","))
 
 	err = mr.WithDatastoreSegment("offer_instances", SegmentInsect, func() error {
-		err := db.SQL(query).QueryStructs(&resOfferInstances)
-		return err
+		return db.SQL(query).QueryStructs(&resOfferInstances)
 	})
 
 	return resOfferInstances, err
