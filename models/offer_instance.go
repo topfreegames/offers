@@ -369,11 +369,20 @@ func GetAvailableOffers(
 	t time.Time,
 	expireDuration time.Duration,
 	filterAttrs map[string]string,
+	allowInefficientQueries bool,
 	mr *MixedMetricsReporter,
 ) (map[string][]*OfferToReturn, error) {
 	offersByPlacement := make(map[string][]*OfferToReturn)
 
-	enabledOffers, err := GetEnabledOffers(db, gameID, offersCache, expireDuration, filterAttrs, mr)
+	enabledOffers, err := GetEnabledOffers(
+		db,
+		gameID,
+		offersCache,
+		expireDuration,
+		filterAttrs,
+		allowInefficientQueries,
+		mr,
+	)
 	if err != nil {
 		return nil, err
 	}

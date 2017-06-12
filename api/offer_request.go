@@ -74,10 +74,43 @@ func (h *OfferRequestHandler) getOffers(w http.ResponseWriter, r *http.Request) 
 		filterAttrs[k] = v[0]
 	}
 
+	maxAge := h.App.MaxAge
+	allowInefficientQueries := false
+	var game *models.Game
 	var err error
+	err = mr.WithSegment(models.SegmentModel, func() error {
+		game, err = models.GetGameByID(h.App.DB, gameID, mr)
+		return err
+	})
+	if err != nil {
+		logger.WithError(err).Error("Failed to retrieve game.")
+		if modelNotFound, ok := err.(*e.ModelNotFoundError); ok {
+			h.App.HandleError(w, http.StatusNotFound, modelNotFound.Error(), modelNotFound)
+			return
+		}
+		h.App.HandleError(w, http.StatusInternalServerError, "Failed to retrieve game", err)
+		return
+	}
+	metadata, err := game.GetMetadata()
+	if err != nil {
+		logger.WithError(err).Error("Failed to get game metadata.")
+		h.App.HandleError(w, http.StatusInternalServerError, "Failed to get game metadata", err)
+		return
+	}
+	if val, ok := metadata["allowInefficientQueries"]; ok {
+		if allowFromMeta, ok := val.(bool); ok {
+			allowInefficientQueries = allowFromMeta
+		}
+	}
+	if val, ok := metadata["cacheMaxAge"]; ok {
+		if maxAgeFromMeta, ok := val.(float64); ok {
+			maxAge = int64(maxAgeFromMeta)
+		}
+	}
+
 	var offers map[string][]*models.OfferToReturn
 	err = mr.WithSegment(models.SegmentModel, func() error {
-		offers, err = models.GetAvailableOffers(h.App.DB, h.App.RedisClient, h.App.Cache, gameID, playerID, currentTime, h.App.OffersCacheMaxAge, filterAttrs, mr)
+		offers, err = models.GetAvailableOffers(h.App.DB, h.App.RedisClient, h.App.Cache, gameID, playerID, currentTime, h.App.OffersCacheMaxAge, filterAttrs, allowInefficientQueries, mr)
 		return err
 	})
 
@@ -94,22 +127,6 @@ func (h *OfferRequestHandler) getOffers(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	maxAge := h.App.MaxAge
-	var game *models.Game
-	err = mr.WithSegment(models.SegmentModel, func() error {
-		game, err = models.GetGameByID(h.App.DB, gameID, mr)
-		return err
-	})
-	metadata, err := game.GetMetadata()
-	if err == nil {
-		if val, ok := metadata["cacheMaxAge"]; ok {
-			if maxAgeFromMeta, ok := val.(float64); ok {
-				maxAge = int64(maxAgeFromMeta)
-			}
-		}
-	} else {
-		logger.WithError(err).Warn("Failed to get game metadata.")
-	}
 	w.Header().Set("Cache-Control", fmt.Sprintf("max-age=%d", maxAge))
 
 	logger.Info("Retrieved player offers successfully")

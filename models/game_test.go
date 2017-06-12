@@ -82,7 +82,7 @@ var _ = Describe("Games Model", func() {
 		It("Should return the full list of games", func() {
 			games, err := models.ListGames(db, nil)
 			Expect(err).NotTo(HaveOccurred())
-			Expect(games).To(HaveLen(8))
+			Expect(games).To(HaveLen(9))
 		})
 	})
 

@@ -374,7 +374,7 @@ var _ = Describe("Offer Handler", func() {
 			err = json.Unmarshal([]byte(recorder.Body.String()), &obj)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(obj["code"]).To(Equal("OFF-004"))
-			Expect(obj["error"]).To(Equal("Failed to retrieve offer for player"))
+			Expect(obj["error"]).To(Equal("Failed to retrieve game"))
 			Expect(obj["description"]).To(Equal("sql: database is closed"))
 			app.DB = oldDB // avoid errors in after each
 		})

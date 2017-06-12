@@ -38,3 +38,7 @@
     id: another-game-with-filters
     name: another-game-with-filters
     created_at: 2016-01-01 12:30:12
+-
+    id: non-existing-offers-game
+    name: non-existing-offers-game
+    created_at: 2016-01-01 12:30:12

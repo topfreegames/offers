@@ -50,7 +50,40 @@ func ValidateString(s string) bool {
 	return isValidString(s)
 }
 
-func buildScope(enabledOffers string, filterAttrs map[string]string) string {
+func buildInefficientScope(enabledOffers string, filterAttrs map[string]string) string {
+	subQueries := []string{enabledOffers}
+	for k, v := range filterAttrs {
+		// TODO: Possible SQL injection
+		if !ValidateString(k) || !ValidateString(v) {
+			subQueries = []string{enabledOffers}
+			break
+		}
+		rawSubQuery := `
+		AND (
+			NOT (filters ? '%[1]s') OR
+			filters @> '{"%[1]s": {"eq": "%[2]s"}}' OR
+			filters @> '{"%[1]s": {"neq": "%[2]s"}}'
+		)`
+		subQuery := fmt.Sprintf(rawSubQuery, k, v)
+		if f, err := strconv.ParseFloat(v, 64); err == nil {
+			rawSubQuery = `
+			AND (
+				NOT (filters ? '%[1]s') OR
+				filters @> '{"%[1]s": {"eq": "%[2]s"}}' OR
+				filters @> '{"%[1]s": {"neq": "%[2]s"}}' OR
+				(((filters::json#>>'{"%[1]s",geq}') IS NOT NULL OR (filters::json#>>'{"%[1]s",geq}') IS NOT NULL) AND
+				((filters::json#>>'{"%[1]s",geq}') IS NULL OR %[3]f >= (filters::json#>>'{"%[1]s",geq}')::float) AND
+				((filters::json#>>'{"%[1]s",lt}') IS NULL OR %[3]f < (filters::json#>>'{"%[1]s",lt}')::float))
+			)`
+			subQuery = fmt.Sprintf(rawSubQuery, k, v, f)
+		}
+		subQueries = append(subQueries, subQuery)
+	}
+	query := strings.Join(subQueries, " ")
+	return query
+}
+
+func buildEffiecientScope(enabledOffers string, filterAttrs map[string]string) string {
 	subQueries := []string{enabledOffers}
 	for k, v := range filterAttrs {
 		// TODO: Possible SQL injection
@@ -64,17 +97,6 @@ func buildScope(enabledOffers string, filterAttrs map[string]string) string {
 			filters @> '{"%[1]s": {"neq": "%[2]s"}}'
 		)`
 		subQuery := fmt.Sprintf(rawSubQuery, k, v)
-		if f, err := strconv.ParseFloat(v, 64); err == nil {
-			rawSubQuery = `
-			AND (
-				filters @> '{"%[1]s": {"eq": "%[2]s"}}' OR
-				filters @> '{"%[1]s": {"neq": "%[2]s"}}' OR
-				(((filters::json#>>'{"%[1]s",geq}') IS NOT NULL OR (filters::json#>>'{"%[1]s",geq}') IS NOT NULL) AND
-				((filters::json#>>'{"%[1]s",geq}') IS NULL OR %[3]f >= (filters::json#>>'{"%[1]s",geq}')::float) AND
-				((filters::json#>>'{"%[1]s",lt}') IS NULL OR %[3]f < (filters::json#>>'{"%[1]s",lt}')::float))
-			)`
-			subQuery = fmt.Sprintf(rawSubQuery, k, v, f)
-		}
 		subQueries = append(subQueries, subQuery)
 	}
 	query := strings.Join(subQueries, " ")
@@ -100,7 +122,7 @@ func GetOfferByID(db runner.Connection, gameID, id string, mr *MixedMetricsRepor
 }
 
 //GetEnabledOffers returns all the enabled offers and matching offers
-func GetEnabledOffers(db runner.Connection, gameID string, offersCache *cache.Cache, expireDuration time.Duration, filterAttrs map[string]string, mr *MixedMetricsReporter) ([]*Offer, error) {
+func GetEnabledOffers(db runner.Connection, gameID string, offersCache *cache.Cache, expireDuration time.Duration, filterAttrs map[string]string, allowInefficientQueries bool, mr *MixedMetricsReporter) ([]*Offer, error) {
 	var offers []*Offer
 	var err error
 
@@ -116,7 +138,12 @@ func GetEnabledOffers(db runner.Connection, gameID string, offersCache *cache.Ca
 		}
 	}
 
-	scope := buildScope(enabledOffers, filterAttrs)
+	var scope string
+	if allowInefficientQueries {
+		scope = buildInefficientScope(enabledOffers, filterAttrs)
+	} else {
+		scope = buildEffiecientScope(enabledOffers, filterAttrs)
+	}
 
 	//fmt.Println("Offers Cache Miss")
 	err = mr.WithDatastoreSegment("offers", SegmentSelect, func() error {
