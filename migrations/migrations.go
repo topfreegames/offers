@@ -5,6 +5,10 @@
 // migrations/0003-CreateOfferIntancesTable.sql
 // migrations/0004-AddFilterToOffers.sql
 // migrations/0005-AddGINIndexToOffers.sql
+// migrations/0006-RemoveProductIdConstraintFromOffers.sql
+// migrations/0007-RemoveProductIdConstraintFromOfferInstances.sql
+// migrations/0008-AddCostToOffers.sql
+// migrations/0009-AddCostToOfferInstances.sql
 // DO NOT EDIT!
 
 package migrations
@@ -172,6 +176,86 @@ func migrations0005AddginindextooffersSql() (*asset, error) {
 	return a, nil
 }
 
+var _migrations0006RemoveproductidconstraintfromoffersSql = []byte("\x1f\x8b\x08\x00\x00\x00\x00\x00\x00\xff\x72\xf4\x09\x71\x0d\x52\x08\x71\x74\xf2\x71\x55\xc8\x4f\x4b\x4b\x2d\x2a\x56\x80\x08\x39\xfb\xfb\x84\xfa\xfa\x29\x14\x14\xe5\xa7\x94\x26\x97\xc4\x67\xa6\x28\xb8\x04\xf9\x07\x28\xf8\xf9\x87\x28\xf8\x85\xfa\xf8\x58\x73\x01\x02\x00\x00\xff\xff\x6f\x08\x65\x0d\x3a\x00\x00\x00")
+
+func migrations0006RemoveproductidconstraintfromoffersSqlBytes() ([]byte, error) {
+	return bindataRead(
+		_migrations0006RemoveproductidconstraintfromoffersSql,
+		"migrations/0006-RemoveProductIdConstraintFromOffers.sql",
+	)
+}
+
+func migrations0006RemoveproductidconstraintfromoffersSql() (*asset, error) {
+	bytes, err := migrations0006RemoveproductidconstraintfromoffersSqlBytes()
+	if err != nil {
+		return nil, err
+	}
+
+	info := bindataFileInfo{name: "migrations/0006-RemoveProductIdConstraintFromOffers.sql", size: 58, mode: os.FileMode(420), modTime: time.Unix(1498652520, 0)}
+	a := &asset{bytes: bytes, info: info}
+	return a, nil
+}
+
+var _migrations0007RemoveproductidconstraintfromofferinstancesSql = []byte("\x1f\x8b\x08\x00\x00\x00\x00\x00\x00\xff\x72\xf4\x09\x71\x0d\x52\x08\x71\x74\xf2\x71\x55\xc8\x4f\x4b\x4b\x2d\x8a\xcf\xcc\x2b\x2e\x49\xcc\x4b\x4e\x2d\x56\x80\xc8\x39\xfb\xfb\x84\xfa\xfa\x29\x14\x14\xe5\xa7\x94\x26\x97\xc4\x67\xa6\x28\xb8\x04\xf9\x07\x28\xf8\xf9\x87\x28\xf8\x85\xfa\xf8\x58\x73\x01\x02\x00\x00\xff\xff\xcc\x65\x64\x81\x43\x00\x00\x00")
+
+func migrations0007RemoveproductidconstraintfromofferinstancesSqlBytes() ([]byte, error) {
+	return bindataRead(
+		_migrations0007RemoveproductidconstraintfromofferinstancesSql,
+		"migrations/0007-RemoveProductIdConstraintFromOfferInstances.sql",
+	)
+}
+
+func migrations0007RemoveproductidconstraintfromofferinstancesSql() (*asset, error) {
+	bytes, err := migrations0007RemoveproductidconstraintfromofferinstancesSqlBytes()
+	if err != nil {
+		return nil, err
+	}
+
+	info := bindataFileInfo{name: "migrations/0007-RemoveProductIdConstraintFromOfferInstances.sql", size: 67, mode: os.FileMode(420), modTime: time.Unix(1498652614, 0)}
+	a := &asset{bytes: bytes, info: info}
+	return a, nil
+}
+
+var _migrations0008AddcosttooffersSql = []byte("\x1f\x8b\x08\x00\x00\x00\x00\x00\x00\xff\x72\xf4\x09\x71\x0d\x52\x08\x71\x74\xf2\x71\x55\xc8\x4f\x4b\x4b\x2d\x2a\x56\x70\x74\x71\x51\x70\xf6\xf7\x09\xf5\xf5\x53\x48\xce\x2f\x2e\x51\xf0\x0a\xf6\xf7\x73\x52\xf0\xf3\x0f\x51\xf0\x0b\xf5\xf1\x51\x70\x71\x75\x73\x0c\xf5\x09\x51\x50\xaf\xae\x55\x57\xb0\xb2\x02\xcb\x5a\x73\x01\x02\x00\x00\xff\xff\x2c\x3f\x81\x21\x48\x00\x00\x00")
+
+func migrations0008AddcosttooffersSqlBytes() ([]byte, error) {
+	return bindataRead(
+		_migrations0008AddcosttooffersSql,
+		"migrations/0008-AddCostToOffers.sql",
+	)
+}
+
+func migrations0008AddcosttooffersSql() (*asset, error) {
+	bytes, err := migrations0008AddcosttooffersSqlBytes()
+	if err != nil {
+		return nil, err
+	}
+
+	info := bindataFileInfo{name: "migrations/0008-AddCostToOffers.sql", size: 72, mode: os.FileMode(420), modTime: time.Unix(1498652529, 0)}
+	a := &asset{bytes: bytes, info: info}
+	return a, nil
+}
+
+var _migrations0009AddcosttoofferinstancesSql = []byte("\x1f\x8b\x08\x00\x00\x00\x00\x00\x00\xff\x72\xf4\x09\x71\x0d\x52\x08\x71\x74\xf2\x71\x55\xc8\x4f\x4b\x4b\x2d\x8a\xcf\xcc\x2b\x2e\x49\xcc\x4b\x4e\x2d\x56\x70\x74\x71\x51\x70\xf6\xf7\x09\xf5\xf5\x53\x48\xce\x2f\x2e\x51\xf0\x0a\xf6\xf7\x73\x52\xf0\xf3\x0f\x51\xf0\x0b\xf5\xf1\x51\x70\x71\x75\x73\x0c\xf5\x09\x51\x50\xaf\xae\x55\x57\xb0\xb2\x02\xcb\x5a\x73\x01\x02\x00\x00\xff\xff\xda\xdc\x76\xbc\x51\x00\x00\x00")
+
+func migrations0009AddcosttoofferinstancesSqlBytes() ([]byte, error) {
+	return bindataRead(
+		_migrations0009AddcosttoofferinstancesSql,
+		"migrations/0009-AddCostToOfferInstances.sql",
+	)
+}
+
+func migrations0009AddcosttoofferinstancesSql() (*asset, error) {
+	bytes, err := migrations0009AddcosttoofferinstancesSqlBytes()
+	if err != nil {
+		return nil, err
+	}
+
+	info := bindataFileInfo{name: "migrations/0009-AddCostToOfferInstances.sql", size: 81, mode: os.FileMode(420), modTime: time.Unix(1498652628, 0)}
+	a := &asset{bytes: bytes, info: info}
+	return a, nil
+}
+
 // Asset loads and returns the asset for the given name.
 // It returns an error if the asset could not be found or
 // could not be loaded.
@@ -229,6 +313,10 @@ var _bindata = map[string]func() (*asset, error){
 	"migrations/0003-CreateOfferIntancesTable.sql": migrations0003CreateofferintancestableSql,
 	"migrations/0004-AddFilterToOffers.sql": migrations0004AddfiltertooffersSql,
 	"migrations/0005-AddGINIndexToOffers.sql": migrations0005AddginindextooffersSql,
+	"migrations/0006-RemoveProductIdConstraintFromOffers.sql": migrations0006RemoveproductidconstraintfromoffersSql,
+	"migrations/0007-RemoveProductIdConstraintFromOfferInstances.sql": migrations0007RemoveproductidconstraintfromofferinstancesSql,
+	"migrations/0008-AddCostToOffers.sql": migrations0008AddcosttooffersSql,
+	"migrations/0009-AddCostToOfferInstances.sql": migrations0009AddcosttoofferinstancesSql,
 }
 
 // AssetDir returns the file names below a certain
@@ -277,6 +365,10 @@ var _bintree = &bintree{nil, map[string]*bintree{
 		"0003-CreateOfferIntancesTable.sql": &bintree{migrations0003CreateofferintancestableSql, map[string]*bintree{}},
 		"0004-AddFilterToOffers.sql": &bintree{migrations0004AddfiltertooffersSql, map[string]*bintree{}},
 		"0005-AddGINIndexToOffers.sql": &bintree{migrations0005AddginindextooffersSql, map[string]*bintree{}},
+		"0006-RemoveProductIdConstraintFromOffers.sql": &bintree{migrations0006RemoveproductidconstraintfromoffersSql, map[string]*bintree{}},
+		"0007-RemoveProductIdConstraintFromOfferInstances.sql": &bintree{migrations0007RemoveproductidconstraintfromofferinstancesSql, map[string]*bintree{}},
+		"0008-AddCostToOffers.sql": &bintree{migrations0008AddcosttooffersSql, map[string]*bintree{}},
+		"0009-AddCostToOfferInstances.sql": &bintree{migrations0009AddcosttoofferinstancesSql, map[string]*bintree{}},
 	}},
 }}
 

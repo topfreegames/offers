@@ -1,0 +1,1 @@
+ALTER TABLE offer_instances ADD COLUMN cost JSONB NOT NULL DEFAULT '{}' ::JSONB;

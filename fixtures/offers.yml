@@ -15,6 +15,7 @@
     placement: popup
     metadata: '{}'
     product_id: com.tfg.sample
+    cost: '{"gems": 500}'
     contents: '{"gems": 5, "gold": 100}'
     enabled: true
 -

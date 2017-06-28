@@ -60,7 +60,7 @@ var _ = Describe("Offer Instance Model", func() {
 			Expect(err.Error()).To(Equal("OfferInstance was not found with specified filters."))
 		})
 
-		It("Should return error if game id  doesn't exist", func() {
+		It("Should return error if game id doesn't exist", func() {
 			//Given
 			gameID := "non-existing-game-id"
 			offerInstanceID := defaultOfferInstanceID
@@ -687,6 +687,7 @@ var _ = Describe("Offer Instance Model", func() {
 			Expect(offerInstances["popup"][0].ID).To(Equal("56fc0477-39f1-485c-898e-4909e9155eb1"))
 			Expect(offerInstances["popup"][0].ProductID).To(Equal("com.tfg.sample"))
 			Expect(offerInstances["popup"][0].Contents).To(Equal(dat.JSON([]byte(`{"gems": 5, "gold": 100}`))))
+			Expect(offerInstances["popup"][0].Cost).To(Equal(dat.JSON([]byte(`{"gems": 500}`))))
 			Expect(offerInstances["popup"][0].Metadata).To(Equal(dat.JSON([]byte(`{}`))))
 			Expect(offerInstances["popup"][0].ExpireAt).To(Equal(int64(1486679000)))
 
@@ -792,6 +793,7 @@ var _ = Describe("Offer Instance Model", func() {
 			Expect(offerInstances["popup"][0].ID).To(Equal("56fc0477-39f1-485c-898e-4909e9155eb1"))
 			Expect(offerInstances["popup"][0].ProductID).To(Equal("com.tfg.sample"))
 			Expect(offerInstances["popup"][0].Contents).To(Equal(dat.JSON([]byte(`{"gems": 5, "gold": 100}`))))
+			Expect(offerInstances["popup"][0].Cost).To(Equal(dat.JSON([]byte(`{"gems": 500}`))))
 			Expect(offerInstances["popup"][0].Metadata).To(Equal(dat.JSON([]byte(`{}`))))
 			Expect(offerInstances["popup"][0].ExpireAt).To(Equal(int64(1486679000)))
 
@@ -994,6 +996,7 @@ var _ = Describe("Offer Instance Model", func() {
 			Expect(offerInstance.ID).To(Equal(offerInstanceID))
 			Expect(offerInstance.ProductID).To(Equal("com.tfg.sample"))
 			Expect(offerInstance.Contents).To(Equal(dat.JSON([]byte(`{"gems": 5, "gold": 100}`))))
+			Expect(offerInstance.Cost).To(Equal(dat.JSON([]byte(`{"gems": 500}`))))
 			Expect(offerInstance.Metadata).To(Equal(dat.JSON([]byte(`{}`))))
 			Expect(offerInstance.ExpireAt).To(Equal(int64(1486679000)))
 		})

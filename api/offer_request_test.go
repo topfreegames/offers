@@ -63,6 +63,7 @@ var _ = Describe("Offer Handler", func() {
 			Expect(popup[0]).To(HaveKey("id"))
 			Expect(popup[0]).To(HaveKey("productId"))
 			Expect(popup[0]).To(HaveKey("contents"))
+			Expect(popup[0]).To(HaveKey("cost"))
 			Expect(popup[0]).To(HaveKey("metadata"))
 			store := jsonBody["store"]
 			Expect(store).To(HaveLen(2))
@@ -538,6 +539,7 @@ var _ = Describe("Offer Handler", func() {
 				ProductID: "com.tfg.sample.3",
 				Contents:  dat.JSON([]byte(`{"gems":5,"gold":100}`)),
 				Metadata:  dat.JSON([]byte("{}")),
+				Cost:      dat.JSON([]byte("{}")),
 				ExpireAt:  1486679100,
 			}
 			Expect(offersToReturn["store"]).To(ContainElement(offer))
@@ -803,6 +805,26 @@ var _ = Describe("Offer Handler", func() {
 			Expect(obj["description"]).To(Equal(fmt.Sprintf("OfferInstanceID: %s does not validate as uuidv4;", id)))
 		})
 
+		It("should return 422 if missing both id and productid", func() {
+			offerReader := JSONFor(JSON{
+				"gameId":        "offers-game",
+				"playerId":      "player-1",
+				"timestamp":     app.Clock.GetTime().Unix(),
+				"transactionId": uuid.NewV4().String(),
+			})
+			request, _ := http.NewRequest("PUT", "/offers/claim", offerReader)
+
+			app.Router.ServeHTTP(recorder, request)
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
+			Expect(recorder.Code).To(Equal(http.StatusUnprocessableEntity))
+			var obj map[string]interface{}
+			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(obj["code"]).To(Equal("OFF-002"))
+			Expect(obj["error"]).To(Equal("ValidationFailedError"))
+			Expect(obj["description"]).To(Equal("Id and ProductID cannot be both null"))
+		})
+
 		It("should return 422 if missing parameters", func() {
 			offerReader := JSONFor(JSON{})
 			request, _ := http.NewRequest("PUT", "/offers/claim", offerReader)
@@ -815,7 +837,7 @@ var _ = Describe("Offer Handler", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(obj["code"]).To(Equal("OFF-002"))
 			Expect(obj["error"]).To(Equal("ValidationFailedError"))
-			Expect(obj["description"]).To(Equal("GameID: non zero value required;PlayerID: non zero value required;ProductID: non zero value required;Timestamp: non zero value required;TransactionID: non zero value required;"))
+			Expect(obj["description"]).To(Equal("GameID: non zero value required;PlayerID: non zero value required;Timestamp: non zero value required;TransactionID: non zero value required;"))
 		})
 
 		It("should return 404 if non existing OfferID", func() {

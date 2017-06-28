@@ -29,12 +29,13 @@ type Offer struct {
 	Trigger   dat.JSON  `db:"trigger" json:"trigger" valid:"RequiredJSONObject"`
 	Placement string    `db:"placement" json:"placement" valid:"ascii,stringlength(1|255),required"`
 	Metadata  dat.JSON  `db:"metadata" json:"metadata" valid:"JSONObject"`
-	ProductID string    `db:"product_id" json:"productId" valid:"ascii,stringlength(1|255),required"`
+	ProductID string    `db:"product_id" json:"productId,omitempty" valid:"ascii,stringlength(1|255)"`
 	Contents  dat.JSON  `db:"contents" json:"contents" valid:"RequiredJSONObject"`
 	Enabled   bool      `db:"enabled" json:"enabled" valid:"matches(^(true|false)$),optional"`
 	Version   int       `db:"version" json:"version" valid:"int,optional"`
 	CreatedAt time.Time `db:"created_at" json:"createdAt" valid:"optional"`
 	Filters   dat.JSON  `db:"filters" json:"filters" valid:"FilterJSONObject"`
+	Cost      dat.JSON  `db:"cost" json:"cost,omitempty" valid:"JSONObject"`
 }
 
 const enabledOffers = `
@@ -153,7 +154,7 @@ func GetEnabledOffers(db runner.Connection, gameID string, offersCache *cache.Ca
 			Select(`
 		id, game_id, name, period, frequency,
 		trigger, placement, metadata,
-		product_id, contents, version
+		product_id, contents, version, cost
 		`).
 			From("offers").
 			Scope(scope, gameID).
@@ -223,11 +224,13 @@ func InsertOffer(db runner.Connection, offer *Offer, offersCache *cache.Cache, m
 	if offer.Filters == nil {
 		offer.Filters = dat.JSON([]byte(`{}`))
 	}
-
+	if offer.Cost == nil {
+		offer.Cost = dat.JSON([]byte(`{}`))
+	}
 	err := mr.WithDatastoreSegment("offers", SegmentInsert, func() error {
 		return db.
 			InsertInto("offers").
-			Columns("game_id", "name", "period", "frequency", "trigger", "placement", "metadata", "product_id", "contents", "filters").
+			Columns("game_id", "name", "period", "frequency", "trigger", "placement", "metadata", "product_id", "contents", "filters", "cost").
 			Record(offer).
 			Returning("id, enabled, version").
 			QueryStruct(offer)
@@ -253,6 +256,9 @@ func UpdateOffer(db runner.Connection, offer *Offer, offersCache *cache.Cache, m
 	if offer.Filters == nil {
 		offer.Filters = dat.JSON([]byte(`{}`))
 	}
+	if offer.Cost == nil {
+		offer.Cost = dat.JSON([]byte(`{}`))
+	}
 	offersMap := map[string]interface{}{
 		"name":       offer.Name,
 		"period":     offer.Period,
@@ -263,6 +269,7 @@ func UpdateOffer(db runner.Connection, offer *Offer, offersCache *cache.Cache, m
 		"product_id": offer.ProductID,
 		"contents":   offer.Contents,
 		"filters":    offer.Filters,
+		"cost":       offer.Cost,
 		"version":    prevOffer.Version + 1,
 	}
 	offer.Version = prevOffer.Version + 1

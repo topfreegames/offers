@@ -145,7 +145,8 @@ Offers API
     ```
       {
         "name":      [string], // required, 255 characters max
-        "productId": [string], // required, 255 characters max
+        "productId": [string], // 255 characters max, required if cost is not defined
+        "cost":      [json],   // required if productId is not defined
         "gameId":    [string], // required, matches ^[^-][a-zA-Z0-9-_]*$
         "contents":  [json],   // required
         "placement": [string], // required, 255 characters max
@@ -168,7 +169,8 @@ Offers API
 
     * Field Descriptions
        - **name**:         Prettier game identifier to show on UI.  
-       - **productId**:    Identifier of the item to be bought on PlayStore or AppStore.  
+       - **productId**:    Identifier of the item to be bought on PlayStore or AppStore. It is required if cost is not set.
+       - **cost**:         A JSON indicating the offer cost in terms of the game currency (ex.: { "gems": 500 }). It is required if productId is not set.
        - **gameId**:       ID of the game this template was made for (must exist on Games table on DB).  
        - **contents**:     What the offer provides (ex.: { "gem": 5, "gold": 100 }).  
        - **metadata**:     Any information the Front wants to access later.  
@@ -188,6 +190,7 @@ Offers API
           "id":        [uuidv4],   // offer unique identifier
           "name":      [string],
           "productId": [string],
+          "cost":      [json],
           "gameId":    [string],
           "contents":  [json],  
           "metadata":  [json],  
@@ -247,7 +250,8 @@ Offers API
     ```
       {
         "name":      [string], // required, 255 characters max
-        "productId": [string], // required, 255 characters max
+        "productId": [string], // 255 characters max, required if cost is not defined
+        "cost":      [json],   // required is productId is not defined
         "gameId":    [string], // required, matches ^[^-][a-zA-Z0-9-_]*$
         "contents":  [json],   // required
         "placement": [string], // required, 255 characters max
@@ -270,7 +274,8 @@ Offers API
 
     * Field Descriptions
        - **name**:         Prettier game identifier to show on UI.  
-       - **productId**:    Identifier of the item to be bought on PlayStore or AppStore.  
+       - **productId**:    Identifier of the item to be bought on PlayStore or AppStore. It is required if cost is not set.
+       - **cost**:         A JSON indicating the offer cost in terms of the game currency (ex.: { "gems": 500 }). It is required if productId is not set.
        - **gameId**:       ID of the game this template was made for (must exist on Games table on DB).  
        - **contents**:     What the offer provides (ex.: { "gem": 5, "gold": 100 }).  
        - **metadata**:     Any information the Front wants to access later.  
@@ -433,6 +438,7 @@ Offers API
           "key":       [uuidv4],
           "name":      [string],
           "productId": [string],
+          "cost":      [json],
           "gameId":    [string],
           "contents":  [json],  
           "metadata":  [json],  
@@ -492,7 +498,8 @@ Offers API
           "placement-1": [
             {
                 "id":                   [uuidv4], // offer id
-                "productId":            [string], // required, 255 characters max
+                "productId":            [string], // 255 characters max
+                "cost":                 [json],   // offer cost as registered in the offer template
                 "contents":             [json],   // offer contents as registered in the offer template
                 "metadata":             [json],   // offer metadata as registered in the offer template
                 "expireAt":             [int64]   // timestamp (seconds since epoch) until when the offer is valid
@@ -534,10 +541,10 @@ Offers API
       {
         "gameId":   [string],      // required, matches ^[^-][a-zA-Z0-9-_]*$
         "playerId": [string],      // required, 255 characters max
-        "productId": [string],     // required, 255 characters max
+        "productId": [string],     // 255 characters max, required if id is not defined
         "timestamp": [int64],      // required, unix timestamp of the purchase
         "transactionId": [string], // required, unique identifier of the purchase
-        "id": [uuidv4]             // optional, the id of the offer being claimed
+        "id": [uuidv4]             // optional, the id of the offer being claimed, required if productId is not defined
       }
     ```
 
@@ -693,7 +700,8 @@ Offers API
       ```
         {
             "id":                   [uuidv4], // offer id
-            "productId":            [string], // required, 255 characters max
+            "productId":            [string], // 255 characters max
+            "cost":                 [json],   // offer cost as registered in the offer template
             "contents":             [json],   // offer contents as registered in the offer template
             "metadata":             [json],   // offer metadata as registered in the offer template
             "expireAt":             [int64]   // timestamp (seconds since epoch) until when the offer is valid
@@ -707,9 +715,13 @@ Offers API
 
   * Error Response
     * Code: `400`, if player-id is not informed
+
     * Code: `400`, if game-id is not informed
+
     * Code: `400`, if offer-id is not informed
+
     * Code: `404`, if the offer was not found
+
     * Code: `500`, if server failed in any other way
     * Content:
       ```

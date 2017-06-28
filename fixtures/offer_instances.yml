@@ -12,6 +12,7 @@
     offer_id: dd21ec96-2890-4ba0-b8e2-40ea67196990
     offer_version: 3
     contents: '{"gems": 5, "gold": 100}'
+    cost: '{"gems": 500}'
     product_id: com.tfg.sample
     created_at: 2016-01-01 12:36:12
 -
@@ -21,6 +22,7 @@
     offer_id: dd21ec96-2890-4ba0-b8e2-40ea67196990
     offer_version: 2
     contents: '{"gems": 5, "gold": 100}'
+    cost: '{"gems": 500}'
     product_id: com.tfg.sample
     created_at: 2016-01-01 12:33:12
 -
@@ -31,6 +33,7 @@
     offer_version: 1
     contents: '{"gems": 5, "gold": 100}'
     product_id: com.tfg.sample
+    cost: '{"gems": 500}'
     created_at: 2016-01-01 12:30:12
 -
     id: 35df52e7-3161-446f-975b-92f32871e37c

@@ -120,6 +120,50 @@ var _ = Describe("Offer Template Handler", func() {
 			Expect(int(obj["version"].(float64))).To(Equal(1))
 		})
 
+		It("should return status code 201 for valid parameters, including cost", func() {
+			name := "New Awesome Game"
+			gameID := "game-id"
+			contents := `{"gems": 5, "gold": 100}`
+			period := `{"max": 1}`
+			frequency := `{"every": "24h"}`
+			trigger := `{"from": 1487280506875, "to": 1487366964730}`
+			cost := `{"gems": 1000}`
+			placement := "popup"
+			offerReader := JSONFor(JSON{
+				"name":      name,
+				"gameId":    gameID,
+				"contents":  dat.JSON([]byte(contents)),
+				"period":    dat.JSON([]byte(period)),
+				"frequency": dat.JSON([]byte(frequency)),
+				"trigger":   dat.JSON([]byte(trigger)),
+				"placement": placement,
+				"cost":      dat.JSON([]byte(cost)),
+			})
+
+			request, _ := http.NewRequest("POST", "/offers", offerReader)
+			app.Router.ServeHTTP(recorder, request)
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
+			Expect(recorder.Code).To(Equal(http.StatusCreated), recorder.Body.String())
+			var obj map[string]interface{}
+			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(obj["id"]).NotTo(BeEmpty())
+			Expect(obj["name"]).To(Equal(name))
+			Expect(obj["gameId"]).To(Equal(gameID))
+			Expect(obj["contents"].(map[string]interface{})["gems"].(float64)).To(BeEquivalentTo(5))
+			Expect(obj["contents"].(map[string]interface{})["gold"]).To(BeEquivalentTo(100))
+			Expect(obj["period"].(map[string]interface{})["max"].(float64)).To(BeEquivalentTo(1))
+			Expect(obj["frequency"].(map[string]interface{})["every"].(string)).To(Equal("24h"))
+			Expect(obj["trigger"].(map[string]interface{})["to"].(float64)).To(BeEquivalentTo(1487366964730))
+			Expect(obj["trigger"].(map[string]interface{})["from"].(float64)).To(BeEquivalentTo(1487280506875))
+			Expect(obj["cost"].(map[string]interface{})["gems"]).To(BeEquivalentTo(1000))
+			Expect(obj).NotTo(HaveKey("productId"))
+			Expect(obj["placement"]).To(Equal(placement))
+			Expect(obj["enabled"]).To(BeTrue())
+			Expect(int(obj["version"].(float64))).To(Equal(1))
+		})
+
 		It("should return status code 422 if missing arguments", func() {
 			offerReader := JSONFor(JSON{})
 
@@ -132,7 +176,37 @@ var _ = Describe("Offer Template Handler", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(obj["code"]).To(Equal("OFF-002"))
 			Expect(obj["error"]).To(Equal("ValidationFailedError"))
-			Expect(obj["description"]).To(Equal("GameID: non zero value required;Name: non zero value required;Period: [] does not validate as RequiredJSONObject;;Frequency: [] does not validate as RequiredJSONObject;;Trigger: [] does not validate as RequiredJSONObject;;Placement: non zero value required;ProductID: non zero value required;Contents: [] does not validate as RequiredJSONObject;;"))
+			Expect(obj["description"]).To(Equal("GameID: non zero value required;Name: non zero value required;Period: [] does not validate as RequiredJSONObject;;Frequency: [] does not validate as RequiredJSONObject;;Trigger: [] does not validate as RequiredJSONObject;;Placement: non zero value required;Contents: [] does not validate as RequiredJSONObject;;"))
+		})
+
+		It("should return status code 422 if missing productID and cost", func() {
+			name := "New Awesome Game"
+			gameID := "game-id"
+			contents := "{\"gems\": 5, \"gold\": 100}"
+			period := "{\"max\": 1}"
+			frequency := "{\"every\": \"24h\"}"
+			trigger := "{\"from\": 1487280506875, \"to\": 1487366964730}"
+			placement := "popup"
+			offerReader := JSONFor(JSON{
+				"name":      name,
+				"gameId":    gameID,
+				"contents":  dat.JSON([]byte(contents)),
+				"period":    dat.JSON([]byte(period)),
+				"frequency": dat.JSON([]byte(frequency)),
+				"trigger":   dat.JSON([]byte(trigger)),
+				"placement": placement,
+			})
+
+			request, _ := http.NewRequest("POST", "/offers", offerReader)
+			app.Router.ServeHTTP(recorder, request)
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
+			Expect(recorder.Code).To(Equal(http.StatusUnprocessableEntity))
+			var obj map[string]interface{}
+			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(obj["code"]).To(Equal("OFF-002"))
+			Expect(obj["error"]).To(Equal("ValidationFailedError"))
+			Expect(obj["description"]).To(Equal("Cost and ProductID cannot be both null"))
 		})
 
 		It("should return status code 422 if invalid arguments", func() {
@@ -156,10 +230,10 @@ var _ = Describe("Offer Template Handler", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(obj["code"]).To(Equal("OFF-002"))
 			Expect(obj["error"]).To(Equal("ValidationFailedError"))
-			Expect(obj["description"]).To(Equal("GameID: ### does not validate as matches(^[^-][a-zA-Z0-9-_]*$);Name: non zero value required;Period: [34 123 110 111 116 45 97 45 106 115 111 110 125 34] does not validate as RequiredJSONObject;;Frequency: [34 123 110 111 116 45 97 45 106 115 111 110 125 34] does not validate as RequiredJSONObject;;Trigger: [34 123 110 111 116 45 97 45 106 115 111 110 125 34] does not validate as RequiredJSONObject;;Placement: non zero value required;ProductID: non zero value required;Contents: [34 123 110 111 116 45 97 45 106 115 111 110 125 34] does not validate as RequiredJSONObject;;"))
+			Expect(obj["description"]).To(Equal("GameID: ### does not validate as matches(^[^-][a-zA-Z0-9-_]*$);Name: non zero value required;Period: [34 123 110 111 116 45 97 45 106 115 111 110 125 34] does not validate as RequiredJSONObject;;Frequency: [34 123 110 111 116 45 97 45 106 115 111 110 125 34] does not validate as RequiredJSONObject;;Trigger: [34 123 110 111 116 45 97 45 106 115 111 110 125 34] does not validate as RequiredJSONObject;;Placement: non zero value required;Contents: [34 123 110 111 116 45 97 45 106 115 111 110 125 34] does not validate as RequiredJSONObject;;"))
 		})
 
-		It("should return status code 422 if game-id doesn`t exist", func() {
+		It("should return status code 422 if game-id doesn't exist", func() {
 			offerReader := JSONFor(JSON{
 				"name":      "New Awesome Game",
 				"productId": "com.tfg.example",
@@ -934,6 +1008,40 @@ var _ = Describe("Offer Template Handler", func() {
 			Expect(int(obj["version"].(float64))).To(Equal(2))
 		})
 
+		It("should update offer with cost", func() {
+			name := "New Awesome Game"
+			gameID := "offers-game"
+			contents := "{\"gems\": 5432}"
+			cost := "{\"gems\": 1234}"
+			period := "{\"max\": 123}"
+			frequency := "{\"every\": \"240h\"}"
+			trigger := "{\"from\": 123456789101, \"to\": 123456789111}"
+			filters := `{"level": {"geq": 5}}`
+			placement := "popup"
+			offerReader = JSONFor(JSON{
+				"name":      name,
+				"cost":      dat.JSON([]byte(cost)),
+				"gameId":    gameID,
+				"contents":  dat.JSON([]byte(contents)),
+				"period":    dat.JSON([]byte(period)),
+				"frequency": dat.JSON([]byte(frequency)),
+				"trigger":   dat.JSON([]byte(trigger)),
+				"placement": placement,
+				"filters":   dat.JSON([]byte(filters)),
+			})
+			id := "dd21ec96-2890-4ba0-b8e2-40ea67196990"
+			request, _ := http.NewRequest("PUT", fmt.Sprintf("/offers/%s", id), offerReader)
+
+			app.Router.ServeHTTP(recorder, request)
+			Expect(recorder.Code).To(Equal(http.StatusOK))
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
+			var obj map[string]interface{}
+			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(obj["id"]).To(Equal(id))
+			Expect(int(obj["version"].(float64))).To(Equal(2))
+		})
+
 		It("returns status code of 500 if database is unavailable", func() {
 			id := "dd21ec96-2890-4ba0-b8e2-40ea67196990"
 			request, _ := http.NewRequest("PUT", fmt.Sprintf("/offers/%s", id), offerReader)
@@ -1003,7 +1111,40 @@ var _ = Describe("Offer Template Handler", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(obj["code"]).To(Equal("OFF-002"))
 			Expect(obj["error"]).To(Equal("ValidationFailedError"))
-			Expect(obj["description"]).To(Equal("GameID: non zero value required;Name: non zero value required;Period: [] does not validate as RequiredJSONObject;;Frequency: [] does not validate as RequiredJSONObject;;Trigger: [] does not validate as RequiredJSONObject;;Placement: non zero value required;ProductID: non zero value required;Contents: [34 105 110 118 97 108 105 100 34] does not validate as RequiredJSONObject;;"))
+			Expect(obj["description"]).To(Equal("GameID: non zero value required;Name: non zero value required;Period: [] does not validate as RequiredJSONObject;;Frequency: [] does not validate as RequiredJSONObject;;Trigger: [] does not validate as RequiredJSONObject;;Placement: non zero value required;Contents: [34 105 110 118 97 108 105 100 34] does not validate as RequiredJSONObject;;"))
+		})
+
+		It("should return status code 422 if no productId and cost", func() {
+			id := "dd21ec96-2890-4ba0-b8e2-40ea67196990"
+			name := "New Awesome Game"
+			gameID := "offers-game"
+			contents := "{\"gems\": 5432}"
+			period := "{\"max\": 123}"
+			frequency := "{\"every\": \"240h\"}"
+			trigger := "{\"from\": 123456789101, \"to\": 123456789111}"
+			filters := `{"level": {"geq": 5}}`
+			placement := "popup"
+			offerReader = JSONFor(JSON{
+				"name":      name,
+				"gameId":    gameID,
+				"contents":  dat.JSON([]byte(contents)),
+				"period":    dat.JSON([]byte(period)),
+				"frequency": dat.JSON([]byte(frequency)),
+				"trigger":   dat.JSON([]byte(trigger)),
+				"placement": placement,
+				"filters":   dat.JSON([]byte(filters)),
+			})
+			request, _ := http.NewRequest("PUT", fmt.Sprintf("/offers/%s", id), offerReader)
+
+			app.Router.ServeHTTP(recorder, request)
+			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
+			Expect(recorder.Code).To(Equal(http.StatusUnprocessableEntity))
+			var obj map[string]interface{}
+			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(obj["code"]).To(Equal("OFF-002"))
+			Expect(obj["error"]).To(Equal("ValidationFailedError"))
+			Expect(obj["description"]).To(Equal("Cost and ProductID cannot be both null"))
 		})
 
 		It("should return status code of 401 if no auth provided", func() {
@@ -1065,6 +1206,9 @@ var _ = Describe("Offer Template Handler", func() {
 				Expect(offer).To(HaveKey("period"))
 				Expect(offer).To(HaveKey("frequency"))
 				Expect(offer).To(HaveKey("trigger"))
+				if offer["id"].(string) == "dd21ec96-2890-4ba0-b8e2-40ea67196990" {
+					Expect(offer).To(HaveKey("cost"))
+				}
 			}
 
 			pages := obj["pages"].(float64)

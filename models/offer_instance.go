@@ -28,11 +28,12 @@ type OfferInstance struct {
 	OfferID      string       `db:"offer_id" json:"offerId" valid:"uuidv4,required"`
 	OfferVersion int          `db:"offer_version" json:"offerVersion" valid:"int,required"`
 	Contents     dat.JSON     `db:"contents" json:"contents" valid:"RequiredJSONObject"`
-	ProductID    string       `db:"product_id" json:"productId" valid:"ascii,stringlength(1|255),required"`
+	ProductID    string       `db:"product_id" json:"productId" valid:"ascii,stringlength(1|255)"`
+	Cost         dat.JSON     `db:"cost" json:"cost" valid:"JSONObject"`
 	CreatedAt    dat.NullTime `db:"created_at" json:"createdAt" valid:""`
 }
 
-//OfferInstanceOffer is a join of OfferInstance with
+//OfferInstanceOffer is a join of OfferInstance with offer
 type OfferInstanceOffer struct {
 	ID       string   `db:"id" json:"id" valid:"uuidv4,required"`
 	GameID   string   `db:"game_id" json:"gameId" valid:"matches(^[^-][a-zA-Z0-9-_]*$),stringlength(1|255),required"`
@@ -44,7 +45,8 @@ type OfferInstanceOffer struct {
 //OfferToReturn has the fields for the returned offer
 type OfferToReturn struct {
 	ID        string   `db:"id" json:"id"`
-	ProductID string   `db:"product_id" json:"productId"`
+	ProductID string   `db:"product_id" json:"productId,omitempty"`
+	Cost      dat.JSON `db:"cost" json:"cost,omitempty" valid:"JSONObject"`
 	Contents  dat.JSON `db:"contents" json:"contents"`
 	Metadata  dat.JSON `db:"metadata" json:"metadata"`
 	ExpireAt  int64    `db:"expire_at" json:"expireAt"`
@@ -419,6 +421,7 @@ func GetAvailableOffers(
 			OfferVersion: offer.Version,
 			Contents:     offer.Contents,
 			ProductID:    offer.ProductID,
+			Cost:         offer.Cost,
 		})
 	}
 
@@ -436,6 +439,7 @@ func GetAvailableOffers(
 			ID:        offerInstance.ID,
 			ProductID: offer.ProductID,
 			Contents:  offer.Contents,
+			Cost:      offer.Cost,
 			Metadata:  offer.Metadata,
 			ExpireAt:  trigger.To,
 		}
@@ -470,13 +474,13 @@ func findOrCreateOfferInstance(
 				o.OfferID,
 				o.OfferVersion))
 		valueArgs = append(valueArgs,
-			fmt.Sprintf("('%s', '%s', '%s', '%d', '%s'::jsonb, '%s')", o.GameID, o.PlayerID, o.OfferID, o.OfferVersion, o.Contents, o.ProductID))
+			fmt.Sprintf("('%s', '%s', '%s', '%d', '%s'::jsonb, '%s', '%s'::jsonb)", o.GameID, o.PlayerID, o.OfferID, o.OfferVersion, o.Contents, o.ProductID, o.Cost))
 	}
 
 	query := fmt.Sprintf(`
 	WITH
 		sel AS (SELECT id, offer_id FROM offer_instances WHERE %s),
-		ins AS (INSERT INTO offer_instances(game_id, player_id, offer_id, offer_version, contents, product_id)
+		ins AS (INSERT INTO offer_instances(game_id, player_id, offer_id, offer_version, contents, product_id, cost)
 						VALUES %s
 						ON CONFLICT DO NOTHING
 						RETURNING id, offer_id)
@@ -615,7 +619,7 @@ func getOfferToReturn(
 
 	err := mr.WithDatastoreSegment("offer_instances", SegmentSelect, func() error {
 		return db.
-			Select("oi.id, oi.product_id, oi.contents, o.metadata, o.trigger#>>'{to}' AS expire_at").
+			Select("oi.id, oi.product_id, oi.contents, oi.cost, o.metadata, o.trigger#>>'{to}' AS expire_at").
 			From("offer_instances oi JOIN offers o ON (oi.offer_id=o.id)").
 			Where("oi.id=$1 AND oi.game_id=$2 AND oi.player_id=$3", offerID, gameID, playerID).
 			QueryStruct(&offerInstance)

@@ -9,6 +9,7 @@ package api
 
 import (
 	"encoding/json"
+	e "errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -58,6 +59,24 @@ func (g *OfferHandler) insertOffer(w http.ResponseWriter, r *http.Request) {
 	})
 
 	var err error
+	if offer.ProductID == "" {
+		validationError := errors.NewValidationFailedError(e.New("Cost and ProductID cannot be both null"))
+		if offer.Cost == nil {
+			g.App.HandleError(w, http.StatusUnprocessableEntity, validationError.Error(), validationError)
+			return
+		}
+		var costVal map[string]interface{}
+		err := offer.Cost.Unmarshal(&costVal)
+		if err != nil {
+			g.App.HandleError(w, http.StatusInternalServerError, "Insert offer failed", err)
+			return
+		}
+		if len(costVal) == 0 {
+			g.App.HandleError(w, http.StatusUnprocessableEntity, validationError.Error(), validationError)
+			return
+		}
+	}
+
 	err = mr.WithSegment(models.SegmentModel, func() error {
 		offer, err = models.InsertOffer(g.App.DB, offer, g.App.Cache, mr)
 		return err
@@ -133,6 +152,24 @@ func (g *OfferHandler) updateOffer(w http.ResponseWriter, r *http.Request) {
 	})
 
 	var err error
+	if offer.ProductID == "" {
+		validationError := errors.NewValidationFailedError(e.New("Cost and ProductID cannot be both null"))
+		if offer.Cost == nil {
+			g.App.HandleError(w, http.StatusUnprocessableEntity, validationError.Error(), validationError)
+			return
+		}
+		var costVal map[string]interface{}
+		err := offer.Cost.Unmarshal(&costVal)
+		if err != nil {
+			g.App.HandleError(w, http.StatusInternalServerError, "Insert offer failed", err)
+			return
+		}
+		if len(costVal) == 0 {
+			g.App.HandleError(w, http.StatusUnprocessableEntity, validationError.Error(), validationError)
+			return
+		}
+	}
+
 	err = mr.WithSegment(models.SegmentModel, func() error {
 		offer, err = models.UpdateOffer(g.App.DB, offer, g.App.Cache, mr)
 		return err

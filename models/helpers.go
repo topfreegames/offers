@@ -25,7 +25,7 @@ import (
 type ClaimOfferPayload struct {
 	GameID          string `json:"gameId" valid:"matches(^[^-][a-zA-Z0-9-_]*$),stringlength(1|255),required"`
 	PlayerID        string `json:"playerId" valid:"ascii,stringlength(1|1000),required"`
-	ProductID       string `json:"productId" valid:"ascii,stringlength(1|255),required"`
+	ProductID       string `json:"productId" valid:"ascii,stringlength(1|255)"`
 	Timestamp       int64  `json:"timestamp" valid:"int64,required"`
 	TransactionID   string `json:"transactionId" valid:"ascii,stringlength(1|1000),required"`
 	OfferInstanceID string `json:"id" valid:"uuidv4,optional"`

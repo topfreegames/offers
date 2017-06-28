@@ -9,6 +9,7 @@ package api
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -142,6 +143,12 @@ func (h *OfferRequestHandler) claimOffer(w http.ResponseWriter, r *http.Request)
 		"operation": "claimOffer",
 		"payload":   payload,
 	})
+
+	if payload.OfferInstanceID == "" && payload.ProductID == "" {
+		validationError := e.NewValidationFailedError(errors.New("Id and ProductID cannot be both null"))
+		h.App.HandleError(w, http.StatusUnprocessableEntity, validationError.Error(), validationError)
+		return
+	}
 
 	contents, alreadyClaimed, nextAt, err := models.ClaimOffer(
 		h.App.DB,
