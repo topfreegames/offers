@@ -771,7 +771,7 @@ var _ = Describe("Offer Instance Model", func() {
 			Expect(offerInstances).To(HaveLen(0))
 		})
 
-		XIt("should return a list of offer templates for each available placement when with filters but offer has no filters", func() {
+		It("should return a list of offer templates for each available placement when with filters but offer has no filters and inneficient queries allowed", func() {
 			//Given
 			playerID := "player-1"
 			gameID := defaultGameID
@@ -783,7 +783,7 @@ var _ = Describe("Offer Instance Model", func() {
 			}
 
 			//When
-			offerInstances, err := models.GetAvailableOffers(db, redisClient, offersCache, gameID, playerID, currentTime, expireDuration, filterAttrs, false, nil)
+			offerInstances, err := models.GetAvailableOffers(db, redisClient, offersCache, gameID, playerID, currentTime, expireDuration, filterAttrs, true, nil)
 
 			//Then
 			Expect(err).NotTo(HaveOccurred())
@@ -810,6 +810,25 @@ var _ = Describe("Offer Instance Model", func() {
 			Expect(offerInstances["store"][1].Contents).To(Equal(dat.JSON([]byte(`{"gems": 5, "gold": 100}`))))
 			Expect(offerInstances["store"][1].Metadata).To(Equal(dat.JSON([]byte(`{}`))))
 			Expect(offerInstances["store"][1].ExpireAt).To(Equal(int64(1486679100)))
+		})
+
+		It("should return no offer templates when with filters but offer has no filters and inneficient queries not allowed", func() {
+			//Given
+			playerID := "player-1"
+			gameID := defaultGameID
+			currentTime := time.Unix(1486678000, 0)
+			filterAttrs := map[string]string{
+				"key1": "value1",
+				"key2": "1.2",
+				"key3": "1",
+			}
+
+			//When
+			offerInstances, err := models.GetAvailableOffers(db, redisClient, offersCache, gameID, playerID, currentTime, expireDuration, filterAttrs, false, nil)
+
+			//Then
+			Expect(err).NotTo(HaveOccurred())
+			Expect(offerInstances).To(HaveLen(0))
 		})
 
 		It("should return empty offer template list if gameID doesn't exist", func() {
