@@ -38,36 +38,6 @@ type OfferImpressionPayload struct {
 	ImpressionID string `json:"impressionId" valid:"uuidv4,required"`
 }
 
-//GetTransactionsKey returns the key of the player's purchase transactions in redis
-func GetTransactionsKey(gameID, playerID string) string {
-	return fmt.Sprintf("transactions:%s:%s", gameID, playerID)
-}
-
-//GetClaimCounterKey returns the key of the player's claim counter
-func GetClaimCounterKey(playerID, offerID string) string {
-	return fmt.Sprintf("claim:counter:%s:%s", playerID, offerID)
-}
-
-//GetClaimTimestampKey returns the key of the player's last claim timestamp
-func GetClaimTimestampKey(playerID, offerID string) string {
-	return fmt.Sprintf("claim:timestamp:%s:%s", playerID, offerID)
-}
-
-//GetImpressionsKey returns the key of the player's impressions in redis
-func GetImpressionsKey(playerID, gameID string) string {
-	return fmt.Sprintf("impressions:%s:%s", gameID, playerID)
-}
-
-//GetViewCounterKey returns the key of the player's impressions counter
-func GetViewCounterKey(playerID, offerID string) string {
-	return fmt.Sprintf("view:counter:%s:%s", playerID, offerID)
-}
-
-//GetViewTimestampKey returns the key of the player's last impression timestamp
-func GetViewTimestampKey(playerID, offerID string) string {
-	return fmt.Sprintf("view:timestamp:%s:%s", playerID, offerID)
-}
-
 //GetEnabledOffersKey returns the key of the current enabled offers
 func GetEnabledOffersKey(gameID string) string {
 	return fmt.Sprintf("offers:enabled:%s", gameID)

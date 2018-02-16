@@ -20,7 +20,6 @@ Offers is composed of an API responsible for creation of games and templates, an
 Our code is in Golang, with:
 
 * Database - Postgres >= 9.5;
-* Redis;
 
 ## Who's Using it
 

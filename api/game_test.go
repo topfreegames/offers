@@ -211,7 +211,7 @@ var _ = Describe("Game Handler", func() {
 			var obj []map[string]interface{}
 			err := json.Unmarshal([]byte(recorder.Body.String()), &obj)
 			Expect(err).NotTo(HaveOccurred())
-			Expect(obj).To(HaveLen(9))
+			Expect(obj).To(HaveLen(13))
 			for i := 0; i < len(obj); i++ {
 				Expect(obj[i]).To(HaveKey("id"))
 				Expect(obj[i]).To(HaveKey("name"))
@@ -220,7 +220,9 @@ var _ = Describe("Game Handler", func() {
 		})
 
 		It("should return empty list if no games", func() {
-			_, err := app.DB.DeleteFrom("offer_instances").Exec()
+			_, err := app.DB.DeleteFrom("offer_players").Exec()
+			Expect(err).NotTo(HaveOccurred())
+			_, err = app.DB.DeleteFrom("offer_instances").Exec()
 			Expect(err).NotTo(HaveOccurred())
 			_, err = app.DB.DeleteFrom("offers").Exec()
 			Expect(err).NotTo(HaveOccurred())

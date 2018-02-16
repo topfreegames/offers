@@ -8,21 +8,20 @@
 package models_test
 
 import (
+	"time"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	runner "gopkg.in/mgutz/dat.v2/sqlx-runner"
-	"time"
 
 	"testing"
 
 	"github.com/pmylund/go-cache"
 	oTesting "github.com/topfreegames/offers/testing"
-	"github.com/topfreegames/offers/util"
 )
 
 var conn runner.Connection
 var db *runner.Tx
-var redisClient *util.RedisClient
 var offersCache *cache.Cache
 
 func TestApi(t *testing.T) {
@@ -36,9 +35,6 @@ var _ = BeforeSuite(func() {
 	Expect(err).NotTo(HaveOccurred())
 
 	err = oTesting.LoadFixtures(conn)
-	Expect(err).NotTo(HaveOccurred())
-
-	redisClient, err = oTesting.GetTestRedis()
 	Expect(err).NotTo(HaveOccurred())
 
 	offersCache = cache.New(300*time.Second, 30*time.Second)
@@ -55,8 +51,6 @@ var _ = AfterEach(func() {
 	err := db.Rollback()
 	Expect(err).NotTo(HaveOccurred())
 	db = nil
-	status := redisClient.Client.FlushAll()
-	Expect(status.Err()).NotTo(HaveOccurred())
 })
 
 var _ = AfterSuite(func() {

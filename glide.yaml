@@ -24,8 +24,6 @@ import:
   version: ^5.0.0
 - package: gopkg.in/mgutz/dat.v2
   version: v2
-- package: gopkg.in/redis.v5
-  version: ^5.2.9
 - package: github.com/patrickmn/go-cache
 - package: github.com/getsentry/raven-go
 - package: github.com/certifi/gocertifi

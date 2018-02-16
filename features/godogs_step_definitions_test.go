@@ -38,7 +38,6 @@ import (
 	"github.com/topfreegames/offers/errors"
 	"github.com/topfreegames/offers/models"
 	"github.com/topfreegames/offers/testing"
-	redis "gopkg.in/redis.v5"
 )
 
 var app *api.App
@@ -186,7 +185,7 @@ func theFollowingPlayersExistInTheGame(gameID string, players *gherkin.DataTable
 				}
 
 				currentTime := time.Unix(int64(unixTime), 0)
-				if _, err := models.GetAvailableOffers(app.DB, app.RedisClient, gameID, playerID, currentTime, nil); err != nil {
+				if _, err := models.GetAvailableOffers(app.DB, gameID, playerID, currentTime, nil); err != nil {
 					return err
 				}
 				offer, err := selectOfferInstanceByOfferNameAndPlayerAndGame(offerName, playerID, gameID)
@@ -194,7 +193,7 @@ func theFollowingPlayersExistInTheGame(gameID string, players *gherkin.DataTable
 					return err
 				}
 
-				_, _, err = models.ViewOffer(app.DB, app.RedisClient, gameID, offer.ID, playerID, uuid.NewV4().String(), currentTime, nil)
+				_, _, err = models.ViewOffer(app.DB, gameID, offer.ID, playerID, uuid.NewV4().String(), currentTime, nil)
 				if err != nil {
 					return err
 				}
@@ -392,13 +391,11 @@ func playerOfGameHasSeenOfferInstance(playerID, gameID, offerName string) error 
 		return err
 	}
 
-	viewCounterKey := models.GetViewCounterKey(playerID, offerInstance.OfferID)
-	viewCounter, err := app.RedisClient.Client.Get(viewCounterKey).Int64()
-
-	if err != nil && err != redis.Nil {
+	offerPlayer, err := models.GetOfferPlayer(app.DB, gameID, playerID, offerInstance.OfferID, nil)
+	if err != nil && !models.IsNoRowsInResultSetError(err) {
 		return err
 	}
-	if viewCounter == 0 {
+	if offerPlayer.ViewCounter == 0 {
 		return fmt.Errorf("Expected player %s of game %s to has seen offer %s", playerID, gameID, offerName)
 	}
 
@@ -493,7 +490,7 @@ func theFollowingPlayersClaimedInTheGame(gameID string, players *gherkin.DataTab
 				}
 
 				currentTime := time.Unix(int64(unixTime), 0)
-				if _, err = models.GetAvailableOffers(app.DB, app.RedisClient, gameID, playerID, currentTime, nil); err != nil {
+				if _, err = models.GetAvailableOffers(app.DB, gameID, playerID, currentTime, nil); err != nil {
 					return err
 				}
 				offerInstance, err := selectOfferInstanceByOfferNameAndPlayerAndGame(offerName, playerID, gameID)
@@ -501,7 +498,7 @@ func theFollowingPlayersClaimedInTheGame(gameID string, players *gherkin.DataTab
 					return err
 				}
 
-				_, _, _, err = models.ClaimOffer(app.DB, app.RedisClient, gameID, offerInstance.ID, playerID, "", uuid.NewV4().String(), currentTime.Unix(), currentTime, nil)
+				_, _, _, err = models.ClaimOffer(app.DB, gameID, offerInstance.ID, playerID, "", uuid.NewV4().String(), currentTime.Unix(), currentTime, nil)
 				if err != nil {
 					return err
 				}

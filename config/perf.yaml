@@ -4,12 +4,6 @@ postgres:
   host: "localhost"
   port: 8585
   sslMode: "disable"
-redis:
-  host: localhost
-  port: 6333
-  password: ""
-  db: 0
-  maxPoolSize: 20
 offersCache:
   maxAgeSeconds: 300
   cleanupInterval: 30

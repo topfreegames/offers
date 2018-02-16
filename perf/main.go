@@ -9,12 +9,12 @@ package main
 
 import (
 	"fmt"
+	"time"
+
 	bench "github.com/topfreegames/offers/bench"
 	"github.com/topfreegames/offers/models"
 	oTesting "github.com/topfreegames/offers/testing"
-	"github.com/topfreegames/offers/util"
 	runner "gopkg.in/mgutz/dat.v2/sqlx-runner"
-	"time"
 )
 
 func initParameters() {
@@ -83,14 +83,14 @@ func populateOffers(db *runner.Connection, games []*models.Game) (map[string][]*
 	return offersByGame, err
 }
 
-func populateOfferInstances(db *runner.Connection, redis *util.RedisClient, offersByGame map[string][]*models.Offer) (map[string][]*models.OfferToReturn, error) {
+func populateOfferInstances(db *runner.Connection, offersByGame map[string][]*models.Offer) (map[string][]*models.OfferToReturn, error) {
 	offerInstances := make(map[string][]*models.OfferToReturn)
 	var err error
 
 	return offerInstances, err
 }
 
-func populateTestDB(db *runner.Connection, redis *util.RedisClient) error {
+func populateTestDB(db *runner.Connection) error {
 	games, err := populateGames(db)
 	if err != nil {
 		return err
@@ -101,7 +101,7 @@ func populateTestDB(db *runner.Connection, redis *util.RedisClient) error {
 		return err
 	}
 
-	_, err = populateOfferInstances(db, redis, offersByGame)
+	_, err = populateOfferInstances(db, offersByGame)
 	if err != nil {
 		return err
 	}
@@ -115,12 +115,7 @@ func main() {
 		panic(err.Error())
 	}
 
-	redis, err := oTesting.GetTestRedis()
-	if err != nil {
-		panic(err.Error())
-	}
-
-	err = populateTestDB(&db, redis)
+	err = populateTestDB(&db)
 	if err != nil {
 		panic(err.Error())
 	}

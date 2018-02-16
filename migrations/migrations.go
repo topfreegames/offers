@@ -9,6 +9,7 @@
 // migrations/0007-RemoveProductIdConstraintFromOfferInstances.sql
 // migrations/0008-AddCostToOffers.sql
 // migrations/0009-AddCostToOfferInstances.sql
+// migrations/0010-CreateOfferPlayerTable.sql
 // DO NOT EDIT!
 
 package migrations
@@ -111,7 +112,7 @@ func migrations0002CreateofferstableSql() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "migrations/0002-CreateOffersTable.sql", size: 692, mode: os.FileMode(420), modTime: time.Unix(1493235957, 0)}
+	info := bindataFileInfo{name: "migrations/0002-CreateOffersTable.sql", size: 692, mode: os.FileMode(420), modTime: time.Unix(1498737211, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -131,7 +132,7 @@ func migrations0003CreateofferintancestableSql() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "migrations/0003-CreateOfferIntancesTable.sql", size: 597, mode: os.FileMode(420), modTime: time.Unix(1493235957, 0)}
+	info := bindataFileInfo{name: "migrations/0003-CreateOfferIntancesTable.sql", size: 597, mode: os.FileMode(420), modTime: time.Unix(1518780975, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -191,7 +192,7 @@ func migrations0006RemoveproductidconstraintfromoffersSql() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "migrations/0006-RemoveProductIdConstraintFromOffers.sql", size: 58, mode: os.FileMode(420), modTime: time.Unix(1498652520, 0)}
+	info := bindataFileInfo{name: "migrations/0006-RemoveProductIdConstraintFromOffers.sql", size: 58, mode: os.FileMode(420), modTime: time.Unix(1498673123, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -211,7 +212,7 @@ func migrations0007RemoveproductidconstraintfromofferinstancesSql() (*asset, err
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "migrations/0007-RemoveProductIdConstraintFromOfferInstances.sql", size: 67, mode: os.FileMode(420), modTime: time.Unix(1498652614, 0)}
+	info := bindataFileInfo{name: "migrations/0007-RemoveProductIdConstraintFromOfferInstances.sql", size: 67, mode: os.FileMode(420), modTime: time.Unix(1498673123, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -231,7 +232,7 @@ func migrations0008AddcosttooffersSql() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "migrations/0008-AddCostToOffers.sql", size: 72, mode: os.FileMode(420), modTime: time.Unix(1498652529, 0)}
+	info := bindataFileInfo{name: "migrations/0008-AddCostToOffers.sql", size: 72, mode: os.FileMode(420), modTime: time.Unix(1498673123, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -251,7 +252,27 @@ func migrations0009AddcosttoofferinstancesSql() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "migrations/0009-AddCostToOfferInstances.sql", size: 81, mode: os.FileMode(420), modTime: time.Unix(1498652628, 0)}
+	info := bindataFileInfo{name: "migrations/0009-AddCostToOfferInstances.sql", size: 81, mode: os.FileMode(420), modTime: time.Unix(1498673123, 0)}
+	a := &asset{bytes: bytes, info: info}
+	return a, nil
+}
+
+var _migrations0010CreateofferplayertableSql = []byte("\x1f\x8b\x08\x00\x00\x00\x00\x00\x00\xff\x8c\x92\x5f\x6f\x82\x30\x14\xc5\xdf\xf9\x14\xf7\x4d\x48\x7c\x70\x7f\xdc\x83\x7b\x42\xbd\x66\x6c\x58\x36\x2c\xd9\xdc\xb2\x34\x0d\x5c\x5d\x13\x41\xd3\x56\x97\x7d\xfb\x25\x45\x81\x2c\x7b\xe0\x8d\xe4\x9c\xdf\xa1\x3d\xa7\xb3\x14\x43\x8e\xc0\xc3\x69\x8c\xb0\xdf\x6c\x48\x8b\xc3\x4e\xfe\x90\x36\xe0\x7b\x00\x00\xaa\x80\xfc\x4b\x6a\xff\xe6\x2e\x80\xe7\x34\x5a\x86\xe9\x1a\x9e\x70\x0d\x73\x5c\x84\x59\xcc\xe1\x78\x54\x85\xd8\x52\x45\x5a\x5a\x12\xa7\x5b\x3f\x18\x3a\x6e\x2b\x4b\x12\xaa\x80\x93\xd4\x8e\xbf\x1e\x8f\x03\x60\x09\x07\x96\xc5\x31\xa4\xb8\xc0\x14\xd9\x0c\x57\xce\x68\x7c\x55\x9c\xb9\xfa\xef\x5d\xf2\x6a\x34\x1a\xb5\x68\xed\xaa\x4f\xda\x27\xde\x39\x3b\xf9\xf9\x4e\xaa\x52\xe4\xfb\x63\x65\x49\x83\xaa\x2c\x6d\x49\x77\x25\xab\x4a\x32\x56\x96\x07\x68\xbf\x5e\x23\xfe\x00\x3c\x5a\x22\xbc\x27\x0c\x6b\xf7\x49\xd1\xf7\xff\x39\x4e\xe9\x1b\x63\xb5\xac\x8c\xcc\xad\xda\x57\x06\x1e\x57\x09\x9b\xb6\xd7\xb8\x74\x3c\xf8\xf8\x1c\x4c\x26\x4e\xac\x21\x55\x1e\x34\x19\xd3\x93\xf1\x82\x7b\xcf\x3b\x0f\x9d\xb1\xe8\x25\x43\x88\xd8\x1c\xdf\x2e\x1b\x89\xa6\x73\xd1\xf4\x9a\xb0\xbf\xaf\xe1\x6c\x1e\xb6\x0b\x0d\x9b\x19\x02\xef\x37\x00\x00\xff\xff\xa4\xfb\xad\xcc\x48\x02\x00\x00")
+
+func migrations0010CreateofferplayertableSqlBytes() ([]byte, error) {
+	return bindataRead(
+		_migrations0010CreateofferplayertableSql,
+		"migrations/0010-CreateOfferPlayerTable.sql",
+	)
+}
+
+func migrations0010CreateofferplayertableSql() (*asset, error) {
+	bytes, err := migrations0010CreateofferplayertableSqlBytes()
+	if err != nil {
+		return nil, err
+	}
+
+	info := bindataFileInfo{name: "migrations/0010-CreateOfferPlayerTable.sql", size: 584, mode: os.FileMode(420), modTime: time.Unix(1518801650, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -317,6 +338,7 @@ var _bindata = map[string]func() (*asset, error){
 	"migrations/0007-RemoveProductIdConstraintFromOfferInstances.sql": migrations0007RemoveproductidconstraintfromofferinstancesSql,
 	"migrations/0008-AddCostToOffers.sql": migrations0008AddcosttooffersSql,
 	"migrations/0009-AddCostToOfferInstances.sql": migrations0009AddcosttoofferinstancesSql,
+	"migrations/0010-CreateOfferPlayerTable.sql": migrations0010CreateofferplayertableSql,
 }
 
 // AssetDir returns the file names below a certain
@@ -369,6 +391,7 @@ var _bintree = &bintree{nil, map[string]*bintree{
 		"0007-RemoveProductIdConstraintFromOfferInstances.sql": &bintree{migrations0007RemoveproductidconstraintfromofferinstancesSql, map[string]*bintree{}},
 		"0008-AddCostToOffers.sql": &bintree{migrations0008AddcosttooffersSql, map[string]*bintree{}},
 		"0009-AddCostToOfferInstances.sql": &bintree{migrations0009AddcosttoofferinstancesSql, map[string]*bintree{}},
+		"0010-CreateOfferPlayerTable.sql": &bintree{migrations0010CreateofferplayertableSql, map[string]*bintree{}},
 	}},
 }}
 

@@ -111,7 +111,7 @@ func (h *OfferRequestHandler) getOffers(w http.ResponseWriter, r *http.Request) 
 
 	var offers map[string][]*models.OfferToReturn
 	err = mr.WithSegment(models.SegmentModel, func() error {
-		offers, err = models.GetAvailableOffers(h.App.DB, h.App.RedisClient, h.App.Cache, gameID, playerID, currentTime, h.App.OffersCacheMaxAge, filterAttrs, allowInefficientQueries, mr)
+		offers, err = models.GetAvailableOffers(h.App.DB, h.App.Cache, gameID, playerID, currentTime, h.App.OffersCacheMaxAge, filterAttrs, allowInefficientQueries, mr)
 		return err
 	})
 
@@ -152,7 +152,6 @@ func (h *OfferRequestHandler) claimOffer(w http.ResponseWriter, r *http.Request)
 
 	contents, alreadyClaimed, nextAt, err := models.ClaimOffer(
 		h.App.DB,
-		h.App.RedisClient,
 		payload.GameID,
 		payload.OfferInstanceID,
 		payload.PlayerID,
@@ -203,7 +202,6 @@ func (h *OfferRequestHandler) viewOffer(w http.ResponseWriter, r *http.Request) 
 
 	alreadyViewed, nextAt, err := models.ViewOffer(
 		h.App.DB,
-		h.App.RedisClient,
 		payload.GameID,
 		offerInstanceID,
 		payload.PlayerID,
@@ -267,7 +265,7 @@ func (h *OfferRequestHandler) offerInfo(w http.ResponseWriter, r *http.Request) 
 	var err error
 	var offer *models.OfferToReturn
 	err = mr.WithSegment(models.SegmentModel, func() error {
-		offer, err = models.GetOfferInfo(h.App.DB, h.App.RedisClient, gameID, playerID, offerInstanceID, h.App.OffersCacheMaxAge, mr)
+		offer, err = models.GetOfferInfo(h.App.DB, gameID, playerID, offerInstanceID, h.App.OffersCacheMaxAge, mr)
 		return err
 	})
 

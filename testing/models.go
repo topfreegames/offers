@@ -8,10 +8,8 @@
 package testing
 
 import (
-	"github.com/Sirupsen/logrus"
 	"github.com/go-testfixtures/testfixtures"
 	"github.com/topfreegames/offers/models"
-	"github.com/topfreegames/offers/util"
 	runner "gopkg.in/mgutz/dat.v2/sqlx-runner"
 )
 
@@ -37,21 +35,10 @@ func GetPerfDB() (runner.Connection, error) {
 	)
 }
 
-//GetTestRedis returns a redis client
-func GetTestRedis() (*util.RedisClient, error) {
-	redisHost := "localhost"
-	redisPort := 6333
-	redisPass := ""
-	redisDB := 0
-	redisMaxPoolSize := 20
-
-	l := logrus.New().WithFields(logrus.Fields{
-		"redis.host":             redisHost,
-		"redis.port":             redisPort,
-		"redis.redisDB":          redisDB,
-		"redis.redisMaxPoolSize": redisMaxPoolSize,
-	})
-	return util.GetRedisClient(redisHost, redisPort, redisPass, redisDB, redisMaxPoolSize, l)
+//ClearOfferPlayers
+func ClearOfferPlayers(db runner.Connection) error {
+	_, err := db.DeleteFrom("offer_players").Exec()
+	return err
 }
 
 //LoadFixtures into the DB

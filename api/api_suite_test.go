@@ -40,6 +40,9 @@ var _ = BeforeSuite(func() {
 	db, err = oTesting.GetTestDB()
 	Expect(err).NotTo(HaveOccurred())
 
+	err = oTesting.ClearOfferPlayers(db)
+	Expect(err).NotTo(HaveOccurred())
+
 	err = oTesting.LoadFixtures(db)
 	Expect(err).NotTo(HaveOccurred())
 
@@ -62,8 +65,6 @@ var _ = AfterEach(func() {
 	err := app.DB.(*runner.Tx).Rollback()
 	Expect(err).NotTo(HaveOccurred())
 	app.DB = db
-	status := app.RedisClient.Client.FlushAll()
-	Expect(status.Err()).NotTo(HaveOccurred())
 	app.Clock = oTesting.MockClock{
 		CurrentTime: 1486678000,
 	}
@@ -76,9 +77,6 @@ var _ = AfterSuite(func() {
 		Expect(err).NotTo(HaveOccurred())
 		db = nil
 	}
-
-	status := app.RedisClient.Client.FlushAll()
-	Expect(status.Err()).NotTo(HaveOccurred())
 
 	if closer != nil {
 		closer.Close()

@@ -623,8 +623,7 @@ var _ = Describe("Offer Handler", func() {
 			offerID := "dd21ec96-2890-4ba0-b8e2-40ea67196990"
 			gameID := "offers-game"
 			playerID := "player-1"
-			claimCounterKey := models.GetClaimCounterKey(playerID, offerID)
-			claimTimestampKey := models.GetClaimTimestampKey(playerID, offerID)
+
 			offerReader := JSONFor(JSON{
 				"gameId":        gameID,
 				"playerId":      playerID,
@@ -640,13 +639,10 @@ var _ = Describe("Offer Handler", func() {
 			Expect(recorder.Body.String()).To(Equal(fmt.Sprintf(`{"contents":{"gems":5,"gold":100},"nextAt":%v}`, app.Clock.GetTime().Unix()+1)))
 			Expect(recorder.Code).To(Equal(http.StatusOK))
 
-			claimCount, err := app.RedisClient.Client.Get(claimCounterKey).Int64()
-			Expect(err).ToNot(HaveOccurred())
-			Expect(claimCount).To(Equal(int64(1)))
-
-			claimTimestamp, err := app.RedisClient.Client.Get(claimTimestampKey).Int64()
-			Expect(err).ToNot(HaveOccurred())
-			Expect(claimTimestamp).To(Equal(app.Clock.GetTime().Unix()))
+			offerPlayer, err := models.GetOfferPlayer(app.DB, gameID, playerID, offerID, nil)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(offerPlayer.ClaimCounter).To(Equal(1))
+			Expect(offerPlayer.ClaimTimestamp.Time.Unix()).To(Equal(app.Clock.GetTime().Unix()))
 		})
 
 		It("should claim valid offer even if id is not passed", func() {
@@ -661,21 +657,16 @@ var _ = Describe("Offer Handler", func() {
 			})
 			request, _ := http.NewRequest("PUT", "/offers/claim", offerReader)
 			offerID := "dd21ec96-2890-4ba0-b8e2-40ea67196990"
-			claimCounterKey := models.GetClaimCounterKey(playerID, offerID)
-			claimTimestampKey := models.GetClaimTimestampKey(playerID, offerID)
 
 			app.Router.ServeHTTP(recorder, request)
 			Expect(recorder.Header().Get("Content-Type")).To(Equal("application/json"))
 			Expect(recorder.Body.String()).To(Equal(fmt.Sprintf(`{"contents":{"gems":5,"gold":100},"nextAt":%v}`, app.Clock.GetTime().Unix()+1)))
 			Expect(recorder.Code).To(Equal(http.StatusOK))
 
-			claimCount, err := app.RedisClient.Client.Get(claimCounterKey).Int64()
-			Expect(err).ToNot(HaveOccurred())
-			Expect(claimCount).To(Equal(int64(1)))
-
-			claimTimestamp, err := app.RedisClient.Client.Get(claimTimestampKey).Int64()
-			Expect(err).ToNot(HaveOccurred())
-			Expect(claimTimestamp).To(Equal(app.Clock.GetTime().Unix()))
+			offerPlayer, err := models.GetOfferPlayer(app.DB, gameID, playerID, offerID, nil)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(offerPlayer.ClaimCounter).To(Equal(1))
+			Expect(offerPlayer.ClaimTimestamp.Time.Unix()).To(Equal(app.Clock.GetTime().Unix()))
 		})
 
 		It("should not claim a claimed offer", func() {
@@ -709,8 +700,6 @@ var _ = Describe("Offer Handler", func() {
 			offerInstanceID := "4407b770-5b24-4ffa-8563-0694d1a10156"
 			gameID := "offers-game"
 			playerID := "player-1"
-			claimCounterKey := models.GetClaimCounterKey(playerID, offerID)
-			claimTimestampKey := models.GetClaimTimestampKey(playerID, offerID)
 			transactionID := uuid.NewV4().String()
 
 			offerReader := JSONFor(JSON{
@@ -742,13 +731,10 @@ var _ = Describe("Offer Handler", func() {
 			Expect(recorder.Body.String()).To(Equal(fmt.Sprintf(`{"contents":{"gems":5,"gold":100},"nextAt":%v}`, app.Clock.GetTime().Unix()+12*60*60)))
 			Expect(recorder.Code).To(Equal(http.StatusConflict))
 
-			claimCount, err := app.RedisClient.Client.Get(claimCounterKey).Int64()
-			Expect(err).ToNot(HaveOccurred())
-			Expect(claimCount).To(Equal(int64(1)))
-
-			claimTimestamp, err := app.RedisClient.Client.Get(claimTimestampKey).Int64()
-			Expect(err).ToNot(HaveOccurred())
-			Expect(claimTimestamp).To(Equal(app.Clock.GetTime().Unix()))
+			offerPlayer, err := models.GetOfferPlayer(app.DB, gameID, playerID, offerID, nil)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(offerPlayer.ClaimCounter).To(Equal(1))
+			Expect(offerPlayer.ClaimTimestamp.Time.Unix()).To(Equal(app.Clock.GetTime().Unix()))
 		})
 
 		It("should not return nextAt if max is achieved", func() {
@@ -756,8 +742,6 @@ var _ = Describe("Offer Handler", func() {
 			offerID := "9456f6c4-f9f1-4dd9-8841-9e5770c8e62c"
 			gameID := "offers-game-max-freq"
 			playerID := "player-1"
-			claimCounterKey := models.GetClaimCounterKey(playerID, offerID)
-			claimTimestampKey := models.GetClaimTimestampKey(playerID, offerID)
 			offerReader := JSONFor(JSON{
 				"gameId":        gameID,
 				"playerId":      playerID,
@@ -773,13 +757,10 @@ var _ = Describe("Offer Handler", func() {
 			Expect(recorder.Body.String()).To(Equal(`{"contents":{"gems":5,"gold":100}}`))
 			Expect(recorder.Code).To(Equal(http.StatusOK))
 
-			claimCount, err := app.RedisClient.Client.Get(claimCounterKey).Int64()
-			Expect(err).ToNot(HaveOccurred())
-			Expect(claimCount).To(Equal(int64(1)))
-
-			claimTimestamp, err := app.RedisClient.Client.Get(claimTimestampKey).Int64()
-			Expect(err).ToNot(HaveOccurred())
-			Expect(claimTimestamp).To(Equal(app.Clock.GetTime().Unix()))
+			offerPlayer, err := models.GetOfferPlayer(app.DB, gameID, playerID, offerID, nil)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(offerPlayer.ClaimCounter).To(Equal(1))
+			Expect(offerPlayer.ClaimTimestamp.Time.Unix()).To(Equal(app.Clock.GetTime().Unix()))
 		})
 
 		It("should return 422 if invalid OfferID", func() {
@@ -957,8 +938,7 @@ var _ = Describe("Offer Handler", func() {
 			offerID := "dd21ec96-2890-4ba0-b8e2-40ea67196990"
 			gameID := "offers-game"
 			playerID := "player-1"
-			viewCounterKey := models.GetViewCounterKey(playerID, offerID)
-			viewTimestampKey := models.GetViewTimestampKey(playerID, offerID)
+
 			offerReader := JSONFor(JSON{
 				"playerId":     playerID,
 				"gameId":       gameID,
@@ -974,13 +954,10 @@ var _ = Describe("Offer Handler", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(int64(obj["nextAt"].(float64))).To(Equal(app.Clock.GetTime().Unix() + 1))
 
-			viewCount, err := app.RedisClient.Client.Get(viewCounterKey).Int64()
+			offerPlayer, err := models.GetOfferPlayer(app.DB, gameID, playerID, offerID, nil)
 			Expect(err).NotTo(HaveOccurred())
-			Expect(viewCount).To(Equal(int64(1)))
-
-			viewTimestamp, err := app.RedisClient.Client.Get(viewTimestampKey).Int64()
-			Expect(err).NotTo(HaveOccurred())
-			Expect(viewTimestamp).To(Equal(app.Clock.GetTime().Unix()))
+			Expect(offerPlayer.ViewCounter).To(Equal(1))
+			Expect(offerPlayer.ViewTimestamp.Time.Unix()).To(Equal(app.Clock.GetTime().Unix()))
 		})
 
 		It("should return the current timestamp as nextAt if offer reached max period", func() {
@@ -1026,8 +1003,6 @@ var _ = Describe("Offer Handler", func() {
 			offerID := "dd21ec96-2890-4ba0-b8e2-40ea67196990"
 			gameID := "offers-game"
 			playerID := "player-1"
-			viewCounterKey := models.GetViewCounterKey(playerID, offerID)
-			viewTimestampKey := models.GetViewTimestampKey(playerID, offerID)
 
 			// View for the first time
 			offerReader := JSONFor(JSON{
@@ -1060,13 +1035,10 @@ var _ = Describe("Offer Handler", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(int64(obj["nextAt"].(float64))).To(Equal(app.Clock.GetTime().Unix() + 1))
 
-			viewCount, err := app.RedisClient.Client.Get(viewCounterKey).Int64()
+			offerPlayer, err := models.GetOfferPlayer(app.DB, gameID, playerID, offerID, nil)
 			Expect(err).NotTo(HaveOccurred())
-			Expect(viewCount).To(Equal(int64(2)))
-
-			viewTimestamp, err := app.RedisClient.Client.Get(viewTimestampKey).Int64()
-			Expect(err).NotTo(HaveOccurred())
-			Expect(viewTimestamp).To(Equal(app.Clock.GetTime().Unix()))
+			Expect(offerPlayer.ViewCounter).To(Equal(2))
+			Expect(offerPlayer.ViewTimestamp.Time.Unix()).To(Equal(app.Clock.GetTime().Unix()))
 		})
 
 		It("should return nextAt zero after seeing twice offer with max period 2", func() {
@@ -1074,8 +1046,14 @@ var _ = Describe("Offer Handler", func() {
 			playerID := "player-1"
 			offerID := "aa65a3f2-7cf8-4d76-957f-0a23a1bbbd32"
 			gameID := "limited-offers-game"
-			viewCounterKey := models.GetViewCounterKey(playerID, offerID)
-			err := app.RedisClient.Client.Set(viewCounterKey, 1, 0).Err()
+
+			op := &models.OfferPlayer{
+				GameID:      gameID,
+				PlayerID:    playerID,
+				OfferID:     offerID,
+				ViewCounter: 1,
+			}
+			err := models.CreateOfferPlayer(app.DB, op, nil)
 			Expect(err).ToNot(HaveOccurred())
 
 			offerReader := JSONFor(JSON{
@@ -1098,8 +1076,6 @@ var _ = Describe("Offer Handler", func() {
 			offerID := "dd21ec96-2890-4ba0-b8e2-40ea67196990"
 			gameID := "offers-game"
 			playerID := "player-1"
-			viewCounterKey := models.GetViewCounterKey(playerID, offerID)
-			viewTimestampKey := models.GetViewTimestampKey(playerID, offerID)
 			impressionID := uuid.NewV4().String()
 			timestamp := app.Clock.GetTime().Unix()
 
@@ -1134,13 +1110,10 @@ var _ = Describe("Offer Handler", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(int64(obj["nextAt"].(float64))).To(Equal(timestamp + 2))
 
-			viewCount, err := app.RedisClient.Client.Get(viewCounterKey).Int64()
+			offerPlayer, err := models.GetOfferPlayer(app.DB, gameID, playerID, offerID, nil)
 			Expect(err).NotTo(HaveOccurred())
-			Expect(viewCount).To(Equal(int64(1)))
-
-			viewTimestamp, err := app.RedisClient.Client.Get(viewTimestampKey).Int64()
-			Expect(err).NotTo(HaveOccurred())
-			Expect(viewTimestamp).To(Equal(timestamp))
+			Expect(offerPlayer.ViewCounter).To(Equal(1))
+			Expect(offerPlayer.ViewTimestamp.Time.Unix()).To(Equal(timestamp))
 		})
 
 		It("should not increment when is a retry request and rechead max view", func() {
@@ -1148,18 +1121,19 @@ var _ = Describe("Offer Handler", func() {
 			offerID := "dd21ec96-2890-4ba0-b8e2-40ea67196990"
 			gameID := "offers-game"
 			playerID := "player-1"
-			viewCounterKey := models.GetViewCounterKey(playerID, offerID)
-			viewTimestampKey := models.GetViewTimestampKey(playerID, offerID)
-			impressionKey := models.GetImpressionsKey(playerID, gameID)
 			impressionID := uuid.NewV4().String()
 			timestamp := app.Clock.GetTime().Unix()
 
 			// already seen once
-			err := app.RedisClient.Client.Set(viewCounterKey, 1, 0).Err()
-			Expect(err).ToNot(HaveOccurred())
-			err = app.RedisClient.Client.Set(viewTimestampKey, timestamp, 0).Err()
-			Expect(err).ToNot(HaveOccurred())
-			err = app.RedisClient.Client.SAdd(impressionKey, impressionID).Err()
+			op := &models.OfferPlayer{
+				GameID:        gameID,
+				PlayerID:      playerID,
+				OfferID:       offerID,
+				ViewCounter:   1,
+				ViewTimestamp: dat.NullTimeFrom(time.Unix(timestamp, 0)),
+				Impressions:   dat.JSON([]byte(fmt.Sprintf(`["%s"]`, impressionID))),
+			}
+			err := models.CreateOfferPlayer(app.DB, op, nil)
 			Expect(err).ToNot(HaveOccurred())
 
 			offerReader := JSONFor(JSON{
@@ -1176,9 +1150,10 @@ var _ = Describe("Offer Handler", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(int64(obj["nextAt"].(float64))).To(Equal(timestamp + 1))
 
-			viewCount, err := app.RedisClient.Client.Get(viewCounterKey).Int64()
+			offerPlayer, err := models.GetOfferPlayer(app.DB, gameID, playerID, offerID, nil)
 			Expect(err).NotTo(HaveOccurred())
-			Expect(viewCount).To(Equal(int64(1)))
+			Expect(offerPlayer.ViewCounter).To(Equal(1))
+			Expect(offerPlayer.ViewTimestamp.Time.Unix()).To(Equal(timestamp))
 		})
 
 		It("should return status code 422 if invalid parameters", func() {

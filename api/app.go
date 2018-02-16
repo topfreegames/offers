@@ -25,7 +25,6 @@ import (
 	"github.com/topfreegames/offers/errors"
 	"github.com/topfreegames/offers/metadata"
 	"github.com/topfreegames/offers/models"
-	"github.com/topfreegames/offers/util"
 	runner "gopkg.in/mgutz/dat.v2/sqlx-runner"
 )
 
@@ -39,7 +38,6 @@ type App struct {
 	Logger            logrus.FieldLogger
 	MaxAge            int64
 	NewRelic          newrelic.Application
-	RedisClient       *util.RedisClient
 	Router            *mux.Router
 	Server            *http.Server
 	Cache             *cache.Cache
@@ -208,11 +206,6 @@ func (a *App) configureApp() error {
 		return err
 	}
 
-	err = a.configureRedisClient()
-	if err != nil {
-		return err
-	}
-
 	err = a.configureNewRelic()
 	if err != nil {
 		return err
@@ -241,31 +234,6 @@ func (a *App) configureCache() {
 	cleanupInterval := time.Duration(a.Config.GetInt64("offersCache.cleanupInterval")) * time.Second
 	a.Cache = cache.New(maxAge, cleanupInterval)
 	a.OffersCacheMaxAge = maxAge
-}
-
-func (a *App) configureRedisClient() error {
-	redisHost := a.Config.GetString("redis.host")
-	redisPort := a.Config.GetInt("redis.port")
-	redisPass := a.Config.GetString("redis.password")
-	redisDB := a.Config.GetInt("redis.db")
-	redisMaxPoolSize := a.Config.GetInt("redis.maxPoolSize")
-
-	l := a.Logger.WithFields(logrus.Fields{
-		"redis.host":             redisHost,
-		"redis.port":             redisPort,
-		"redis.redisDB":          redisDB,
-		"redis.redisMaxPoolSize": redisMaxPoolSize,
-	})
-	l.Debug("Connecting to Redis...")
-	cli, err := util.GetRedisClient(redisHost, redisPort, redisPass, redisDB, redisMaxPoolSize, a.Logger)
-	if err != nil {
-		l.WithError(err).Error("Connection to redis failed.")
-		return err
-	}
-	l.Debug("Successful connection to redis.")
-	a.RedisClient = cli
-
-	return nil
 }
 
 func (a *App) configureDatabase() error {

@@ -9,12 +9,6 @@ postgres:
 newrelic:
   app: offers
   key:
-redis:
-  host: localhost
-  port: 6333
-  password: ""
-  db: 0
-  maxPoolSize: 20
 cache:
   maxAgeSeconds: 43200
 offersCache:

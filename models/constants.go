@@ -30,21 +30,3 @@ const SegmentSelect = "Database/Select"
 
 //SegmentInsect represents a segment
 const SegmentInsect = "Database/Insect"
-
-//SegmentSIsMember represents a redis op
-const SegmentSIsMember = "Redis/SISMEMBER"
-
-//SegmentGet represents a redis op
-const SegmentGet = "Redis/GET"
-
-//SegmentIncr represents a redis op
-const SegmentIncr = "Redis/INCR"
-
-//SegmentSet represents a redis op
-const SegmentSet = "Redis/SET"
-
-//SegmentSAdd represents a redis op
-const SegmentSAdd = "Redis/SADD"
-
-//SegmentRedis represents a redis op
-const SegmentRedis = "Redis"

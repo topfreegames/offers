@@ -13,12 +13,6 @@ Offers uses PostgreSQL to store offers information. The container takes environm
 * `OFFERS_POSTGRES_PASSWORD` - Password of the PostgreSQL Server to connect to;
 * `OFFERS_POSTGRES_USER` - PostgreSQL user;
 
-Offers also uses Redis to store offers views and purchases information. The container takes environment variables to specify this connection:
-
-* `OFFERS_REDIS_HOST` - Redis host to connect to;
-* `OFFERS_REDIS_PORT` - Redis port to connect to;
-* `OFFERS_REDIS_PASSWORD` - Password of the Redis database to connect to;
-
 Offers uses basic auth to restrict access to routes that are not used directly by a client consuming the offers.
 
 * `OFFERS_BASICAUTH_USERNAME` - Basic Auth user;
