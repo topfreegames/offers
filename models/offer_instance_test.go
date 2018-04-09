@@ -38,7 +38,7 @@ var _ = Describe("Offer Instance Model", func() {
 			offerInstanceID := defaultOfferInstanceID
 
 			//When
-			offerInstance, err := models.GetOfferInstanceByID(db, gameID, offerInstanceID, nil)
+			offerInstance, err := models.GetOfferInstanceByID(nil, db, gameID, offerInstanceID, nil)
 
 			//Then
 			Expect(err).NotTo(HaveOccurred())
@@ -53,7 +53,7 @@ var _ = Describe("Offer Instance Model", func() {
 			offerInstanceID := uuid.NewV4().String()
 
 			//When
-			_, err := models.GetOfferInstanceByID(db, gameID, offerInstanceID, nil)
+			_, err := models.GetOfferInstanceByID(nil, db, gameID, offerInstanceID, nil)
 
 			//Then
 			Expect(err).To(HaveOccurred())
@@ -66,7 +66,7 @@ var _ = Describe("Offer Instance Model", func() {
 			offerInstanceID := defaultOfferInstanceID
 
 			//When
-			_, err := models.GetOfferInstanceByID(db, gameID, offerInstanceID, nil)
+			_, err := models.GetOfferInstanceByID(nil, db, gameID, offerInstanceID, nil)
 
 			//Then
 			Expect(err).To(HaveOccurred())
@@ -86,7 +86,7 @@ var _ = Describe("Offer Instance Model", func() {
 			transactionID := uuid.NewV4().String()
 
 			//When
-			contents, alreadyClaimed, nextAt, err := models.ClaimOffer(db, gameID, id, playerID, defaultProductID, transactionID, currentTime.Unix(), currentTime, nil)
+			contents, alreadyClaimed, nextAt, err := models.ClaimOffer(nil, db, gameID, id, playerID, defaultProductID, transactionID, currentTime.Unix(), currentTime, nil)
 
 			//Then
 			Expect(err).NotTo(HaveOccurred())
@@ -94,7 +94,7 @@ var _ = Describe("Offer Instance Model", func() {
 			Expect(alreadyClaimed).To(BeFalse())
 			Expect(nextAt).To(Equal(currentTime.Unix() + 1))
 
-			offerPlayer, err := models.GetOfferPlayer(db, gameID, playerID, offerID, nil)
+			offerPlayer, err := models.GetOfferPlayer(nil, db, gameID, playerID, offerID, nil)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(offerPlayer.ClaimCounter).To(Equal(1))
 			Expect(offerPlayer.ClaimTimestamp.Time.Unix()).To(Equal(currentTime.Unix()))
@@ -110,7 +110,7 @@ var _ = Describe("Offer Instance Model", func() {
 			transactionID := uuid.NewV4().String()
 
 			//When
-			contents, alreadyClaimed, nextAt, err := models.ClaimOffer(db, gameID, id, playerID, defaultProductID, transactionID, currentTime.Unix(), currentTime, nil)
+			contents, alreadyClaimed, nextAt, err := models.ClaimOffer(nil, db, gameID, id, playerID, defaultProductID, transactionID, currentTime.Unix(), currentTime, nil)
 
 			//Then
 			Expect(err).NotTo(HaveOccurred())
@@ -118,7 +118,7 @@ var _ = Describe("Offer Instance Model", func() {
 			Expect(alreadyClaimed).To(BeFalse())
 			Expect(nextAt).To(Equal(currentTime.Unix() + 1))
 
-			offerPlayer, err := models.GetOfferPlayer(db, gameID, playerID, offerID, nil)
+			offerPlayer, err := models.GetOfferPlayer(nil, db, gameID, playerID, offerID, nil)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(offerPlayer.ClaimCounter).To(Equal(1))
 			Expect(offerPlayer.ClaimTimestamp.Time.Unix()).To(Equal(currentTime.Unix()))
@@ -134,7 +134,7 @@ var _ = Describe("Offer Instance Model", func() {
 			transactionID := uuid.NewV4().String()
 
 			//When
-			contents, alreadyClaimed, nextAt, err := models.ClaimOffer(db, gameID, id, playerID, defaultProductID, transactionID, currentTime.Unix(), currentTime, nil)
+			contents, alreadyClaimed, nextAt, err := models.ClaimOffer(nil, db, gameID, id, playerID, defaultProductID, transactionID, currentTime.Unix(), currentTime, nil)
 
 			//Then
 			Expect(contents).NotTo(BeNil())
@@ -142,7 +142,7 @@ var _ = Describe("Offer Instance Model", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(nextAt).To(Equal(currentTime.Unix() + 1))
 
-			offerPlayer, err := models.GetOfferPlayer(db, gameID, playerID, offerID, nil)
+			offerPlayer, err := models.GetOfferPlayer(nil, db, gameID, playerID, offerID, nil)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(offerPlayer.ClaimCounter).To(Equal(1))
 			Expect(offerPlayer.ClaimTimestamp.Time.Unix()).To(Equal(currentTime.Unix()))
@@ -158,7 +158,7 @@ var _ = Describe("Offer Instance Model", func() {
 			transactionID := uuid.NewV4().String()
 
 			//When
-			contents, alreadyClaimed, nextAt, err := models.ClaimOffer(db, gameID, id, playerID, defaultProductID, transactionID, currentTime.Unix(), currentTime, nil)
+			contents, alreadyClaimed, nextAt, err := models.ClaimOffer(nil, db, gameID, id, playerID, defaultProductID, transactionID, currentTime.Unix(), currentTime, nil)
 
 			//Then
 			Expect(contents).NotTo(BeNil())
@@ -166,7 +166,7 @@ var _ = Describe("Offer Instance Model", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(nextAt).To(Equal(currentTime.Unix() + 1))
 
-			offerPlayer, err := models.GetOfferPlayer(db, gameID, playerID, offerID, nil)
+			offerPlayer, err := models.GetOfferPlayer(nil, db, gameID, playerID, offerID, nil)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(offerPlayer.ClaimCounter).To(Equal(1))
 			Expect(offerPlayer.ClaimTimestamp.Time.Unix()).To(Equal(currentTime.Unix()))
@@ -182,7 +182,7 @@ var _ = Describe("Offer Instance Model", func() {
 			transactionID := uuid.NewV4().String()
 
 			//When
-			contents, alreadyClaimed, nextAt, err := models.ClaimOffer(db, gameID, id, playerID, defaultProductID, transactionID, currentTime.Unix(), currentTime, nil)
+			contents, alreadyClaimed, nextAt, err := models.ClaimOffer(nil, db, gameID, id, playerID, defaultProductID, transactionID, currentTime.Unix(), currentTime, nil)
 
 			//Then
 			Expect(contents).NotTo(BeNil())
@@ -190,7 +190,7 @@ var _ = Describe("Offer Instance Model", func() {
 			Expect(nextAt).To(Equal(int64(0)))
 			Expect(err).NotTo(HaveOccurred())
 
-			offerPlayer, err := models.GetOfferPlayer(db, gameID, playerID, offerID, nil)
+			offerPlayer, err := models.GetOfferPlayer(nil, db, gameID, playerID, offerID, nil)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(offerPlayer.ClaimCounter).To(Equal(1))
 			Expect(offerPlayer.ClaimTimestamp.Time.Unix()).To(Equal(currentTime.Unix()))
@@ -206,7 +206,7 @@ var _ = Describe("Offer Instance Model", func() {
 			transactionID := uuid.NewV4().String()
 
 			//When
-			contents, alreadyClaimed, nextAt, err := models.ClaimOffer(db, gameID, id, playerID, defaultProductID, transactionID, currentTime.Unix(), currentTime, nil)
+			contents, alreadyClaimed, nextAt, err := models.ClaimOffer(nil, db, gameID, id, playerID, defaultProductID, transactionID, currentTime.Unix(), currentTime, nil)
 
 			//Then
 			Expect(contents).NotTo(BeNil())
@@ -214,7 +214,7 @@ var _ = Describe("Offer Instance Model", func() {
 			Expect(nextAt).To(Equal(int64(0)))
 			Expect(err).NotTo(HaveOccurred())
 
-			offerPlayer, err := models.GetOfferPlayer(db, gameID, playerID, offerID, nil)
+			offerPlayer, err := models.GetOfferPlayer(nil, db, gameID, playerID, offerID, nil)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(offerPlayer.ClaimCounter).To(Equal(1))
 			Expect(offerPlayer.ClaimTimestamp.Time.Unix()).To(Equal(currentTime.Unix()))
@@ -230,7 +230,7 @@ var _ = Describe("Offer Instance Model", func() {
 			transactionID := uuid.NewV4().String()
 
 			//When
-			contents, alreadyClaimed, nextAt, err := models.ClaimOffer(db, gameID, id, playerID, defaultProductID, transactionID, currentTime.Unix(), currentTime, nil)
+			contents, alreadyClaimed, nextAt, err := models.ClaimOffer(nil, db, gameID, id, playerID, defaultProductID, transactionID, currentTime.Unix(), currentTime, nil)
 
 			//Then
 			Expect(contents).NotTo(BeNil())
@@ -238,7 +238,7 @@ var _ = Describe("Offer Instance Model", func() {
 			Expect(nextAt).To(Equal(currentTime.Unix()))
 			Expect(err).NotTo(HaveOccurred())
 
-			offerPlayer, err := models.GetOfferPlayer(db, gameID, playerID, offerID, nil)
+			offerPlayer, err := models.GetOfferPlayer(nil, db, gameID, playerID, offerID, nil)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(offerPlayer.ClaimCounter).To(Equal(1))
 			Expect(offerPlayer.ClaimTimestamp.Time.Unix()).To(Equal(currentTime.Unix()))
@@ -254,7 +254,7 @@ var _ = Describe("Offer Instance Model", func() {
 			transactionID := uuid.NewV4().String()
 
 			//When
-			contents, alreadyClaimed, nextAt, err := models.ClaimOffer(db, gameID, id, playerID, defaultProductID, transactionID, currentTime.Unix(), currentTime, nil)
+			contents, alreadyClaimed, nextAt, err := models.ClaimOffer(nil, db, gameID, id, playerID, defaultProductID, transactionID, currentTime.Unix(), currentTime, nil)
 
 			//Then
 			Expect(contents).NotTo(BeNil())
@@ -262,7 +262,7 @@ var _ = Describe("Offer Instance Model", func() {
 			Expect(nextAt).To(Equal(currentTime.Unix() + 30))
 			Expect(err).NotTo(HaveOccurred())
 
-			offerPlayer, err := models.GetOfferPlayer(db, gameID, playerID, offerID, nil)
+			offerPlayer, err := models.GetOfferPlayer(nil, db, gameID, playerID, offerID, nil)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(offerPlayer.ClaimCounter).To(Equal(1))
 			Expect(offerPlayer.ClaimTimestamp.Time.Unix()).To(Equal(currentTime.Unix()))
@@ -280,9 +280,9 @@ var _ = Describe("Offer Instance Model", func() {
 			secondTime := time.Unix(to+1000, 0)
 
 			//When
-			contents1, alreadyClaimed1, nextAt1, err := models.ClaimOffer(db, gameID, id, playerID, defaultProductID, transactionID, firstTime.Unix(), firstTime, nil)
+			contents1, alreadyClaimed1, nextAt1, err := models.ClaimOffer(nil, db, gameID, id, playerID, defaultProductID, transactionID, firstTime.Unix(), firstTime, nil)
 			Expect(err).NotTo(HaveOccurred())
-			contents2, alreadyClaimed2, nextAt2, err := models.ClaimOffer(db, gameID, id, playerID, defaultProductID, transactionID, secondTime.Unix(), secondTime, nil)
+			contents2, alreadyClaimed2, nextAt2, err := models.ClaimOffer(nil, db, gameID, id, playerID, defaultProductID, transactionID, secondTime.Unix(), secondTime, nil)
 			Expect(err).NotTo(HaveOccurred())
 
 			//Then
@@ -294,7 +294,7 @@ var _ = Describe("Offer Instance Model", func() {
 			Expect(alreadyClaimed2).To(BeTrue())
 			Expect(nextAt2).To(Equal(int64(to + 501)))
 
-			offerPlayer, err := models.GetOfferPlayer(db, gameID, playerID, offerID, nil)
+			offerPlayer, err := models.GetOfferPlayer(nil, db, gameID, playerID, offerID, nil)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(offerPlayer.ClaimCounter).To(Equal(1))
 			Expect(offerPlayer.ClaimTimestamp.Time.Unix()).To(Equal(firstTime.Unix()))
@@ -313,9 +313,9 @@ var _ = Describe("Offer Instance Model", func() {
 			secondTime := time.Unix(to+1000, 0)
 
 			//When
-			contents1, alreadyClaimed1, nextAt1, err := models.ClaimOffer(db, gameID, id, playerID, defaultProductID, transactionID1, firstTime.Unix(), firstTime, nil)
+			contents1, alreadyClaimed1, nextAt1, err := models.ClaimOffer(nil, db, gameID, id, playerID, defaultProductID, transactionID1, firstTime.Unix(), firstTime, nil)
 			Expect(err).NotTo(HaveOccurred())
-			contents2, alreadyClaimed2, nextAt2, err := models.ClaimOffer(db, gameID, id, playerID, defaultProductID, transactionID2, secondTime.Unix(), secondTime, nil)
+			contents2, alreadyClaimed2, nextAt2, err := models.ClaimOffer(nil, db, gameID, id, playerID, defaultProductID, transactionID2, secondTime.Unix(), secondTime, nil)
 			Expect(err).NotTo(HaveOccurred())
 
 			//Then
@@ -327,7 +327,7 @@ var _ = Describe("Offer Instance Model", func() {
 			Expect(alreadyClaimed2).To(BeFalse())
 			Expect(nextAt2).To(Equal(secondTime.Unix() + 1))
 
-			offerPlayer, err := models.GetOfferPlayer(db, gameID, playerID, offerID, nil)
+			offerPlayer, err := models.GetOfferPlayer(nil, db, gameID, playerID, offerID, nil)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(offerPlayer.ClaimCounter).To(Equal(2))
 			Expect(offerPlayer.ClaimTimestamp.Time.Unix()).To(Equal(secondTime.Unix()))
@@ -341,7 +341,7 @@ var _ = Describe("Offer Instance Model", func() {
 			playerID := "player-1"
 			transactionID := uuid.NewV4().String()
 			//When
-			_, _, _, err := models.ClaimOffer(db, gameID, id, playerID, defaultProductID, transactionID, currentTime.Unix(), currentTime, nil)
+			_, _, _, err := models.ClaimOffer(nil, db, gameID, id, playerID, defaultProductID, transactionID, currentTime.Unix(), currentTime, nil)
 
 			//Then
 			Expect(err).To(HaveOccurred())
@@ -363,7 +363,7 @@ var _ = Describe("Offer Instance Model", func() {
 			Expect(err).NotTo(HaveOccurred())
 			db.(*runner.DB).DB.Close() // make DB connection unavailable
 
-			_, _, _, err = models.ClaimOffer(db, gameID, id, playerID, defaultProductID, transactionID, currentTime.Unix(), currentTime, nil)
+			_, _, _, err = models.ClaimOffer(nil, db, gameID, id, playerID, defaultProductID, transactionID, currentTime.Unix(), currentTime, nil)
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(Equal("sql: database is closed"))
 		})
@@ -411,12 +411,12 @@ var _ = Describe("Offer Instance Model", func() {
 			currentTime := time.Now()
 
 			//When
-			isReplay, nextAt, err := models.ViewOffer(db, gameID, offerInstanceID, playerID, impressionID, currentTime, nil)
+			isReplay, nextAt, err := models.ViewOffer(nil, db, gameID, offerInstanceID, playerID, impressionID, currentTime, nil)
 			Expect(isReplay).To(BeFalse())
 			Expect(err).NotTo(HaveOccurred())
 
 			//Then
-			offerPlayer, err := models.GetOfferPlayer(db, gameID, playerID, offerID, nil)
+			offerPlayer, err := models.GetOfferPlayer(nil, db, gameID, playerID, offerID, nil)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(offerPlayer.ViewCounter).To(Equal(1))
 			Expect(offerPlayer.ViewTimestamp.Time.Unix()).To(Equal(currentTime.Unix()))
@@ -432,7 +432,7 @@ var _ = Describe("Offer Instance Model", func() {
 			impressionID := uuid.NewV4().String()
 
 			//When
-			isReplay, nextAt, err := models.ViewOffer(db, gameID, offerInstanceID, playerID, impressionID, currentTime, nil)
+			isReplay, nextAt, err := models.ViewOffer(nil, db, gameID, offerInstanceID, playerID, impressionID, currentTime, nil)
 			Expect(isReplay).To(BeFalse())
 
 			//Then
@@ -449,7 +449,7 @@ var _ = Describe("Offer Instance Model", func() {
 			impressionID := uuid.NewV4().String()
 
 			//When
-			isReplay, nextAt, err := models.ViewOffer(db, gameID, offerInstanceID, playerID, impressionID, currentTime, nil)
+			isReplay, nextAt, err := models.ViewOffer(nil, db, gameID, offerInstanceID, playerID, impressionID, currentTime, nil)
 			Expect(isReplay).To(BeFalse())
 
 			//Then
@@ -467,12 +467,12 @@ var _ = Describe("Offer Instance Model", func() {
 			impressionID := uuid.NewV4().String()
 
 			//When
-			isReplay, nextAt, err := models.ViewOffer(db, gameID, offerInstanceID, playerID, impressionID, currentTime, nil)
+			isReplay, nextAt, err := models.ViewOffer(nil, db, gameID, offerInstanceID, playerID, impressionID, currentTime, nil)
 			Expect(isReplay).To(BeFalse())
 			Expect(err).NotTo(HaveOccurred())
 
 			//Then
-			offerPlayer, err := models.GetOfferPlayer(db, gameID, playerID, offerID, nil)
+			offerPlayer, err := models.GetOfferPlayer(nil, db, gameID, playerID, offerID, nil)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(offerPlayer.ViewCounter).To(Equal(1))
 			Expect(offerPlayer.ViewTimestamp.Time.Unix()).To(Equal(currentTime.Unix()))
@@ -488,7 +488,7 @@ var _ = Describe("Offer Instance Model", func() {
 			currentTime := time.Now()
 
 			//When
-			isReplay, nextAt, err := models.ViewOffer(db, gameID, offerInstanceID, playerID, impressionID, currentTime, nil)
+			isReplay, nextAt, err := models.ViewOffer(nil, db, gameID, offerInstanceID, playerID, impressionID, currentTime, nil)
 			Expect(isReplay).To(BeFalse())
 
 			//Then
@@ -506,7 +506,7 @@ var _ = Describe("Offer Instance Model", func() {
 			currentTime := time.Now()
 
 			//When
-			isReplay, nextAt, err := models.ViewOffer(db, gameID, offerInstanceID, playerID, impressionID, currentTime, nil)
+			isReplay, nextAt, err := models.ViewOffer(nil, db, gameID, offerInstanceID, playerID, impressionID, currentTime, nil)
 			Expect(isReplay).To(BeFalse())
 
 			//Then
@@ -524,7 +524,7 @@ var _ = Describe("Offer Instance Model", func() {
 			currentTime := time.Now()
 
 			//When
-			isReplay, nextAt, err := models.ViewOffer(db, gameID, offerInstanceID, playerID, impressionID, currentTime, nil)
+			isReplay, nextAt, err := models.ViewOffer(nil, db, gameID, offerInstanceID, playerID, impressionID, currentTime, nil)
 			Expect(isReplay).To(BeFalse())
 
 			//Then
@@ -543,15 +543,15 @@ var _ = Describe("Offer Instance Model", func() {
 			currentTime := time.Now()
 
 			//When
-			isReplay, nextAt, err := models.ViewOffer(db, gameID, offerInstanceID, playerID, impressionID, currentTime, nil)
+			isReplay, nextAt, err := models.ViewOffer(nil, db, gameID, offerInstanceID, playerID, impressionID, currentTime, nil)
 			Expect(isReplay).To(BeFalse())
 			Expect(err).NotTo(HaveOccurred())
-			isReplay, nextAt, err = models.ViewOffer(db, gameID, offerInstanceID, playerID, impressionID, currentTime, nil)
+			isReplay, nextAt, err = models.ViewOffer(nil, db, gameID, offerInstanceID, playerID, impressionID, currentTime, nil)
 			Expect(isReplay).To(BeTrue())
 			Expect(err).NotTo(HaveOccurred())
 
 			//Then
-			offerPlayer, err := models.GetOfferPlayer(db, gameID, playerID, offerID, nil)
+			offerPlayer, err := models.GetOfferPlayer(nil, db, gameID, playerID, offerID, nil)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(offerPlayer.ViewCounter).To(Equal(1))
 			Expect(offerPlayer.ViewTimestamp.Time.Unix()).To(Equal(currentTime.Unix()))
@@ -568,16 +568,16 @@ var _ = Describe("Offer Instance Model", func() {
 			impressionID := uuid.NewV4().String()
 
 			//When
-			isReplay, nextAt, err := models.ViewOffer(db, gameID, offerInstanceID, playerID, impressionID, currentTime, nil)
+			isReplay, nextAt, err := models.ViewOffer(nil, db, gameID, offerInstanceID, playerID, impressionID, currentTime, nil)
 			Expect(isReplay).To(BeFalse())
 			Expect(err).NotTo(HaveOccurred())
 			impressionID = uuid.NewV4().String()
-			isReplay, nextAt, err = models.ViewOffer(db, gameID, offerInstanceID, playerID, impressionID, currentTime, nil)
+			isReplay, nextAt, err = models.ViewOffer(nil, db, gameID, offerInstanceID, playerID, impressionID, currentTime, nil)
 			Expect(isReplay).To(BeFalse())
 			Expect(err).NotTo(HaveOccurred())
 
 			//Then
-			offerPlayer, err := models.GetOfferPlayer(db, gameID, playerID, offerID, nil)
+			offerPlayer, err := models.GetOfferPlayer(nil, db, gameID, playerID, offerID, nil)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(offerPlayer.ViewCounter).To(Equal(2))
 			Expect(offerPlayer.ViewTimestamp.Time.Unix()).To(Equal(currentTime.Unix()))
@@ -594,7 +594,7 @@ var _ = Describe("Offer Instance Model", func() {
 			filterAttrs := make(map[string]string)
 
 			//When
-			offerInstances, err := models.GetAvailableOffers(db, offersCache, gameID, playerID, currentTime, expireDuration, filterAttrs, false, nil)
+			offerInstances, err := models.GetAvailableOffers(nil, db, offersCache, gameID, playerID, currentTime, expireDuration, filterAttrs, false, nil)
 
 			//Then
 			Expect(err).NotTo(HaveOccurred())
@@ -633,7 +633,7 @@ var _ = Describe("Offer Instance Model", func() {
 			}
 
 			//When
-			offerInstances, err := models.GetAvailableOffers(db, offersCache, gameID, playerID, currentTime, expireDuration, filterAttrs, true, nil)
+			offerInstances, err := models.GetAvailableOffers(nil, db, offersCache, gameID, playerID, currentTime, expireDuration, filterAttrs, true, nil)
 
 			//Then
 			Expect(err).NotTo(HaveOccurred())
@@ -664,7 +664,7 @@ var _ = Describe("Offer Instance Model", func() {
 			}
 
 			//When
-			offerInstances, err := models.GetAvailableOffers(db, offersCache, gameID, playerID, currentTime, expireDuration, filterAttrs, false, nil)
+			offerInstances, err := models.GetAvailableOffers(nil, db, offersCache, gameID, playerID, currentTime, expireDuration, filterAttrs, false, nil)
 
 			//Then
 			Expect(err).NotTo(HaveOccurred())
@@ -681,7 +681,7 @@ var _ = Describe("Offer Instance Model", func() {
 			}
 
 			//When
-			offerInstances, err := models.GetAvailableOffers(db, offersCache, gameID, playerID, currentTime, expireDuration, filterAttrs, false, nil)
+			offerInstances, err := models.GetAvailableOffers(nil, db, offersCache, gameID, playerID, currentTime, expireDuration, filterAttrs, false, nil)
 
 			//Then
 			Expect(err).NotTo(HaveOccurred())
@@ -700,7 +700,7 @@ var _ = Describe("Offer Instance Model", func() {
 			}
 
 			//When
-			offerInstances, err := models.GetAvailableOffers(db, offersCache, gameID, playerID, currentTime, expireDuration, filterAttrs, true, nil)
+			offerInstances, err := models.GetAvailableOffers(nil, db, offersCache, gameID, playerID, currentTime, expireDuration, filterAttrs, true, nil)
 
 			//Then
 			Expect(err).NotTo(HaveOccurred())
@@ -741,7 +741,7 @@ var _ = Describe("Offer Instance Model", func() {
 			}
 
 			//When
-			offerInstances, err := models.GetAvailableOffers(db, offersCache, gameID, playerID, currentTime, expireDuration, filterAttrs, false, nil)
+			offerInstances, err := models.GetAvailableOffers(nil, db, offersCache, gameID, playerID, currentTime, expireDuration, filterAttrs, false, nil)
 
 			//Then
 			Expect(err).NotTo(HaveOccurred())
@@ -756,7 +756,7 @@ var _ = Describe("Offer Instance Model", func() {
 			filterAttrs := make(map[string]string)
 
 			//When
-			offerInstances, err := models.GetAvailableOffers(db, offersCache, gameID, playerID, currentTime, expireDuration, filterAttrs, false, nil)
+			offerInstances, err := models.GetAvailableOffers(nil, db, offersCache, gameID, playerID, currentTime, expireDuration, filterAttrs, false, nil)
 
 			//Then
 			Expect(offerInstances).To(BeEmpty())
@@ -772,9 +772,9 @@ var _ = Describe("Offer Instance Model", func() {
 			impressionID := uuid.NewV4().String()
 
 			//When
-			_, _, err := models.ViewOffer(db, gameID, defaultOfferInstanceID, playerID, impressionID, currentTime, nil)
+			_, _, err := models.ViewOffer(nil, db, gameID, defaultOfferInstanceID, playerID, impressionID, currentTime, nil)
 			Expect(err).NotTo(HaveOccurred())
-			offerInstances, err := models.GetAvailableOffers(db, offersCache, gameID, playerID, nextTime, expireDuration, filterAttrs, false, nil)
+			offerInstances, err := models.GetAvailableOffers(nil, db, offersCache, gameID, playerID, nextTime, expireDuration, filterAttrs, false, nil)
 			Expect(err).NotTo(HaveOccurred())
 
 			//Then
@@ -792,9 +792,9 @@ var _ = Describe("Offer Instance Model", func() {
 			offerInstanceID := "4407b770-5b24-4ffa-8563-0694d1a10156"
 
 			//When
-			_, _, _, err := models.ClaimOffer(db, gameID, offerInstanceID, "", "", "", currentTime.Unix(), currentTime, nil)
+			_, _, _, err := models.ClaimOffer(nil, db, gameID, offerInstanceID, "", "", "", currentTime.Unix(), currentTime, nil)
 			Expect(err).NotTo(HaveOccurred())
-			offerInstances, err := models.GetAvailableOffers(db, offersCache, gameID, playerID, nextTime, expireDuration, filterAttrs, false, nil)
+			offerInstances, err := models.GetAvailableOffers(nil, db, offersCache, gameID, playerID, nextTime, expireDuration, filterAttrs, false, nil)
 			Expect(err).NotTo(HaveOccurred())
 
 			//Then
@@ -811,7 +811,7 @@ var _ = Describe("Offer Instance Model", func() {
 			filterAttrs := make(map[string]string)
 
 			//When
-			offerInstances, err := models.GetAvailableOffers(db, offersCache, gameID, playerID, currentTime, expireDuration, filterAttrs, false, nil)
+			offerInstances, err := models.GetAvailableOffers(nil, db, offersCache, gameID, playerID, currentTime, expireDuration, filterAttrs, false, nil)
 
 			//Then
 			Expect(err).NotTo(HaveOccurred())
@@ -827,17 +827,17 @@ var _ = Describe("Offer Instance Model", func() {
 			claimTime := int64(1486678000)
 			filterAttrs := make(map[string]string)
 
-			offerInstances, err := models.GetAvailableOffers(db, offersCache, gameID, playerID, currentTime, expireDuration, filterAttrs, false, nil)
+			offerInstances, err := models.GetAvailableOffers(nil, db, offersCache, gameID, playerID, currentTime, expireDuration, filterAttrs, false, nil)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(offerInstances).To(HaveLen(1))
 			Expect(offerInstances).To(HaveKey("store"))
 			offerInstanceID := offerInstances["store"][0].ID
 
-			_, alreadyClaimed, _, err := models.ClaimOffer(db, gameID, offerInstanceID, playerID, productID, transactionID, claimTime, currentTime, nil)
+			_, alreadyClaimed, _, err := models.ClaimOffer(nil, db, gameID, offerInstanceID, playerID, productID, transactionID, claimTime, currentTime, nil)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(alreadyClaimed).To(BeFalse())
 
-			offerInstances, err = models.GetAvailableOffers(db, offersCache, gameID, playerID, currentTime, expireDuration, filterAttrs, false, nil)
+			offerInstances, err = models.GetAvailableOffers(nil, db, offersCache, gameID, playerID, currentTime, expireDuration, filterAttrs, false, nil)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(offerInstances).To(HaveLen(0))
 		})
@@ -852,17 +852,17 @@ var _ = Describe("Offer Instance Model", func() {
 			claimTime := int64(1486678000)
 			filterAttrs := make(map[string]string)
 
-			offerInstances, err := models.GetAvailableOffers(db, offersCache, gameID, playerID, currentTime, expireDuration, filterAttrs, false, nil)
+			offerInstances, err := models.GetAvailableOffers(nil, db, offersCache, gameID, playerID, currentTime, expireDuration, filterAttrs, false, nil)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(offerInstances).To(HaveLen(1))
 			Expect(offerInstances).To(HaveKey("store"))
 			offerInstanceID := offerInstances["store"][0].ID
 
-			_, alreadyClaimed, _, err := models.ClaimOffer(db, gameID, offerInstanceID, playerID, productID, transactionID, claimTime, currentTime, nil)
+			_, alreadyClaimed, _, err := models.ClaimOffer(nil, db, gameID, offerInstanceID, playerID, productID, transactionID, claimTime, currentTime, nil)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(alreadyClaimed).To(BeFalse())
 
-			offerInstances, err = models.GetAvailableOffers(db, offersCache, gameID, playerID, currentTime, expireDuration, filterAttrs, false, nil)
+			offerInstances, err = models.GetAvailableOffers(nil, db, offersCache, gameID, playerID, currentTime, expireDuration, filterAttrs, false, nil)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(offerInstances).To(HaveLen(0))
 		})
@@ -875,7 +875,7 @@ var _ = Describe("Offer Instance Model", func() {
 			filterAttrs := make(map[string]string)
 
 			//When
-			_, err := models.GetAvailableOffers(db, offersCache, gameID, playerID, currentTime, expireDuration, filterAttrs, false, nil)
+			_, err := models.GetAvailableOffers(nil, db, offersCache, gameID, playerID, currentTime, expireDuration, filterAttrs, false, nil)
 
 			//Then
 			Expect(err).To(HaveOccurred())
@@ -890,7 +890,7 @@ var _ = Describe("Offer Instance Model", func() {
 			filterAttrs := make(map[string]string)
 
 			//When
-			_, err := models.GetAvailableOffers(db, offersCache, gameID, playerID, currentTime, expireDuration, filterAttrs, false, nil)
+			_, err := models.GetAvailableOffers(nil, db, offersCache, gameID, playerID, currentTime, expireDuration, filterAttrs, false, nil)
 
 			//Then
 			Expect(err).To(HaveOccurred())
@@ -911,7 +911,7 @@ var _ = Describe("Offer Instance Model", func() {
 			Expect(err).NotTo(HaveOccurred())
 			db.(*runner.DB).DB.Close() // make DB connection unavailable
 
-			_, err = models.GetAvailableOffers(db, offersCache, gameID, playerID, currentTime, expireDuration, filterAttrs, false, nil)
+			_, err = models.GetAvailableOffers(nil, db, offersCache, gameID, playerID, currentTime, expireDuration, filterAttrs, false, nil)
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(Equal("sql: database is closed"))
 		})
@@ -925,7 +925,7 @@ var _ = Describe("Offer Instance Model", func() {
 			offerInstanceID := "eb7e8d2a-2739-4da3-aa31-7970b63bdad7"
 
 			//When
-			offerInstance, err := models.GetOfferInfo(db, gameID, playerID, offerInstanceID, expireDuration, nil)
+			offerInstance, err := models.GetOfferInfo(nil, db, gameID, playerID, offerInstanceID, expireDuration, nil)
 
 			//Then
 			Expect(err).NotTo(HaveOccurred())
@@ -944,7 +944,7 @@ var _ = Describe("Offer Instance Model", func() {
 			offerInstanceID := "eb7e8d2a-2739-4da3-aa31-7970b63bdad7"
 
 			//When
-			_, err := models.GetOfferInfo(db, gameID, playerID, offerInstanceID, expireDuration, nil)
+			_, err := models.GetOfferInfo(nil, db, gameID, playerID, offerInstanceID, expireDuration, nil)
 
 			//Then
 			Expect(err).To(HaveOccurred())
@@ -966,7 +966,7 @@ var _ = Describe("Offer Instance Model", func() {
 			db.(*runner.DB).DB.Close() // make DB connection unavailable
 
 			//When
-			_, err = models.GetOfferInfo(db, gameID, playerID, offerInstanceID, expireDuration, nil)
+			_, err = models.GetOfferInfo(nil, db, gameID, playerID, offerInstanceID, expireDuration, nil)
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(Equal("sql: database is closed"))
 		})
@@ -983,13 +983,13 @@ var _ = Describe("Offer Instance Model", func() {
 			filterAttrs := make(map[string]string)
 
 			// Get fot the first time
-			offerInstances, err := models.GetAvailableOffers(db, offersCache, gameID, playerID, currentTime, expireDuration, filterAttrs, false, nil)
+			offerInstances, err := models.GetAvailableOffers(nil, db, offersCache, gameID, playerID, currentTime, expireDuration, filterAttrs, false, nil)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(offerInstances).To(HaveLen(1))
 			Expect(offerInstances[place]).To(HaveLen(2))
 
 			// Claim the offer instance
-			_, alreadyClaimed, _, err := models.ClaimOffer(db, gameID, offerInstances[place][0].ID, playerID, "", transactionID, currentTime.Unix(), currentTime, nil)
+			_, alreadyClaimed, _, err := models.ClaimOffer(nil, db, gameID, offerInstances[place][0].ID, playerID, "", transactionID, currentTime.Unix(), currentTime, nil)
 			Expect(alreadyClaimed).To(BeFalse())
 			Expect(err).NotTo(HaveOccurred())
 
@@ -1000,11 +1000,11 @@ var _ = Describe("Offer Instance Model", func() {
 
 			// Update its contents and insert with same key
 			offer.Contents = dat.JSON([]byte(`{ "somethingNew": 100 }`))
-			offer, err = models.UpdateOffer(db, offer, offersCache, nil)
+			offer, err = models.UpdateOffer(nil, db, offer, offersCache, nil)
 			Expect(err).NotTo(HaveOccurred())
 
 			// Should not return the popup offer, since it was claimed for the first time
-			offerInstances, err = models.GetAvailableOffers(db, offersCache, gameID, playerID, currentTime, expireDuration, filterAttrs, false, nil)
+			offerInstances, err = models.GetAvailableOffers(nil, db, offersCache, gameID, playerID, currentTime, expireDuration, filterAttrs, false, nil)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(offerInstances).To(HaveKey(place))
 			Expect(offerInstances[place]).To(HaveLen(1))
@@ -1022,13 +1022,13 @@ var _ = Describe("Offer Instance Model", func() {
 			filterAttrs := make(map[string]string)
 
 			// Get offer instances
-			offerInstances, err := models.GetAvailableOffers(db, offersCache, gameID, playerID, currentTime, expireDuration, filterAttrs, false, nil)
+			offerInstances, err := models.GetAvailableOffers(nil, db, offersCache, gameID, playerID, currentTime, expireDuration, filterAttrs, false, nil)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(offerInstances[place]).To(HaveLen(1))
 			offerInstanceID := offerInstances[place][0].ID
 
 			// View once
-			_, _, err = models.ViewOffer(db, gameID, offerInstanceID, playerID, uuid.NewV4().String(), currentTime, nil)
+			_, _, err = models.ViewOffer(nil, db, gameID, offerInstanceID, playerID, uuid.NewV4().String(), currentTime, nil)
 			Expect(err).NotTo(HaveOccurred())
 
 			// Update Offer
@@ -1036,24 +1036,24 @@ var _ = Describe("Offer Instance Model", func() {
 			err = db.SQL("SELECT * FROM offers WHERE id = $1 AND game_id = $2", offerID, gameID).QueryStruct(offer)
 			Expect(err).NotTo(HaveOccurred())
 			offer.Contents = dat.JSON([]byte(`{ "somethingNew": 100 }`))
-			_, err = models.UpdateOffer(db, offer, offersCache, nil)
+			_, err = models.UpdateOffer(nil, db, offer, offersCache, nil)
 			Expect(err).NotTo(HaveOccurred())
 
 			// Get offer
 			currentTime = nextTime(currentTime)
-			offerInstances, err = models.GetAvailableOffers(db, offersCache, gameID, playerID, currentTime, expireDuration, filterAttrs, false, nil)
+			offerInstances, err = models.GetAvailableOffers(nil, db, offersCache, gameID, playerID, currentTime, expireDuration, filterAttrs, false, nil)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(offerInstances).To(HaveKey(place))
 			Expect(offerInstances[place]).To(HaveLen(1))
 			offerInstanceID = offerInstances[place][0].ID
 
 			// Sees twice
-			_, _, err = models.ViewOffer(db, gameID, offerInstanceID, playerID, uuid.NewV4().String(), currentTime, nil)
+			_, _, err = models.ViewOffer(nil, db, gameID, offerInstanceID, playerID, uuid.NewV4().String(), currentTime, nil)
 			Expect(err).NotTo(HaveOccurred())
 
 			// Get offer, expect unique-place to not be returned
 			currentTime = nextTime(currentTime)
-			offerInstances, err = models.GetAvailableOffers(db, offersCache, gameID, playerID, currentTime, expireDuration, filterAttrs, false, nil)
+			offerInstances, err = models.GetAvailableOffers(nil, db, offersCache, gameID, playerID, currentTime, expireDuration, filterAttrs, false, nil)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(offerInstances).NotTo(HaveKey(place))
 		})

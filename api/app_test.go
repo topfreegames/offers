@@ -8,9 +8,9 @@
 package api_test
 
 import (
-	"github.com/Sirupsen/logrus"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"github.com/topfreegames/offers/api"
 	"github.com/topfreegames/offers/models"

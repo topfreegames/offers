@@ -20,3 +20,6 @@ basicauth:
 pagination:
   limit: 50
   offset: 0
+jaeger:
+  disabled: false
+  samplingProbability: 1.0

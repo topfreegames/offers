@@ -10,9 +10,9 @@ package api_test
 import (
 	"io"
 
-	"github.com/Sirupsen/logrus"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	runner "gopkg.in/mgutz/dat.v2/sqlx-runner"
 

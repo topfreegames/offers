@@ -31,8 +31,8 @@ import (
 
 	"github.com/DATA-DOG/godog"
 	"github.com/DATA-DOG/godog/gherkin"
-	"github.com/Sirupsen/logrus"
 	"github.com/satori/go.uuid"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"github.com/topfreegames/offers/api"
 	"github.com/topfreegames/offers/errors"

@@ -8,8 +8,10 @@
 package models
 
 import (
+	"context"
 	"time"
 
+	edat "github.com/topfreegames/extensions/dat"
 	dat "gopkg.in/mgutz/dat.v2/dat"
 	runner "gopkg.in/mgutz/dat.v2/sqlx-runner"
 )
@@ -33,12 +35,12 @@ func (g *Game) GetMetadata() (map[string]interface{}, error) {
 }
 
 //GetGameByID returns a game by it's pk
-func GetGameByID(db runner.Connection, id string, mr *MixedMetricsReporter) (*Game, error) {
+func GetGameByID(ctx context.Context, db runner.Connection, id string, mr *MixedMetricsReporter) (*Game, error) {
 	var game Game
 	err := mr.WithDatastoreSegment("games", SegmentInsert, func() error {
-		return db.
-			Select("*").
-			From("games").
+		builder := db.Select("*")
+		builder.Execer = edat.NewExecer(builder.Execer).WithContext(ctx)
+		return builder.From("games").
 			Where("id = $1", id).
 			QueryStruct(&game)
 	})
@@ -48,12 +50,12 @@ func GetGameByID(db runner.Connection, id string, mr *MixedMetricsReporter) (*Ga
 }
 
 //ListGames returns a the full list of games
-func ListGames(db runner.Connection, mr *MixedMetricsReporter) ([]*Game, error) {
+func ListGames(ctx context.Context, db runner.Connection, mr *MixedMetricsReporter) ([]*Game, error) {
 	var games []*Game
 	err := mr.WithDatastoreSegment("games", "select all", func() error {
-		return db.
-			Select("*").
-			From("games").
+		builder := db.Select("*")
+		builder.Execer = edat.NewExecer(builder.Execer).WithContext(ctx)
+		return builder.From("games").
 			QueryStructs(&games)
 	})
 	return games, err
@@ -61,15 +63,15 @@ func ListGames(db runner.Connection, mr *MixedMetricsReporter) ([]*Game, error) 
 
 //UpsertGame updates a game with new meta or insert with the new UUID
 //func UpsertGame(db runner.Connection, game *Game, t time.Time, mr *MixedMetricsReporter) error {
-func UpsertGame(db runner.Connection, game *Game, t time.Time, mr *MixedMetricsReporter) error {
+func UpsertGame(ctx context.Context, db runner.Connection, game *Game, t time.Time, mr *MixedMetricsReporter) error {
 	if game.Metadata == nil {
 		game.Metadata = dat.JSON([]byte(`{}`))
 	}
 	game.UpdatedAt = dat.NullTimeFrom(t)
 	return mr.WithDatastoreSegment("games", SegmentUpsert, func() error {
-		return db.
-			Upsert("games").
-			Columns("id", "name", "updated_at", "metadata").
+		builder := db.Upsert("games")
+		builder.Execer = edat.NewExecer(builder.Execer).WithContext(ctx)
+		return builder.Columns("id", "name", "updated_at", "metadata").
 			Record(game).
 			Where("id=$1", game.ID).
 			Returning("created_at", "updated_at").

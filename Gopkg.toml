@@ -34,7 +34,7 @@
   name = "github.com/GuiaBolso/darwin"
 
 [[constraint]]
-  name = "github.com/Sirupsen/logrus"
+  name = "github.com/sirupsen/logrus"
   version = "0.11.2"
 
 [[constraint]]

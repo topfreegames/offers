@@ -8,6 +8,7 @@
 package models
 
 import (
+	"context"
 	"fmt"
 	"regexp"
 	"strconv"
@@ -15,6 +16,7 @@ import (
 	"time"
 
 	"github.com/pmylund/go-cache"
+	edat "github.com/topfreegames/extensions/dat"
 	"gopkg.in/mgutz/dat.v2/dat"
 	runner "gopkg.in/mgutz/dat.v2/sqlx-runner"
 )
@@ -105,12 +107,12 @@ func buildEffiecientScope(enabledOffers string, filterAttrs map[string]string) s
 }
 
 //GetOfferByID returns Offer by ID
-func GetOfferByID(db runner.Connection, gameID, id string, mr *MixedMetricsReporter) (*Offer, error) {
+func GetOfferByID(ctx context.Context, db runner.Connection, gameID, id string, mr *MixedMetricsReporter) (*Offer, error) {
 	var offer Offer
 	err := mr.WithDatastoreSegment("offers", SegmentSelect, func() error {
-		return db.
-			Select("id, frequency, period, version, enabled").
-			From("offers").
+		builder := db.Select("id, frequency, period, version, enabled")
+		builder.Execer = edat.NewExecer(builder.Execer).WithContext(ctx)
+		return builder.From("offers").
 			Where("id=$1 AND game_id=$2", id, gameID).
 			QueryStruct(&offer)
 	})
@@ -123,7 +125,7 @@ func GetOfferByID(db runner.Connection, gameID, id string, mr *MixedMetricsRepor
 }
 
 //GetEnabledOffers returns all the enabled offers and matching offers
-func GetEnabledOffers(db runner.Connection, gameID string, offersCache *cache.Cache, expireDuration time.Duration, filterAttrs map[string]string, allowInefficientQueries bool, mr *MixedMetricsReporter) ([]*Offer, error) {
+func GetEnabledOffers(ctx context.Context, db runner.Connection, gameID string, offersCache *cache.Cache, expireDuration time.Duration, filterAttrs map[string]string, allowInefficientQueries bool, mr *MixedMetricsReporter) ([]*Offer, error) {
 	var offers []*Offer
 	var err error
 
@@ -150,13 +152,15 @@ func GetEnabledOffers(db runner.Connection, gameID string, offersCache *cache.Ca
 	err = mr.WithDatastoreSegment("offers", SegmentSelect, func() error {
 		// TODO: Add a configurable limit to this query
 		// Explicitly not fetching filters, the player does not need to know about them
-		return db.
+
+		builder := db.
 			Select(`
 		id, game_id, name, period, frequency,
 		trigger, placement, metadata,
 		product_id, contents, version, cost
-		`).
-			From("offers").
+		`)
+		builder.Execer = edat.NewExecer(builder.Execer).WithContext(ctx)
+		return builder.From("offers").
 			Scope(scope, gameID).
 			QueryStructs(&offers)
 	})
@@ -172,6 +176,7 @@ func GetEnabledOffers(db runner.Connection, gameID string, offersCache *cache.Ca
 //ListOffers returns all the offer templates for a given game
 //return the number of pages using the number of offers and given the limit for each page
 func ListOffers(
+	ctx context.Context,
 	db runner.Connection,
 	gameID string,
 	limit, offset uint64,
@@ -180,9 +185,9 @@ func ListOffers(
 	offers := []*Offer{}
 	var numberOffers int
 	err := mr.WithDatastoreSegment("offers", SegmentSelect, func() error {
-		return db.
-			Select("COUNT(*)").
-			From("offers").
+		builder := db.Select("COUNT(*)")
+		builder.Execer = edat.NewExecer(builder.Execer).WithContext(ctx)
+		return builder.From("offers").
 			Where("game_id = $1", gameID).
 			QueryScalar(&numberOffers)
 	})
@@ -199,9 +204,9 @@ func ListOffers(
 
 		start := offset * limit
 		err = mr.WithDatastoreSegment("offers", SegmentSelect, func() error {
-			return db.
-				Select("*").
-				From("offers").
+			builder := db.Select("*")
+			builder.Execer = edat.NewExecer(builder.Execer).WithContext(ctx)
+			return builder.From("offers").
 				Where("game_id = $1", gameID).
 				OrderBy("created_at").
 				Limit(limit).
@@ -217,7 +222,7 @@ func ListOffers(
 }
 
 // InsertOffer inserts a new offer template into DB
-func InsertOffer(db runner.Connection, offer *Offer, offersCache *cache.Cache, mr *MixedMetricsReporter) (*Offer, error) {
+func InsertOffer(ctx context.Context, db runner.Connection, offer *Offer, offersCache *cache.Cache, mr *MixedMetricsReporter) (*Offer, error) {
 	if offer.Metadata == nil {
 		offer.Metadata = dat.JSON([]byte(`{}`))
 	}
@@ -228,9 +233,9 @@ func InsertOffer(db runner.Connection, offer *Offer, offersCache *cache.Cache, m
 		offer.Cost = dat.JSON([]byte(`{}`))
 	}
 	err := mr.WithDatastoreSegment("offers", SegmentInsert, func() error {
-		return db.
-			InsertInto("offers").
-			Columns("game_id", "name", "period", "frequency", "trigger", "placement", "metadata", "product_id", "contents", "filters", "cost").
+		builder := db.InsertInto("offers")
+		builder.Execer = edat.NewExecer(builder.Execer).WithContext(ctx)
+		return builder.Columns("game_id", "name", "period", "frequency", "trigger", "placement", "metadata", "product_id", "contents", "filters", "cost").
 			Record(offer).
 			Returning("id, enabled, version").
 			QueryStruct(offer)
@@ -245,8 +250,8 @@ func InsertOffer(db runner.Connection, offer *Offer, offersCache *cache.Cache, m
 }
 
 // UpdateOffer updates a given offer
-func UpdateOffer(db runner.Connection, offer *Offer, offersCache *cache.Cache, mr *MixedMetricsReporter) (*Offer, error) {
-	prevOffer, err := GetOfferByID(db, offer.GameID, offer.ID, mr)
+func UpdateOffer(ctx context.Context, db runner.Connection, offer *Offer, offersCache *cache.Cache, mr *MixedMetricsReporter) (*Offer, error) {
+	prevOffer, err := GetOfferByID(ctx, db, offer.GameID, offer.ID, mr)
 	if err != nil {
 		return nil, err
 	}
@@ -274,9 +279,9 @@ func UpdateOffer(db runner.Connection, offer *Offer, offersCache *cache.Cache, m
 	}
 	offer.Version = prevOffer.Version + 1
 	err = mr.WithDatastoreSegment("offers", SegmentUpdate, func() error {
-		return db.
-			Update("offers").
-			SetMap(offersMap).
+		builder := db.Update("offers")
+		builder.Execer = edat.NewExecer(builder.Execer).WithContext(ctx)
+		return builder.SetMap(offersMap).
 			Where("id = $1 AND game_id = $2", offer.ID, offer.GameID).
 			Returning("id, version").
 			QueryStruct(offer)
@@ -289,12 +294,12 @@ func UpdateOffer(db runner.Connection, offer *Offer, offersCache *cache.Cache, m
 }
 
 //SetEnabledOffer can enable or disable an offer template
-func SetEnabledOffer(db runner.Connection, gameID, id string, enabled bool, offersCache *cache.Cache, mr *MixedMetricsReporter) error {
+func SetEnabledOffer(ctx context.Context, db runner.Connection, gameID, id string, enabled bool, offersCache *cache.Cache, mr *MixedMetricsReporter) error {
 	var offerTemplate Offer
 	err := mr.WithDatastoreSegment("offers", SegmentUpdate, func() error {
-		return db.
-			Update("offers").
-			Set("enabled", enabled).
+		builder := db.Update("offers")
+		builder.Execer = edat.NewExecer(builder.Execer).WithContext(ctx)
+		return builder.Set("enabled", enabled).
 			Where("id=$1 AND game_id=$2", id, gameID).
 			Returning("id").
 			QueryStruct(&offerTemplate)

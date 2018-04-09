@@ -15,13 +15,15 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/asaskevich/govalidator"
 	raven "github.com/getsentry/raven-go"
 	"github.com/gorilla/mux"
 	newrelic "github.com/newrelic/go-agent"
 	"github.com/pmylund/go-cache"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
+	"github.com/topfreegames/extensions/jaeger"
+	"github.com/topfreegames/extensions/router"
 	"github.com/topfreegames/offers/errors"
 	"github.com/topfreegames/offers/metadata"
 	"github.com/topfreegames/offers/models"
@@ -71,7 +73,7 @@ func NewApp(host string, port int, config *viper.Viper, debug bool, logger logru
 }
 
 func (a *App) getRouter() *mux.Router {
-	r := mux.NewRouter()
+	r := router.NewRouter()
 	r.Handle("/healthcheck", Chain(
 		&HealthcheckHandler{App: a},
 		&SentryMiddleware{},
@@ -212,6 +214,7 @@ func (a *App) configureApp() error {
 	}
 
 	a.configureSentry()
+	a.configureJaeger()
 
 	a.MaxAge = a.Config.GetInt64("cache.maxAgeSeconds")
 	a.configurePagination()
@@ -244,6 +247,24 @@ func (a *App) configureDatabase() error {
 
 	a.DB = db
 	return nil
+}
+
+func (a *App) configureJaeger() {
+	l := a.Logger.WithFields(logrus.Fields{
+		"source":    "app",
+		"operation": "configureJaeger",
+	})
+
+	opts := jaeger.Options{
+		Disabled:    a.Config.GetBool("jaeger.disabled"),
+		Probability: a.Config.GetFloat64("jaeger.samplingProbability"),
+		ServiceName: "offers",
+	}
+
+	_, err := jaeger.Configure(opts)
+	if err != nil {
+		l.Error("failed to initialize jaeger")
+	}
 }
 
 func (a *App) getDB() (runner.Connection, error) {

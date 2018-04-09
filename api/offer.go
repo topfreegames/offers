@@ -14,7 +14,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/Sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"github.com/topfreegames/offers/errors"
 	"github.com/topfreegames/offers/models"
 )
@@ -78,7 +78,7 @@ func (g *OfferHandler) insertOffer(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err = mr.WithSegment(models.SegmentModel, func() error {
-		offer, err = models.InsertOffer(g.App.DB, offer, g.App.Cache, mr)
+		offer, err = models.InsertOffer(r.Context(), g.App.DB, offer, g.App.Cache, mr)
 		return err
 	})
 
@@ -119,8 +119,10 @@ func (g *OfferHandler) setEnabledOffer(w http.ResponseWriter, r *http.Request, e
 	})
 
 	var err error
+	fmt.Println("A")
 	err = mr.WithSegment(models.SegmentModel, func() error {
-		return models.SetEnabledOffer(g.App.DB, gameID, offerID, enable, g.App.Cache, mr)
+		fmt.Println("B")
+		return models.SetEnabledOffer(r.Context(), g.App.DB, gameID, offerID, enable, g.App.Cache, mr)
 	})
 
 	if err != nil {
@@ -171,7 +173,7 @@ func (g *OfferHandler) updateOffer(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err = mr.WithSegment(models.SegmentModel, func() error {
-		offer, err = models.UpdateOffer(g.App.DB, offer, g.App.Cache, mr)
+		offer, err = models.UpdateOffer(r.Context(), g.App.DB, offer, g.App.Cache, mr)
 		return err
 	})
 	if err != nil {
@@ -248,7 +250,7 @@ func (g *OfferHandler) list(w http.ResponseWriter, r *http.Request) {
 	var offers []*models.Offer
 	var pages int
 	err = mr.WithSegment(models.SegmentModel, func() error {
-		offers, pages, err = models.ListOffers(g.App.DB, gameID, limit, offset, mr)
+		offers, pages, err = models.ListOffers(r.Context(), g.App.DB, gameID, limit, offset, mr)
 		return err
 	})
 
