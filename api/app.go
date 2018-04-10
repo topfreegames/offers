@@ -255,6 +255,8 @@ func (a *App) configureJaeger() {
 		"operation": "configureJaeger",
 	})
 
+	a.Config.SetDefault("jaeger.disabled", true)
+	a.Config.SetDefault("jaeger.samplingProbability", 0.001)
 	opts := jaeger.Options{
 		Disabled:    a.Config.GetBool("jaeger.disabled"),
 		Probability: a.Config.GetFloat64("jaeger.samplingProbability"),
