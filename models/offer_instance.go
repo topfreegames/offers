@@ -163,7 +163,7 @@ func ClaimOffer(
 			return nil, false, 0, err
 		}
 	} else {
-		offerInstance, err = GetLastOfferInstanceByPlayerIDAndProductID(db, gameID, playerID, productID, timestamp, mr)
+		offerInstance, err = GetLastOfferInstanceByPlayerIDAndProductID(ctx, db, gameID, playerID, productID, timestamp, mr)
 		if err != nil {
 			return nil, false, 0, err
 		}
@@ -236,14 +236,15 @@ func ClaimOffer(
 }
 
 //GetLastOfferInstanceByPlayerIDAndProductID returns a offer by gameId, playerId and productId
-func GetLastOfferInstanceByPlayerIDAndProductID(db runner.Connection, gameID, playerID, productID string, timestamp int64, mr *MixedMetricsReporter) (*OfferInstance, error) {
+func GetLastOfferInstanceByPlayerIDAndProductID(ctx context.Context, db runner.Connection, gameID, playerID, productID string, timestamp int64, mr *MixedMetricsReporter) (*OfferInstance, error) {
 	var offerInstance OfferInstance
 	err := mr.WithDatastoreSegment("offer_instances", SegmentSelect, func() error {
-		return db.SQL("SELECT id, offer_id, contents "+
+		builder := db.SQL("SELECT id, offer_id, contents "+
 			"FROM offer_instances "+
 			"WHERE game_id=$1 AND player_id=$2 AND product_id=$3 AND created_at < to_timestamp($4) "+
-			"ORDER BY created_at DESC FETCH FIRST 1 ROW ONLY", gameID, playerID, productID, timestamp).
-			QueryStruct(&offerInstance)
+			"ORDER BY created_at DESC FETCH FIRST 1 ROW ONLY", gameID, playerID, productID, timestamp)
+		builder.Execer = edat.NewExecer(builder.Execer).WithContext(ctx)
+		return builder.QueryStruct(&offerInstance)
 	})
 
 	err = HandleNotFoundError("offerInstance", map[string]interface{}{
@@ -437,7 +438,7 @@ func GetAvailableOffers(
 		})
 	}
 
-	offerInstances, err = findOrCreateOfferInstance(db, offerInstances, t, mr)
+	offerInstances, err = findOrCreateOfferInstance(ctx, db, offerInstances, t, mr)
 	if err != nil {
 		return nil, err
 	}
@@ -467,6 +468,7 @@ func GetAvailableOffers(
 }
 
 func findOrCreateOfferInstance(
+	ctx context.Context,
 	db runner.Connection,
 	offerInstances []*OfferInstance,
 	t time.Time,
@@ -500,7 +502,9 @@ func findOrCreateOfferInstance(
 	`, strings.Join(whereClause, " OR "), strings.Join(valueArgs, ","))
 
 	err = mr.WithDatastoreSegment("offer_instances", SegmentInsect, func() error {
-		return db.SQL(query).QueryStructs(&resOfferInstances)
+		builder := db.SQL(query)
+		builder.Execer = edat.NewExecer(builder.Execer).WithContext(ctx)
+		return builder.QueryStructs(&resOfferInstances)
 	})
 
 	return resOfferInstances, err

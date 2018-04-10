@@ -119,9 +119,7 @@ func (g *OfferHandler) setEnabledOffer(w http.ResponseWriter, r *http.Request, e
 	})
 
 	var err error
-	fmt.Println("A")
 	err = mr.WithSegment(models.SegmentModel, func() error {
-		fmt.Println("B")
 		return models.SetEnabledOffer(r.Context(), g.App.DB, gameID, offerID, enable, g.App.Cache, mr)
 	})
 

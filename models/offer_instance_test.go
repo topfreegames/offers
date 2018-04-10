@@ -13,6 +13,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/satori/go.uuid"
+	edat "github.com/topfreegames/extensions/dat"
 	"github.com/topfreegames/offers/errors"
 	"github.com/topfreegames/offers/models"
 	. "github.com/topfreegames/offers/testing"
@@ -374,7 +375,7 @@ var _ = Describe("Offer Instance Model", func() {
 			//Given
 
 			//When
-			offer, err := models.GetLastOfferInstanceByPlayerIDAndProductID(db, "offers-game", defaultPlayerID, defaultProductID, time.Now().Unix(), nil)
+			offer, err := models.GetLastOfferInstanceByPlayerIDAndProductID(nil, db, "offers-game", defaultPlayerID, defaultProductID, time.Now().Unix(), nil)
 			//Then
 			Expect(err).NotTo(HaveOccurred())
 			Expect(offer.ID).To(Equal("eb7e8d2a-2739-4da3-aa31-7970b63bdad7"))
@@ -391,7 +392,7 @@ var _ = Describe("Offer Instance Model", func() {
 			})
 
 			//When
-			offer, err := models.GetLastOfferInstanceByPlayerIDAndProductID(db, "offers-game", playerID, productID, time.Now().Unix(), nil)
+			offer, err := models.GetLastOfferInstanceByPlayerIDAndProductID(nil, db, "offers-game", playerID, productID, time.Now().Unix(), nil)
 
 			//Then
 			Expect(offer.ID).To(Equal(""))
@@ -995,7 +996,9 @@ var _ = Describe("Offer Instance Model", func() {
 
 			// Get offer to update it
 			offer := new(models.Offer)
-			err = db.SQL("SELECT * FROM offers WHERE id = $1 AND game_id = $2", offerID, gameID).QueryStruct(offer)
+			builder := db.SQL("SELECT * FROM offers WHERE id = $1 AND game_id = $2", offerID, gameID)
+			builder.Execer = edat.NewExecer(builder.Execer)
+			err = builder.QueryStruct(offer)
 			Expect(err).NotTo(HaveOccurred())
 
 			// Update its contents and insert with same key
@@ -1033,7 +1036,9 @@ var _ = Describe("Offer Instance Model", func() {
 
 			// Update Offer
 			offer := new(models.Offer)
-			err = db.SQL("SELECT * FROM offers WHERE id = $1 AND game_id = $2", offerID, gameID).QueryStruct(offer)
+			builder := db.SQL("SELECT * FROM offers WHERE id = $1 AND game_id = $2", offerID, gameID)
+			builder.Execer = edat.NewExecer(builder.Execer)
+			err = builder.QueryStruct(offer)
 			Expect(err).NotTo(HaveOccurred())
 			offer.Contents = dat.JSON([]byte(`{ "somethingNew": 100 }`))
 			_, err = models.UpdateOffer(nil, db, offer, offersCache, nil)

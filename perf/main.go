@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"time"
 
+	edat "github.com/topfreegames/extensions/dat"
 	bench "github.com/topfreegames/offers/bench"
 	"github.com/topfreegames/offers/models"
 	oTesting "github.com/topfreegames/offers/testing"
@@ -35,7 +36,9 @@ func populateGames(db *runner.Connection) ([]*models.Game, error) {
 					RETURNING
 						id, name
 					`
-	err = (*db).SQL(query, bench.NumberOfGames).QueryStructs(&games)
+	builder := (*db).SQL(query, bench.NumberOfGames)
+	builder.Execer = edat.NewExecer(builder.Execer)
+	err = builder.QueryStructs(&games)
 
 	return games, err
 }
@@ -72,7 +75,9 @@ func populateOffers(db *runner.Connection, games []*models.Game) (map[string][]*
 		to := time.Now().Unix() + 5*60
 		trigger := fmt.Sprintf("{\"from\": 1486678000, \"to\": %d}", to)
 		var offers []*models.Offer
-		err = (*db).SQL(query, game.ID, trigger, bench.NumberOfOffersPerGame).QueryStructs(&offers)
+		builder := (*db).SQL(query, game.ID, trigger, bench.NumberOfOffersPerGame)
+		builder.Execer = edat.NewExecer(builder.Execer)
+		err = builder.QueryStructs(&offers)
 		if err != nil {
 			return offersByGame, err
 		}

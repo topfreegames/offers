@@ -365,7 +365,9 @@ var _ = Describe("Offer Models", func() {
 			//When
 			err := models.SetEnabledOffer(nil, db, gameID, offerID, enabled, offersCache, nil)
 			Expect(err).NotTo(HaveOccurred())
-			err = db.SQL("SELECT enabled FROM offers WHERE game_id=$1 AND id=$2", gameID, offerID).QueryStruct(&offer)
+			builder := db.SQL("SELECT enabled FROM offers WHERE game_id=$1 AND id=$2", gameID, offerID)
+			builder.Execer = edat.NewExecer(builder.Execer)
+			err = builder.QueryStruct(&offer)
 			Expect(err).NotTo(HaveOccurred())
 
 			//Then
@@ -382,7 +384,9 @@ var _ = Describe("Offer Models", func() {
 			//When
 			err := models.SetEnabledOffer(nil, db, gameID, offerID, enabled, offersCache, nil)
 			Expect(err).NotTo(HaveOccurred())
-			err = db.SQL("SELECT enabled FROM offers WHERE game_id=$1 AND id=$2", gameID, offerID).QueryStruct(&offer)
+			builder := db.SQL("SELECT enabled FROM offers WHERE game_id=$1 AND id=$2", gameID, offerID)
+			builder.Execer = edat.NewExecer(builder.Execer)
+			err = builder.QueryStruct(&offer)
 			Expect(err).NotTo(HaveOccurred())
 
 			//Then
@@ -399,7 +403,9 @@ var _ = Describe("Offer Models", func() {
 			//When
 			err := models.SetEnabledOffer(nil, db, gameID, offerID, enabled, offersCache, nil)
 			Expect(err).NotTo(HaveOccurred())
-			err = db.SQL("SELECT enabled FROM offers WHERE game_id=$1 AND id=$2", gameID, offerID).QueryStruct(&offer)
+			builder := db.SQL("SELECT enabled FROM offers WHERE game_id=$1 AND id=$2", gameID, offerID)
+			builder.Execer = edat.NewExecer(builder.Execer)
+			err = builder.QueryStruct(&offer)
 			Expect(err).NotTo(HaveOccurred())
 
 			//Then

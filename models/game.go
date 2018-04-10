@@ -62,7 +62,6 @@ func ListGames(ctx context.Context, db runner.Connection, mr *MixedMetricsReport
 }
 
 //UpsertGame updates a game with new meta or insert with the new UUID
-//func UpsertGame(db runner.Connection, game *Game, t time.Time, mr *MixedMetricsReporter) error {
 func UpsertGame(ctx context.Context, db runner.Connection, game *Game, t time.Time, mr *MixedMetricsReporter) error {
 	if game.Metadata == nil {
 		game.Metadata = dat.JSON([]byte(`{}`))
