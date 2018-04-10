@@ -69,6 +69,10 @@
   branch = "v2"
   name = "gopkg.in/mgutz/dat.v2"
 
+[[constraint]]
+  name = "github.com/topfreegames/extensions"
+  version = "5.14.1"
+
 [prune]
   go-tests = true
   unused-packages = true

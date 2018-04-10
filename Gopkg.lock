@@ -4,8 +4,8 @@
 [[projects]]
   name = "cloud.google.com/go"
   packages = ["compute/metadata"]
-  revision = "4b98a6370e36d7a85192e7bad08a4ebd82eac2a8"
-  version = "v0.20.0"
+  revision = "29f476ffa9c4cd4fd14336b6043090ac1ad76733"
+  version = "v0.21.0"
 
 [[projects]]
   name = "github.com/DATA-DOG/godog"
@@ -78,7 +78,7 @@
   branch = "master"
   name = "github.com/getsentry/raven-go"
   packages = ["."]
-  revision = "7562301a6763c9ac631b0a2011b4aa0e064e45d4"
+  revision = "d1470f50d3a3a38533355a9fab7393e25a3b4226"
 
 [[projects]]
   name = "github.com/go-pg/pg"
@@ -90,8 +90,8 @@
     "orm",
     "types"
   ]
-  revision = "a7da286fae957b07243bb3aaaf4897c3ca912c50"
-  version = "v6.11.1"
+  revision = "5b73ce88484575f3480edf393237f6bf79d5f166"
+  version = "v6.11.2"
 
 [[projects]]
   name = "github.com/go-testfixtures/testfixtures"
@@ -132,7 +132,7 @@
     "json/scanner",
     "json/token"
   ]
-  revision = "061bf373e402ebb186988085a71ac748949594a9"
+  revision = "ef8a98b0bbce4a65b5aa4c368430a80ddc533168"
 
 [[projects]]
   name = "github.com/inconshreveable/mousetrap"
@@ -153,7 +153,7 @@
     ".",
     "reflectx"
   ]
-  revision = "cf35089a197953c69420c8d0cecda90809764b1d"
+  revision = "2aeb6a910c2b94f2d5eb53d9895d80e27264ec41"
 
 [[projects]]
   branch = "master"
@@ -344,17 +344,19 @@
   version = "v1.0.2"
 
 [[projects]]
-  branch = "tracing"
   name = "github.com/topfreegames/extensions"
   packages = [
+    "dat",
     "dogstatsd",
     "jaeger",
+    "jaeger/dat",
     "middleware",
     "oauth2",
     "pg/interfaces",
     "router"
   ]
-  revision = "1c713d665fbc08fe43d8df48fb430b5b525ca268"
+  revision = "62238dd1fc0a53e8a99f6e1d44d40ee2bdfdc26a"
+  version = "v5.14.1"
 
 [[projects]]
   name = "github.com/uber/jaeger-client-go"
@@ -393,7 +395,7 @@
     "html/atom",
     "html/charset"
   ]
-  revision = "b68f30494add4df6bd8ef5e82803f308e7f7c59c"
+  revision = "61147c48b25b599e5b561d2e9c4f3e1ef489ca41"
 
 [[projects]]
   branch = "master"
@@ -411,7 +413,7 @@
   branch = "master"
   name = "golang.org/x/sys"
   packages = ["unix"]
-  revision = "f67933eaf9e2f750f58a234209a11ebc1107be38"
+  revision = "3b87a42e500a6dc65dae1a55d0b641295971163e"
 
 [[projects]]
   name = "golang.org/x/text"
@@ -479,6 +481,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "7dc45e1b0e37874b3110815ad71bb08d148afcae8440f508efc9f852f8671d96"
+  inputs-digest = "663e18deee7f3eecd4597f72a0689b71bac07fa37713ce83a97da4ead097202a"
   solver-name = "gps-cdcl"
   solver-version = 1
