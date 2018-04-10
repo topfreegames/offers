@@ -8,8 +8,10 @@
 package models
 
 import (
+	"context"
 	"time"
 
+	edat "github.com/topfreegames/extensions/dat"
 	dat "gopkg.in/mgutz/dat.v2/dat"
 	runner "gopkg.in/mgutz/dat.v2/sqlx-runner"
 )
@@ -29,12 +31,12 @@ type OfferPlayer struct {
 }
 
 //GetOfferPlayer returns an offer player
-func GetOfferPlayer(db runner.Connection, gameID, playerID, offerID string, mr *MixedMetricsReporter) (*OfferPlayer, error) {
+func GetOfferPlayer(ctx context.Context, db runner.Connection, gameID, playerID, offerID string, mr *MixedMetricsReporter) (*OfferPlayer, error) {
 	var offerPlayer OfferPlayer
 	err := mr.WithDatastoreSegment("offer_players", SegmentSelect, func() error {
-		return db.
-			Select("*").
-			From("offer_players").
+		builder := db.Select("*")
+		builder.Execer = edat.NewExecer(builder.Execer).WithContext(ctx)
+		return builder.From("offer_players").
 			Where("game_id = $1 AND player_id = $2 AND offer_id = $3", gameID, playerID, offerID).
 			QueryStruct(&offerPlayer)
 	})
@@ -43,12 +45,12 @@ func GetOfferPlayer(db runner.Connection, gameID, playerID, offerID string, mr *
 }
 
 //GetOffersByPlayer returns all offers by player
-func GetOffersByPlayer(db runner.Connection, gameID, playerID string, mr *MixedMetricsReporter) ([]*OfferPlayer, error) {
+func GetOffersByPlayer(ctx context.Context, db runner.Connection, gameID, playerID string, mr *MixedMetricsReporter) ([]*OfferPlayer, error) {
 	var offersByPlayer []*OfferPlayer
 	err := mr.WithDatastoreSegment("offer_players", "select all", func() error {
-		return db.
-			Select("*").
-			From("offer_players").
+		builder := db.Select("*")
+		builder.Execer = edat.NewExecer(builder.Execer).WithContext(ctx)
+		return builder.From("offer_players").
 			Where("game_id = $1 AND player_id = $2", gameID, playerID).
 			QueryStructs(&offersByPlayer)
 	})
@@ -57,7 +59,7 @@ func GetOffersByPlayer(db runner.Connection, gameID, playerID string, mr *MixedM
 }
 
 //CreateOfferPlayer creates an offer player
-func CreateOfferPlayer(db runner.Connection, offerPlayer *OfferPlayer, mr *MixedMetricsReporter) error {
+func CreateOfferPlayer(ctx context.Context, db runner.Connection, offerPlayer *OfferPlayer, mr *MixedMetricsReporter) error {
 	if offerPlayer.Transactions == nil {
 		offerPlayer.Transactions = dat.JSON([]byte(`[]`))
 	}
@@ -65,8 +67,9 @@ func CreateOfferPlayer(db runner.Connection, offerPlayer *OfferPlayer, mr *Mixed
 		offerPlayer.Impressions = dat.JSON([]byte(`[]`))
 	}
 	return mr.WithDatastoreSegment("offer_players", SegmentInsert, func() error {
-		return db.
-			InsertInto("offer_players").
+		builder := db.InsertInto("offer_players")
+		builder.Execer = edat.NewExecer(builder.Execer).WithContext(ctx)
+		return builder.
 			Columns("game_id", "player_id", "offer_id", "claim_counter", "claim_timestamp", "view_counter", "view_timestamp", "transactions", "impressions").
 			Record(offerPlayer).
 			Returning("*").
@@ -75,12 +78,12 @@ func CreateOfferPlayer(db runner.Connection, offerPlayer *OfferPlayer, mr *Mixed
 }
 
 //ClaimOfferPlayer increments the claim counter and updates the timestamp
-func ClaimOfferPlayer(db runner.Connection, offerPlayer *OfferPlayer, t time.Time, mr *MixedMetricsReporter) error {
+func ClaimOfferPlayer(ctx context.Context, db runner.Connection, offerPlayer *OfferPlayer, t time.Time, mr *MixedMetricsReporter) error {
 	return mr.WithDatastoreSegment("offer_players", SegmentUpdate, func() error {
 		const incrCounter = dat.UnsafeString("claim_counter + 1")
-		return db.
-			Update("offer_players").
-			Set("claim_counter", incrCounter).
+		builder := db.Update("offer_players")
+		builder.Execer = edat.NewExecer(builder.Execer).WithContext(ctx)
+		return builder.Set("claim_counter", incrCounter).
 			Set("claim_timestamp", t).
 			Set("transactions", offerPlayer.Transactions).
 			Where("game_id = $1 AND player_id = $2 AND offer_id = $3", offerPlayer.GameID, offerPlayer.PlayerID, offerPlayer.OfferID).
@@ -90,12 +93,12 @@ func ClaimOfferPlayer(db runner.Connection, offerPlayer *OfferPlayer, t time.Tim
 }
 
 //ViewOfferPlayer increments the view counter and updates the timestamp
-func ViewOfferPlayer(db runner.Connection, offerPlayer *OfferPlayer, t time.Time, mr *MixedMetricsReporter) error {
+func ViewOfferPlayer(ctx context.Context, db runner.Connection, offerPlayer *OfferPlayer, t time.Time, mr *MixedMetricsReporter) error {
 	return mr.WithDatastoreSegment("offer_players", SegmentUpdate, func() error {
 		const incrCounter = dat.UnsafeString("view_counter + 1")
-		return db.
-			Update("offer_players").
-			Set("view_counter", incrCounter).
+		builder := db.Update("offer_players")
+		builder.Execer = edat.NewExecer(builder.Execer).WithContext(ctx)
+		return builder.Set("view_counter", incrCounter).
 			Set("view_timestamp", t).
 			Set("impressions", offerPlayer.Impressions).
 			Where("game_id = $1 AND player_id = $2 AND offer_id = $3", offerPlayer.GameID, offerPlayer.PlayerID, offerPlayer.OfferID).

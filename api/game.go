@@ -11,7 +11,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/Sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"github.com/topfreegames/offers/models"
 )
 
@@ -45,7 +45,7 @@ func (g *GameHandler) list(w http.ResponseWriter, r *http.Request) {
 	var err error
 	var games []*models.Game
 	err = mr.WithSegment(models.SegmentModel, func() error {
-		games, err = models.ListGames(g.App.DB, mr)
+		games, err = models.ListGames(r.Context(), g.App.DB, mr)
 		return err
 	})
 
@@ -78,7 +78,7 @@ func (g *GameHandler) upsert(w http.ResponseWriter, r *http.Request) {
 
 	err := mr.WithSegment(models.SegmentModel, func() error {
 		currentTime := g.App.Clock.GetTime()
-		return models.UpsertGame(g.App.DB, game, currentTime, mr)
+		return models.UpsertGame(r.Context(), g.App.DB, game, currentTime, mr)
 	})
 
 	if err != nil {

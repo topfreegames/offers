@@ -13,6 +13,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	uuid "github.com/satori/go.uuid"
+	edat "github.com/topfreegames/extensions/dat"
 	"github.com/topfreegames/offers/errors"
 	"github.com/topfreegames/offers/models"
 	"gopkg.in/mgutz/dat.v2/dat"
@@ -26,9 +27,9 @@ var _ = Describe("Games Model", func() {
 			var game models.Game
 
 			//When
-			err := db.
-				Select("*").
-				From("games").
+			builder := db.Select("*")
+			builder.Execer = edat.NewExecer(builder.Execer)
+			err := builder.From("games").
 				Where("id = $1", gameID).
 				QueryStruct(&game)
 
@@ -53,16 +54,16 @@ var _ = Describe("Games Model", func() {
 			var game2 models.Game
 
 			//When
-			err1 := db.
-				InsertInto("games").
-				Columns("name", "id", "metadata").
+			builder1 := db.InsertInto("games")
+			builder1.Execer = edat.NewExecer(builder1.Execer)
+			err1 := builder1.Columns("name", "id", "metadata").
 				Record(game).
 				Returning("created_at", "updated_at").
 				QueryStruct(game)
 
-			err3 := db.
-				Select("*").
-				From("games").
+			builder3 := db.Select("*")
+			builder3.Execer = edat.NewExecer(builder3.Execer)
+			err3 := builder3.From("games").
 				Where("id = $1", game.ID).
 				QueryStruct(&game2)
 			obj, err2 := game2.GetMetadata()
@@ -80,7 +81,7 @@ var _ = Describe("Games Model", func() {
 
 	Describe("List Games", func() {
 		It("Should return the full list of games", func() {
-			games, err := models.ListGames(db, nil)
+			games, err := models.ListGames(nil, db, nil)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(games).To(HaveLen(13))
 		})
@@ -92,7 +93,7 @@ var _ = Describe("Games Model", func() {
 			gameID := "game-id"
 
 			//When
-			game, err1 := models.GetGameByID(db, gameID, nil)
+			game, err1 := models.GetGameByID(nil, db, gameID, nil)
 			obj, err2 := game.GetMetadata()
 
 			//Then
@@ -111,7 +112,7 @@ var _ = Describe("Games Model", func() {
 			})
 
 			//When
-			game, err := models.GetGameByID(db, gameID, nil)
+			game, err := models.GetGameByID(nil, db, gameID, nil)
 
 			//Then
 			Expect(game.ID).To(Equal(""))
@@ -132,8 +133,8 @@ var _ = Describe("Games Model", func() {
 			var c models.RealClock
 
 			//When
-			err1 := models.UpsertGame(db, &game, c.GetTime(), nil)
-			gameFromDB, err2 := models.GetGameByID(db, id, nil)
+			err1 := models.UpsertGame(nil, db, &game, c.GetTime(), nil)
+			gameFromDB, err2 := models.GetGameByID(nil, db, id, nil)
 
 			//Then
 			Expect(err1).NotTo(HaveOccurred())
@@ -157,8 +158,8 @@ var _ = Describe("Games Model", func() {
 			var c models.RealClock
 
 			//When
-			err1 := models.UpsertGame(db, &game, c.GetTime(), nil)
-			gameFromDB, err2 := models.GetGameByID(db, id, nil)
+			err1 := models.UpsertGame(nil, db, &game, c.GetTime(), nil)
+			gameFromDB, err2 := models.GetGameByID(nil, db, id, nil)
 
 			//Then
 			Expect(err1).NotTo(HaveOccurred())
@@ -184,7 +185,7 @@ var _ = Describe("Games Model", func() {
 			var c models.RealClock
 
 			//When
-			err := models.UpsertGame(db, &game, c.GetTime(), nil)
+			err := models.UpsertGame(nil, db, &game, c.GetTime(), nil)
 
 			//Then
 			Expect(err).To(HaveOccurred())

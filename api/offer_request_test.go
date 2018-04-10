@@ -639,7 +639,7 @@ var _ = Describe("Offer Handler", func() {
 			Expect(recorder.Body.String()).To(Equal(fmt.Sprintf(`{"contents":{"gems":5,"gold":100},"nextAt":%v}`, app.Clock.GetTime().Unix()+1)))
 			Expect(recorder.Code).To(Equal(http.StatusOK))
 
-			offerPlayer, err := models.GetOfferPlayer(app.DB, gameID, playerID, offerID, nil)
+			offerPlayer, err := models.GetOfferPlayer(request.Context(), app.DB, gameID, playerID, offerID, nil)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(offerPlayer.ClaimCounter).To(Equal(1))
 			Expect(offerPlayer.ClaimTimestamp.Time.Unix()).To(Equal(app.Clock.GetTime().Unix()))
@@ -663,7 +663,7 @@ var _ = Describe("Offer Handler", func() {
 			Expect(recorder.Body.String()).To(Equal(fmt.Sprintf(`{"contents":{"gems":5,"gold":100},"nextAt":%v}`, app.Clock.GetTime().Unix()+1)))
 			Expect(recorder.Code).To(Equal(http.StatusOK))
 
-			offerPlayer, err := models.GetOfferPlayer(app.DB, gameID, playerID, offerID, nil)
+			offerPlayer, err := models.GetOfferPlayer(request.Context(), app.DB, gameID, playerID, offerID, nil)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(offerPlayer.ClaimCounter).To(Equal(1))
 			Expect(offerPlayer.ClaimTimestamp.Time.Unix()).To(Equal(app.Clock.GetTime().Unix()))
@@ -731,7 +731,7 @@ var _ = Describe("Offer Handler", func() {
 			Expect(recorder.Body.String()).To(Equal(fmt.Sprintf(`{"contents":{"gems":5,"gold":100},"nextAt":%v}`, app.Clock.GetTime().Unix()+12*60*60)))
 			Expect(recorder.Code).To(Equal(http.StatusConflict))
 
-			offerPlayer, err := models.GetOfferPlayer(app.DB, gameID, playerID, offerID, nil)
+			offerPlayer, err := models.GetOfferPlayer(request.Context(), app.DB, gameID, playerID, offerID, nil)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(offerPlayer.ClaimCounter).To(Equal(1))
 			Expect(offerPlayer.ClaimTimestamp.Time.Unix()).To(Equal(app.Clock.GetTime().Unix()))
@@ -757,7 +757,7 @@ var _ = Describe("Offer Handler", func() {
 			Expect(recorder.Body.String()).To(Equal(`{"contents":{"gems":5,"gold":100}}`))
 			Expect(recorder.Code).To(Equal(http.StatusOK))
 
-			offerPlayer, err := models.GetOfferPlayer(app.DB, gameID, playerID, offerID, nil)
+			offerPlayer, err := models.GetOfferPlayer(request.Context(), app.DB, gameID, playerID, offerID, nil)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(offerPlayer.ClaimCounter).To(Equal(1))
 			Expect(offerPlayer.ClaimTimestamp.Time.Unix()).To(Equal(app.Clock.GetTime().Unix()))
@@ -954,7 +954,7 @@ var _ = Describe("Offer Handler", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(int64(obj["nextAt"].(float64))).To(Equal(app.Clock.GetTime().Unix() + 1))
 
-			offerPlayer, err := models.GetOfferPlayer(app.DB, gameID, playerID, offerID, nil)
+			offerPlayer, err := models.GetOfferPlayer(request.Context(), app.DB, gameID, playerID, offerID, nil)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(offerPlayer.ViewCounter).To(Equal(1))
 			Expect(offerPlayer.ViewTimestamp.Time.Unix()).To(Equal(app.Clock.GetTime().Unix()))
@@ -1035,7 +1035,7 @@ var _ = Describe("Offer Handler", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(int64(obj["nextAt"].(float64))).To(Equal(app.Clock.GetTime().Unix() + 1))
 
-			offerPlayer, err := models.GetOfferPlayer(app.DB, gameID, playerID, offerID, nil)
+			offerPlayer, err := models.GetOfferPlayer(request.Context(), app.DB, gameID, playerID, offerID, nil)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(offerPlayer.ViewCounter).To(Equal(2))
 			Expect(offerPlayer.ViewTimestamp.Time.Unix()).To(Equal(app.Clock.GetTime().Unix()))
@@ -1053,7 +1053,7 @@ var _ = Describe("Offer Handler", func() {
 				OfferID:     offerID,
 				ViewCounter: 1,
 			}
-			err := models.CreateOfferPlayer(app.DB, op, nil)
+			err := models.CreateOfferPlayer(nil, app.DB, op, nil)
 			Expect(err).ToNot(HaveOccurred())
 
 			offerReader := JSONFor(JSON{
@@ -1110,7 +1110,7 @@ var _ = Describe("Offer Handler", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(int64(obj["nextAt"].(float64))).To(Equal(timestamp + 2))
 
-			offerPlayer, err := models.GetOfferPlayer(app.DB, gameID, playerID, offerID, nil)
+			offerPlayer, err := models.GetOfferPlayer(request.Context(), app.DB, gameID, playerID, offerID, nil)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(offerPlayer.ViewCounter).To(Equal(1))
 			Expect(offerPlayer.ViewTimestamp.Time.Unix()).To(Equal(timestamp))
@@ -1133,7 +1133,7 @@ var _ = Describe("Offer Handler", func() {
 				ViewTimestamp: dat.NullTimeFrom(time.Unix(timestamp, 0)),
 				Impressions:   dat.JSON([]byte(fmt.Sprintf(`["%s"]`, impressionID))),
 			}
-			err := models.CreateOfferPlayer(app.DB, op, nil)
+			err := models.CreateOfferPlayer(nil, app.DB, op, nil)
 			Expect(err).ToNot(HaveOccurred())
 
 			offerReader := JSONFor(JSON{
@@ -1150,7 +1150,7 @@ var _ = Describe("Offer Handler", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(int64(obj["nextAt"].(float64))).To(Equal(timestamp + 1))
 
-			offerPlayer, err := models.GetOfferPlayer(app.DB, gameID, playerID, offerID, nil)
+			offerPlayer, err := models.GetOfferPlayer(request.Context(), app.DB, gameID, playerID, offerID, nil)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(offerPlayer.ViewCounter).To(Equal(1))
 			Expect(offerPlayer.ViewTimestamp.Time.Unix()).To(Equal(timestamp))

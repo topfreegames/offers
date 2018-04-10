@@ -31,9 +31,10 @@ import (
 
 	"github.com/DATA-DOG/godog"
 	"github.com/DATA-DOG/godog/gherkin"
-	"github.com/Sirupsen/logrus"
 	"github.com/satori/go.uuid"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
+	edat "github.com/topfreegames/extensions/dat"
 	"github.com/topfreegames/offers/api"
 	"github.com/topfreegames/offers/errors"
 	"github.com/topfreegames/offers/models"
@@ -226,7 +227,9 @@ func theFollowingOffersExistInTheGame(gameID string, otArgs *gherkin.DataTable) 
 							WHERE name = $1 AND game_id = $2
 							LIMIT 1`
 		var dbOffer models.Offer
-		err := app.DB.SQL(query, offer.Name, offer.GameID, offer.ProductID).QueryStruct(&dbOffer)
+		builder := app.DB.SQL(query, offer.Name, offer.GameID, offer.ProductID)
+		builder.Execer = edat.NewExecer(builder.Execer)
+		err := builder.QueryStruct(&dbOffer)
 		if err != nil {
 			if _, err := models.InsertOffer(app.DB, offer, nil); err != nil {
 				return err
@@ -337,7 +340,9 @@ func anOfferIsCreatedInTheGameWithNamePidContentsMetadataPeriodFreqTriggerPlace(
 func anOfferWithNameExistsInGame(offerName, gameID string) error {
 	var offer models.Offer
 	query := "SELECT id FROM offers WHERE name = $1 AND enabled = true"
-	err := app.DB.SQL(query, offerName).QueryStruct(&offer)
+	builder := app.DB.SQL(query, offerName)
+	builder.Execer = edat.NewExecer(builder.Execer)
+	err := builder.QueryStruct(&offer)
 
 	if err != nil {
 		return err

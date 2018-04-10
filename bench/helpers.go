@@ -14,6 +14,7 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	edat "github.com/topfreegames/extensions/dat"
 	"github.com/topfreegames/offers/models"
 	runner "gopkg.in/mgutz/dat.v2/sqlx-runner"
 )
@@ -26,7 +27,9 @@ func getGames(db *runner.Connection) ([]*models.Game, error) {
 	var games []*models.Game
 
 	query := `SELECT id, name FROM games`
-	err := (*db).SQL(query).QueryStructs(&games)
+	builder := (*db).SQL(query)
+	builder.Execer = edat.NewExecer(builder.Execer)
+	err := builder.QueryStructs(&games)
 
 	return games, err
 }
@@ -35,7 +38,9 @@ func getOffers(db *runner.Connection) ([]*models.Offer, error) {
 	var offers []*models.Offer
 
 	query := "SELECT * FROM offers"
-	err := (*db).SQL(query).QueryStructs(&offers)
+	builder := (*db).SQL(query)
+	builder.Execer = edat.NewExecer(builder.Execer)
+	err := builder.QueryStructs(&offers)
 
 	return offers, err
 }

@@ -29,6 +29,7 @@ import (
 	"strings"
 
 	//"github.com/satori/go.uuid"
+	edat "github.com/topfreegames/extensions/dat"
 	"github.com/topfreegames/offers/api"
 	"github.com/topfreegames/offers/models"
 	"gopkg.in/mgutz/dat.v2/dat"
@@ -102,7 +103,9 @@ func selectOfferInstanceByOfferNameAndPlayerAndGame(offerName, playerID, gameID 
 							AND offers.game_id =$2
 							AND offers.name = $3`
 	var offerInstance models.OfferInstance
-	err := app.DB.SQL(query, playerID, gameID, offerName).QueryStruct(&offerInstance)
+	builder := app.DB.SQL(query, playerID, gameID, offerName)
+	builder.Execer = edat.NewExecer(builder.Execer)
+	err := builder.QueryStruct(&offerInstance)
 
 	return &offerInstance, err
 }

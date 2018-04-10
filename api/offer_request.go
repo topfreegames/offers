@@ -13,7 +13,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/Sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	e "github.com/topfreegames/offers/errors"
 	"github.com/topfreegames/offers/models"
 )
@@ -80,7 +80,7 @@ func (h *OfferRequestHandler) getOffers(w http.ResponseWriter, r *http.Request) 
 	var game *models.Game
 	var err error
 	err = mr.WithSegment(models.SegmentModel, func() error {
-		game, err = models.GetGameByID(h.App.DB, gameID, mr)
+		game, err = models.GetGameByID(r.Context(), h.App.DB, gameID, mr)
 		return err
 	})
 	if err != nil {
@@ -111,7 +111,7 @@ func (h *OfferRequestHandler) getOffers(w http.ResponseWriter, r *http.Request) 
 
 	var offers map[string][]*models.OfferToReturn
 	err = mr.WithSegment(models.SegmentModel, func() error {
-		offers, err = models.GetAvailableOffers(h.App.DB, h.App.Cache, gameID, playerID, currentTime, h.App.OffersCacheMaxAge, filterAttrs, allowInefficientQueries, mr)
+		offers, err = models.GetAvailableOffers(r.Context(), h.App.DB, h.App.Cache, gameID, playerID, currentTime, h.App.OffersCacheMaxAge, filterAttrs, allowInefficientQueries, mr)
 		return err
 	})
 
@@ -151,6 +151,7 @@ func (h *OfferRequestHandler) claimOffer(w http.ResponseWriter, r *http.Request)
 	}
 
 	contents, alreadyClaimed, nextAt, err := models.ClaimOffer(
+		r.Context(),
 		h.App.DB,
 		payload.GameID,
 		payload.OfferInstanceID,
@@ -201,6 +202,7 @@ func (h *OfferRequestHandler) viewOffer(w http.ResponseWriter, r *http.Request) 
 	})
 
 	alreadyViewed, nextAt, err := models.ViewOffer(
+		r.Context(),
 		h.App.DB,
 		payload.GameID,
 		offerInstanceID,
@@ -265,7 +267,7 @@ func (h *OfferRequestHandler) offerInfo(w http.ResponseWriter, r *http.Request) 
 	var err error
 	var offer *models.OfferToReturn
 	err = mr.WithSegment(models.SegmentModel, func() error {
-		offer, err = models.GetOfferInfo(h.App.DB, gameID, playerID, offerInstanceID, h.App.OffersCacheMaxAge, mr)
+		offer, err = models.GetOfferInfo(r.Context(), h.App.DB, gameID, playerID, offerInstanceID, h.App.OffersCacheMaxAge, mr)
 		return err
 	})
 
@@ -290,7 +292,7 @@ func (h *OfferRequestHandler) offerInfo(w http.ResponseWriter, r *http.Request) 
 	maxAge := h.App.MaxAge
 	var game *models.Game
 	err = mr.WithSegment(models.SegmentModel, func() error {
-		game, err = models.GetGameByID(h.App.DB, gameID, mr)
+		game, err = models.GetGameByID(r.Context(), h.App.DB, gameID, mr)
 		return err
 	})
 	metadata, err := game.GetMetadata()
