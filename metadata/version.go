@@ -8,4 +8,4 @@
 package metadata
 
 //Version of the Offers API
-var Version = "2.0.0"
+var Version = "2.1.0"
