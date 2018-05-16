@@ -71,7 +71,7 @@
 
 [[constraint]]
   name = "github.com/topfreegames/extensions"
-  version = "5.14.1"
+  version = "v5.18.1"
 
 [prune]
   go-tests = true

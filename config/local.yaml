@@ -23,3 +23,7 @@ pagination:
 jaeger:
   disabled: true
   samplingProbability: 0.0001
+extensions:
+  dogstatsd:
+    host: localhost:8125
+    prefix: offers.

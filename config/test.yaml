@@ -17,3 +17,7 @@ offersCache:
 pagination:
   limit: 50
   offset: 0
+extensions:
+  dogstatsd:
+    host: localhost:9125
+    prefix: offers.

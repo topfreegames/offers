@@ -23,6 +23,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"github.com/topfreegames/extensions/jaeger"
+	"github.com/topfreegames/extensions/middleware"
 	"github.com/topfreegames/extensions/router"
 	"github.com/topfreegames/offers/errors"
 	"github.com/topfreegames/offers/metadata"
@@ -38,6 +39,7 @@ type App struct {
 	DB                runner.Connection
 	Debug             bool
 	Logger            logrus.FieldLogger
+	MetricsReporter   middleware.MetricsReporter
 	MaxAge            int64
 	NewRelic          newrelic.Application
 	Router            *mux.Router
@@ -74,6 +76,8 @@ func NewApp(host string, port int, config *viper.Viper, debug bool, logger logru
 
 func (a *App) getRouter() *mux.Router {
 	r := router.NewRouter()
+	r.Use(middleware.Metrics(a.MetricsReporter))
+
 	r.Handle("/healthcheck", Chain(
 		&HealthcheckHandler{App: a},
 		&SentryMiddleware{},
@@ -215,11 +219,24 @@ func (a *App) configureApp() error {
 
 	a.configureSentry()
 	a.configureJaeger()
+	err = a.configureMetricsReporter()
+	if err != nil {
+		return err
+	}
 
 	a.MaxAge = a.Config.GetInt64("cache.maxAgeSeconds")
 	a.configurePagination()
 	a.configureServer()
 	a.configureCache()
+	return nil
+}
+
+func (a *App) configureMetricsReporter() error {
+	mr, err := middleware.NewMetricsReporter(a.Config)
+	if err != nil {
+		return err
+	}
+	a.MetricsReporter = mr
 	return nil
 }
 
