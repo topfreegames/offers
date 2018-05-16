@@ -77,6 +77,8 @@ func NewApp(host string, port int, config *viper.Viper, debug bool, logger logru
 func (a *App) getRouter() *mux.Router {
 	r := router.NewRouter()
 	r.Use(middleware.Metrics(a.MetricsReporter))
+	r.Use(middleware.Version(metadata.Version))
+	r.Use(middleware.Logging(a.Logger))
 
 	r.Handle("/healthcheck", Chain(
 		&HealthcheckHandler{App: a},
@@ -84,8 +86,6 @@ func (a *App) getRouter() *mux.Router {
 		&MetricsReporterMiddleware{App: a},
 		&NewRelicMiddleware{App: a},
 		&AuthMiddleware{App: a},
-		&LoggingMiddleware{App: a},
-		&VersionMiddleware{},
 	)).Methods("GET").Name("healthcheck")
 
 	r.Handle("/games", Chain(
@@ -94,8 +94,6 @@ func (a *App) getRouter() *mux.Router {
 		&MetricsReporterMiddleware{App: a},
 		&NewRelicMiddleware{App: a},
 		&AuthMiddleware{App: a, useBasicAuth: true},
-		&LoggingMiddleware{App: a},
-		&VersionMiddleware{},
 	)).Methods("GET").Name("game")
 
 	r.HandleFunc("/games/{id}", Chain(
@@ -104,8 +102,6 @@ func (a *App) getRouter() *mux.Router {
 		&MetricsReporterMiddleware{App: a},
 		&NewRelicMiddleware{App: a},
 		&AuthMiddleware{App: a, useBasicAuth: true},
-		&LoggingMiddleware{App: a},
-		&VersionMiddleware{},
 		NewParamKeyMiddleware(a, func(id string) bool {
 			return govalidator.Matches(id, "^[^-][a-zA-Z0-9-_]*$") && govalidator.StringLength(id, "1", "255")
 		}),
@@ -117,8 +113,6 @@ func (a *App) getRouter() *mux.Router {
 		&SentryMiddleware{},
 		&NewRelicMiddleware{App: a},
 		&AuthMiddleware{App: a, useBasicAuth: true},
-		&LoggingMiddleware{App: a},
-		&VersionMiddleware{},
 	)).Methods("GET").Name("offers")
 
 	r.Handle("/offers", Chain(
@@ -126,8 +120,6 @@ func (a *App) getRouter() *mux.Router {
 		&SentryMiddleware{},
 		&NewRelicMiddleware{App: a},
 		&AuthMiddleware{App: a, useBasicAuth: true},
-		&LoggingMiddleware{App: a},
-		&VersionMiddleware{},
 		NewValidationMiddleware(func() interface{} { return &models.Offer{} }),
 	)).Methods("POST").Name("offers")
 
@@ -136,8 +128,6 @@ func (a *App) getRouter() *mux.Router {
 		&SentryMiddleware{},
 		&NewRelicMiddleware{App: a},
 		&AuthMiddleware{App: a},
-		&LoggingMiddleware{App: a},
-		&VersionMiddleware{},
 		NewValidationMiddleware(func() interface{} { return &models.ClaimOfferPayload{} }),
 	)).Methods("PUT").Name("offer-requests")
 
@@ -146,8 +136,6 @@ func (a *App) getRouter() *mux.Router {
 		&SentryMiddleware{},
 		&NewRelicMiddleware{App: a},
 		&AuthMiddleware{App: a, useBasicAuth: true},
-		&LoggingMiddleware{App: a},
-		&VersionMiddleware{},
 		NewParamKeyMiddleware(a, govalidator.IsUUIDv4),
 		NewValidationMiddleware(func() interface{} { return &models.Offer{} }),
 	)).Methods("PUT").Name("offers")
@@ -157,8 +145,6 @@ func (a *App) getRouter() *mux.Router {
 		&SentryMiddleware{},
 		&NewRelicMiddleware{App: a},
 		&AuthMiddleware{App: a, useBasicAuth: true},
-		&LoggingMiddleware{App: a},
-		&VersionMiddleware{},
 		NewParamKeyMiddleware(a, govalidator.IsUUIDv4),
 	)).Methods("PUT").Name("offers")
 
@@ -167,8 +153,6 @@ func (a *App) getRouter() *mux.Router {
 		&SentryMiddleware{},
 		&NewRelicMiddleware{App: a},
 		&AuthMiddleware{App: a, useBasicAuth: true},
-		&LoggingMiddleware{App: a},
-		&VersionMiddleware{},
 		NewParamKeyMiddleware(a, govalidator.IsUUIDv4),
 	)).Methods("PUT").Name("offers")
 
@@ -177,8 +161,6 @@ func (a *App) getRouter() *mux.Router {
 		&SentryMiddleware{},
 		&NewRelicMiddleware{App: a},
 		&AuthMiddleware{App: a},
-		&LoggingMiddleware{App: a},
-		&VersionMiddleware{},
 	)).Methods("GET").Name("offer-requests")
 
 	r.HandleFunc("/offers/{id}/impressions", Chain(
@@ -186,8 +168,6 @@ func (a *App) getRouter() *mux.Router {
 		&SentryMiddleware{},
 		&NewRelicMiddleware{App: a},
 		&AuthMiddleware{App: a},
-		&LoggingMiddleware{App: a},
-		&VersionMiddleware{},
 		NewParamKeyMiddleware(a, govalidator.IsUUIDv4),
 		NewValidationMiddleware(func() interface{} { return &models.OfferImpressionPayload{} }),
 	).ServeHTTP).Methods("PUT").Name("offer-requests")
@@ -197,8 +177,6 @@ func (a *App) getRouter() *mux.Router {
 		&SentryMiddleware{},
 		&NewRelicMiddleware{App: a},
 		&AuthMiddleware{App: a},
-		&LoggingMiddleware{App: a},
-		&VersionMiddleware{},
 	)).Methods("GET").Name("offer-requests")
 
 	return r
@@ -365,7 +343,7 @@ func (a *App) configureNewRelic() error {
 
 func (a *App) configureServer() {
 	a.Router = a.getRouter()
-	a.Server = &http.Server{Addr: a.Address, Handler: wrapHandlerWithResponseWriter(a.Router)}
+	a.Server = &http.Server{Addr: a.Address, Handler: middleware.UseResponseWriter(a.Router)}
 }
 
 //HandleError writes an error response with message and status

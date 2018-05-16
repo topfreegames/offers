@@ -34,18 +34,3 @@ func (rw *responseWriter) WriteHeader(code int) {
 	rw.statusCode = code
 	rw.ResponseWriter.WriteHeader(code)
 }
-
-func wrapHandlerWithResponseWriter(wrappedHandler http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		rw := newResponseWriter(w)
-		wrappedHandler.ServeHTTP(rw, req)
-	})
-}
-
-func getStatusFromResponseWriter(w http.ResponseWriter) int {
-	rw, ok := w.(*responseWriter)
-	if ok {
-		return rw.statusCode
-	}
-	return -1
-}

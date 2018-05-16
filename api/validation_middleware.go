@@ -15,6 +15,7 @@ import (
 	"gopkg.in/mgutz/dat.v2/dat"
 
 	"github.com/asaskevich/govalidator"
+	"github.com/topfreegames/extensions/middleware"
 	"github.com/topfreegames/offers/errors"
 	"github.com/topfreegames/offers/models"
 )
@@ -194,7 +195,7 @@ func (m *ValidationMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	defer r.Body.Close()
 
 	payload := m.GetPayload()
-	l := loggerFromContext(r.Context())
+	l := middleware.GetLogger(r.Context())
 
 	decoder := json.NewDecoder(r.Body)
 	err := decoder.Decode(payload)

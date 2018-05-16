@@ -47,7 +47,7 @@ var _ = Describe("Healthcheck Handler", func() {
 
 			It("returns the version as a header", func() {
 				app.Router.ServeHTTP(recorder, request)
-				Expect(recorder.Header().Get("X-Offers-Version")).To(Equal(metadata.Version))
+				Expect(recorder.Header().Get("X-Version")).To(Equal(metadata.Version))
 			})
 
 			It("returns status code of 500 if database is unavailable", func() {

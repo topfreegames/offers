@@ -355,8 +355,8 @@
     "pg/interfaces",
     "router"
   ]
-  revision = "6899921e24d80b91787fac4b8d1810bb1e557c27"
-  version = "v5.18.1"
+  revision = "9e3083be648e081c03da86f39dc433da0cabe92c"
+  version = "v5.19.0"
 
 [[projects]]
   name = "github.com/uber/jaeger-client-go"
@@ -481,6 +481,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "35bc326cfdf4431d87d06e5f0796b3f4d59a9c18c68fae40e387b1d41f917f40"
+  inputs-digest = "62f2dd8351aedb96b5892b41f505b82b040d6df97d42068213a4af28baede431"
   solver-name = "gps-cdcl"
   solver-version = 1

@@ -10,6 +10,7 @@ package api
 import (
 	"net/http"
 
+	"github.com/topfreegames/extensions/middleware"
 	"github.com/topfreegames/offers/errors"
 	"github.com/topfreegames/offers/models"
 )
@@ -21,7 +22,7 @@ type HealthcheckHandler struct {
 
 //ServeHTTP method
 func (h *HealthcheckHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	l := loggerFromContext(r.Context())
+	l := middleware.GetLogger(r.Context())
 	mr := metricsReporterFromCtx(r.Context())
 
 	l.Debug("Performing healthcheck...")

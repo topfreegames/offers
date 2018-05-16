@@ -10,9 +10,11 @@ package api
 import (
 	"context"
 	"fmt"
-	"github.com/gorilla/mux"
-	"github.com/topfreegames/offers/errors"
 	"net/http"
+
+	"github.com/gorilla/mux"
+	"github.com/topfreegames/extensions/middleware"
+	"github.com/topfreegames/offers/errors"
 )
 
 //ParamMiddleware add into the model the parameters that came in the URI
@@ -49,7 +51,7 @@ func (m *ParamMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if !valid {
 		err := fmt.Errorf("ID: " + id + " does not validate;")
-		l := loggerFromContext(r.Context())
+		l := middleware.GetLogger(r.Context())
 		l.WithError(err).Error("Payload could not be decoded.")
 		vErr := errors.NewValidationFailedError(err)
 		WriteBytes(w, http.StatusUnprocessableEntity, vErr.Serialize())
