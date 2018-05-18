@@ -28,6 +28,7 @@ const (
 )
 
 var _ = Describe("Offer Models", func() {
+	currentTime := time.Unix(1486678000, 0)
 	Describe("Get offer id", func() {
 		It("should load an offer from existent id", func() {
 			id := defaultOfferID
@@ -308,7 +309,7 @@ var _ = Describe("Offer Models", func() {
 			gameID := defaultGameID
 
 			filterAttrs := make(map[string]string)
-			offers, err := models.GetEnabledOffers(nil, db, gameID, offersCache, expireDuration, filterAttrs, false, nil)
+			offers, err := models.GetEnabledOffers(nil, db, gameID, offersCache, expireDuration, currentTime, filterAttrs, false, nil)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(offers).To(HaveLen(4))
 			for i := 0; i < len(offers); i++ {
@@ -319,7 +320,7 @@ var _ = Describe("Offer Models", func() {
 		It("should return an empty list if there are no enabled offers", func() {
 			gameID := uuid.NewV4().String()
 			filterAttrs := make(map[string]string)
-			offers, err := models.GetEnabledOffers(nil, db, gameID, offersCache, expireDuration, filterAttrs, false, nil)
+			offers, err := models.GetEnabledOffers(nil, db, gameID, offersCache, expireDuration, currentTime, filterAttrs, false, nil)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(offers).To(HaveLen(0))
 		})
@@ -334,13 +335,13 @@ var _ = Describe("Offer Models", func() {
 			gameID := defaultGameID
 			start := time.Now().UnixNano()
 			filterAttrs := make(map[string]string)
-			offers, err := models.GetEnabledOffers(nil, db, gameID, offersCache, expireDuration, filterAttrs, false, nil)
+			offers, err := models.GetEnabledOffers(nil, db, gameID, offersCache, expireDuration, currentTime, filterAttrs, false, nil)
 			dbElapsedTime := time.Now().UnixNano() - start
 			Expect(err).NotTo(HaveOccurred())
 			Expect(offers).To(HaveLen(4))
 
 			start = time.Now().UnixNano()
-			offers, err = models.GetEnabledOffers(nil, db, gameID, offersCache, expireDuration, filterAttrs, false, nil)
+			offers, err = models.GetEnabledOffers(nil, db, gameID, offersCache, expireDuration, currentTime, filterAttrs, false, nil)
 			cacheElapsedTime := time.Now().UnixNano() - start
 			Expect(err).NotTo(HaveOccurred())
 			_, found := offersCache.Get(models.GetEnabledOffersKey(gameID))

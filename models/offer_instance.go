@@ -389,6 +389,7 @@ func GetAvailableOffers(
 		gameID,
 		offersCache,
 		expireDuration,
+		t,
 		filterAttrs,
 		allowInefficientQueries,
 		mr,
@@ -400,21 +401,12 @@ func GetAvailableOffers(
 		return offersByPlacement, nil
 	}
 
-	var trigger TimeTrigger
-	filteredOffers, err := filterTemplatesByTrigger(trigger, enabledOffers, t)
-	if err != nil {
-		return nil, err
-	}
-	if len(filteredOffers) == 0 {
-		return offersByPlacement, nil
-	}
-
 	offersByPlayer, err := GetOffersByPlayer(ctx, db, gameID, playerID, mr)
 	if err != nil {
 		return nil, err
 	}
 
-	filteredOffers, err = filterOffersByFrequencyAndPeriod(playerID, filteredOffers, offersByPlayer, t, mr)
+	filteredOffers, err := filterOffersByFrequencyAndPeriod(playerID, enabledOffers, offersByPlayer, t, mr)
 	if err != nil {
 		return nil, err
 	}

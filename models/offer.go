@@ -44,6 +44,8 @@ const enabledOffers = `
     WHERE
 		offers.game_id = $1
 		AND offers.enabled = true
+		AND (trigger->>'to')::int >= $2
+		AND (trigger->>'from')::int <= $2
 `
 
 var isValidString = regexp.MustCompile(`^[a-zA-Z0-9_\.]+$`).MatchString
@@ -86,7 +88,7 @@ func buildInefficientScope(enabledOffers string, filterAttrs map[string]string) 
 	return query
 }
 
-func buildEffiecientScope(enabledOffers string, filterAttrs map[string]string) string {
+func buildEfficientScope(enabledOffers string, filterAttrs map[string]string) string {
 	subQueries := []string{enabledOffers}
 	for k, v := range filterAttrs {
 		// TODO: Possible SQL injection
@@ -125,17 +127,14 @@ func GetOfferByID(ctx context.Context, db runner.Connection, gameID, id string, 
 }
 
 //GetEnabledOffers returns all the enabled offers and matching offers
-func GetEnabledOffers(ctx context.Context, db runner.Connection, gameID string, offersCache *cache.Cache, expireDuration time.Duration, filterAttrs map[string]string, allowInefficientQueries bool, mr *MixedMetricsReporter) ([]*Offer, error) {
+func GetEnabledOffers(ctx context.Context, db runner.Connection, gameID string, offersCache *cache.Cache, expireDuration time.Duration, currentTime time.Time, filterAttrs map[string]string, allowInefficientQueries bool, mr *MixedMetricsReporter) ([]*Offer, error) {
 	var offers []*Offer
 	var err error
 
 	enabledOffersKey := GetEnabledOffersKey(gameID)
-	// TODO: See if it is possible to enable cache with filters
 	if len(filterAttrs) == 0 {
 		offersInterface, found := offersCache.Get(enabledOffersKey)
-
 		if found {
-			//fmt.Println("Offers Cache Hit")
 			offers = offersInterface.([]*Offer)
 			return offers, err
 		}
@@ -145,13 +144,11 @@ func GetEnabledOffers(ctx context.Context, db runner.Connection, gameID string, 
 	if allowInefficientQueries {
 		scope = buildInefficientScope(enabledOffers, filterAttrs)
 	} else {
-		scope = buildEffiecientScope(enabledOffers, filterAttrs)
+		scope = buildEfficientScope(enabledOffers, filterAttrs)
 	}
 
-	//fmt.Println("Offers Cache Miss")
 	err = mr.WithDatastoreSegment("offers", SegmentSelect, func() error {
 		// TODO: Add a configurable limit to this query
-		// Explicitly not fetching filters, the player does not need to know about them
 
 		builder := db.
 			Select(`
@@ -161,7 +158,7 @@ func GetEnabledOffers(ctx context.Context, db runner.Connection, gameID string, 
 		`)
 		builder.Execer = edat.NewExecer(builder.Execer).WithContext(ctx)
 		return builder.From("offers").
-			Scope(scope, gameID).
+			Scope(scope, gameID, currentTime.Unix()).
 			QueryStructs(&offers)
 	})
 	err = HandleNotFoundError("Offer", map[string]interface{}{"enabled": true}, err)
