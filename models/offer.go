@@ -232,6 +232,7 @@ func InsertOffer(ctx context.Context, db runner.Connection, offer *Offer, offers
 	err := mr.WithDatastoreSegment("offers", SegmentInsert, func() error {
 		builder := db.InsertInto("offers")
 		builder.Execer = edat.NewExecer(builder.Execer).WithContext(ctx)
+		// TODO: Insert into offer_versions as well
 		return builder.Columns("game_id", "name", "period", "frequency", "trigger", "placement", "metadata", "product_id", "contents", "filters", "cost").
 			Record(offer).
 			Returning("id, enabled, version").
@@ -278,6 +279,7 @@ func UpdateOffer(ctx context.Context, db runner.Connection, offer *Offer, offers
 	err = mr.WithDatastoreSegment("offers", SegmentUpdate, func() error {
 		builder := db.Update("offers")
 		builder.Execer = edat.NewExecer(builder.Execer).WithContext(ctx)
+		// TODO: Create new offer version
 		return builder.SetMap(offersMap).
 			Where("id = $1 AND game_id = $2", offer.ID, offer.GameID).
 			Returning("id, version").

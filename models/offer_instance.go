@@ -430,6 +430,7 @@ func GetAvailableOffers(
 		})
 	}
 
+	// TODO: Change this to use offerVersions
 	offerInstances, err = findOrCreateOfferInstance(ctx, db, offerInstances, t, mr)
 	if err != nil {
 		return nil, err
@@ -487,9 +488,9 @@ func findOrCreateOfferInstance(
 	WITH
 		sel AS (SELECT id, offer_id FROM offer_instances WHERE %s),
 		ins AS (INSERT INTO offer_instances(game_id, player_id, offer_id, offer_version, contents, product_id, cost)
-						VALUES %s
-						ON CONFLICT DO NOTHING
-						RETURNING id, offer_id)
+				VALUES %s
+				ON CONFLICT DO NOTHING
+				RETURNING id, offer_id)
 	SELECT * FROM ins UNION ALL SELECT * FROM sel
 	`, strings.Join(whereClause, " OR "), strings.Join(valueArgs, ","))
 
@@ -500,22 +501,6 @@ func findOrCreateOfferInstance(
 	})
 
 	return resOfferInstances, err
-}
-
-func filterTemplatesByTrigger(trigger Trigger, offers []*Offer, t time.Time) ([]*Offer, error) {
-	var (
-		filteredOffers []*Offer
-		times          Times
-	)
-	for _, ot := range offers {
-		if err := json.Unmarshal(ot.Trigger, &times); err != nil {
-			return nil, err
-		}
-		if trigger.IsTriggered(times, t) {
-			filteredOffers = append(filteredOffers, ot)
-		}
-	}
-	return filteredOffers, nil
 }
 
 func filterOffersByFrequencyAndPeriod(
@@ -576,47 +561,4 @@ func filterOffersByFrequencyAndPeriod(
 	}
 
 	return filteredOffers, nil
-}
-
-func getOfferToReturn(
-	ctx context.Context,
-	db runner.Connection,
-	gameID, playerID, offerID string,
-	mr *MixedMetricsReporter,
-) (*OfferToReturn, error) {
-	var offerInstance OfferToReturn
-
-	err := mr.WithDatastoreSegment("offer_instances", SegmentSelect, func() error {
-		builder := db.
-			Select("oi.id, oi.product_id, oi.contents, oi.cost, o.metadata, o.trigger#>>'{to}' AS expire_at")
-		builder.Execer = edat.NewExecer(builder.Execer).WithContext(ctx)
-		return builder.From("offer_instances oi JOIN offers o ON (oi.offer_id=o.id)").
-			Where("oi.id=$1 AND oi.game_id=$2 AND oi.player_id=$3", offerID, gameID, playerID).
-			QueryStruct(&offerInstance)
-	})
-
-	err = HandleNotFoundError("OfferInstance", map[string]interface{}{
-		"GameID":   gameID,
-		"ID":       offerID,
-		"PlayerID": playerID,
-	}, err)
-
-	return &offerInstance, err
-}
-
-//GetOfferInfo returns the offers that match the criteria of enabled offer templates
-func GetOfferInfo(
-	ctx context.Context,
-	db runner.Connection,
-	gameID, playerID, offerInstanceID string,
-	expireDuration time.Duration,
-	mr *MixedMetricsReporter,
-) (*OfferToReturn, error) {
-	offer, err := getOfferToReturn(ctx, db, gameID, playerID, offerInstanceID, mr)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return offer, nil
 }

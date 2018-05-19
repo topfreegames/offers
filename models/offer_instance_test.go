@@ -921,12 +921,11 @@ var _ = Describe("Offer Instance Model", func() {
 	Describe("Get offer info", func() {
 		It("should return offer info for an already seen offer", func() {
 			//Given
-			playerID := "player-1"
 			gameID := defaultGameID
 			offerInstanceID := "eb7e8d2a-2739-4da3-aa31-7970b63bdad7"
 
 			//When
-			offerInstance, err := models.GetOfferInfo(nil, db, gameID, playerID, offerInstanceID, expireDuration, nil)
+			offerInstance, err := models.GetOfferInfo(nil, db, gameID, offerInstanceID, expireDuration, nil)
 
 			//Then
 			Expect(err).NotTo(HaveOccurred())
@@ -940,21 +939,19 @@ var _ = Describe("Offer Instance Model", func() {
 
 		It("should error if gameID doesn't exist", func() {
 			//Given
-			playerID := "player-1"
 			gameID := "non-existing-game"
 			offerInstanceID := "eb7e8d2a-2739-4da3-aa31-7970b63bdad7"
 
 			//When
-			_, err := models.GetOfferInfo(nil, db, gameID, playerID, offerInstanceID, expireDuration, nil)
+			_, err := models.GetOfferInfo(nil, db, gameID, offerInstanceID, expireDuration, nil)
 
 			//Then
 			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(Equal("OfferInstance was not found with specified filters."))
+			Expect(err.Error()).To(Equal("OfferVersion was not found with specified filters."))
 		})
 
 		It("should fail if some error in the database", func() {
 			//Given
-			playerID := "player-1"
 			gameID := "non-existing-game"
 			offerInstanceID := "eb7e8d2a-2739-4da3-aa31-7970b63bdad7"
 
@@ -967,7 +964,7 @@ var _ = Describe("Offer Instance Model", func() {
 			db.(*runner.DB).DB.Close() // make DB connection unavailable
 
 			//When
-			_, err = models.GetOfferInfo(nil, db, gameID, playerID, offerInstanceID, expireDuration, nil)
+			_, err = models.GetOfferInfo(nil, db, gameID, offerInstanceID, expireDuration, nil)
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(Equal("sql: database is closed"))
 		})
