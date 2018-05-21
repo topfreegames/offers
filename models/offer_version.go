@@ -21,6 +21,17 @@ type OfferVersion struct {
 	CreatedAt    dat.NullTime `db:"created_at" json:"createdAt" valid:""`
 }
 
+func offerVersionFromOffer(offer *Offer) *OfferVersion {
+	return &OfferVersion{
+		GameID:       offer.GameID,
+		OfferID:      offer.ID,
+		OfferVersion: offer.Version,
+		Contents:     offer.Contents,
+		ProductID:    offer.ProductID,
+		Cost:         offer.Cost,
+	}
+}
+
 func getOfferToReturn(
 	ctx context.Context,
 	db runner.Connection,

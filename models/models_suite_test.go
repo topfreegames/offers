@@ -48,8 +48,10 @@ var _ = BeforeEach(func() {
 })
 
 var _ = AfterEach(func() {
-	err := db.Rollback()
-	Expect(err).NotTo(HaveOccurred())
+	if !db.IsRollbacked {
+		err := db.Rollback()
+		Expect(err).NotTo(HaveOccurred())
+	}
 	db = nil
 })
 

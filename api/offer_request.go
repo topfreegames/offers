@@ -267,6 +267,7 @@ func (h *OfferRequestHandler) offerInfo(w http.ResponseWriter, r *http.Request) 
 	var err error
 	var offer *models.OfferToReturn
 	err = mr.WithSegment(models.SegmentModel, func() error {
+		// TODO: Fallback to offer instances if not found
 		offer, err = models.GetOfferInfo(r.Context(), h.App.DB, gameID, offerInstanceID, h.App.OffersCacheMaxAge, mr)
 		return err
 	})
