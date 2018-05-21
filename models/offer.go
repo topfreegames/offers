@@ -96,11 +96,7 @@ func buildEfficientScope(enabledOffers string, filterAttrs map[string]string) st
 			subQueries = []string{enabledOffers}
 			break
 		}
-		rawSubQuery := `
-		AND (
-			filters @> '{"%[1]s": {"eq": "%[2]s"}}' OR
-			filters @> '{"%[1]s": {"neq": "%[2]s"}}'
-		)`
+		rawSubQuery := `AND filters @> '{"%[1]s": {"eq": "%[2]s"}}'`
 		subQuery := fmt.Sprintf(rawSubQuery, k, v)
 		subQueries = append(subQueries, subQuery)
 	}
