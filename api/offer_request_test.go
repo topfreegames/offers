@@ -509,7 +509,7 @@ var _ = Describe("Offer Handler", func() {
 			// Create Offer by requesting it
 			gameID := "offers-game"
 			playerID := "player-1"
-			id := "6c4a79f2-24b8-4be9-93d4-12413b789823"
+			id := "35df52e7-3161-446f-975b-92f32871e37c"
 			var body map[string]int64
 
 			// View the Offer
@@ -535,7 +535,7 @@ var _ = Describe("Offer Handler", func() {
 			var offersToReturn map[string][]models.OfferToReturn
 			json.Unmarshal(recorder.Body.Bytes(), &offersToReturn)
 			offer := models.OfferToReturn{
-				ID:        "6c4a79f2-24b8-4be9-93d4-12413b789823",
+				ID:        "35df52e7-3161-446f-975b-92f32871e37c",
 				ProductID: "com.tfg.sample.3",
 				Contents:  dat.JSON([]byte(`{"gems":5,"gold":100}`)),
 				Metadata:  dat.JSON([]byte("{}")),
@@ -549,7 +549,7 @@ var _ = Describe("Offer Handler", func() {
 			// Create Offer by requesting it
 			gameID := "offers-game"
 			playerID := "player-1"
-			id := "6c4a79f2-24b8-4be9-93d4-12413b789823"
+			id := "35df52e7-3161-446f-975b-92f32871e37c"
 			var body map[string]int64
 
 			// View the Offer for the first time
@@ -596,24 +596,6 @@ var _ = Describe("Offer Handler", func() {
 				ExpireAt:  1486679100,
 			}
 			Expect(offersToReturn["store"]).NotTo(ContainElement(offer))
-		})
-
-		It("should return available offers from cache on second request", func() {
-			playerID := "player-1"
-			gameID := "offers-game"
-			url := fmt.Sprintf("/available-offers?player-id=%s&game-id=%s", playerID, gameID)
-			request, _ := http.NewRequest("GET", url, nil)
-
-			start := time.Now().UnixNano()
-			app.Router.ServeHTTP(recorder, request)
-			dbElapsedTime := time.Now().UnixNano() - start
-
-			recorder = httptest.NewRecorder()
-			start = time.Now().UnixNano()
-			app.Router.ServeHTTP(recorder, request)
-			cacheElapsedTime := time.Now().UnixNano() - start
-
-			Expect(dbElapsedTime).To(BeNumerically(">", cacheElapsedTime))
 		})
 	})
 
@@ -927,8 +909,8 @@ var _ = Describe("Offer Handler", func() {
 			var jsonBody map[string]string
 			json.Unmarshal(recorder.Body.Bytes(), &jsonBody)
 			Expect(jsonBody["code"]).To(Equal("OFF-001"))
-			Expect(jsonBody["description"]).To(Equal("offerInstance was not found with specified filters."))
-			Expect(jsonBody["error"]).To(Equal("offerInstanceNotFoundError"))
+			Expect(jsonBody["description"]).To(Equal("OfferInstance was not found with specified filters."))
+			Expect(jsonBody["error"]).To(Equal("OfferInstanceNotFoundError"))
 		})
 	})
 
@@ -1117,8 +1099,8 @@ var _ = Describe("Offer Handler", func() {
 		})
 
 		It("should not increment when is a retry request and rechead max view", func() {
-			offerInstanceID := "56fc0477-39f1-485c-898e-4909e9155eb1"
-			offerID := "dd21ec96-2890-4ba0-b8e2-40ea67196990"
+			offerInstanceID := "38cf3ed6-b999-4ee8-9e21-8f700532b37c"
+			offerID := "d5114990-77d7-45c4-ba5f-462fc86b213f"
 			gameID := "offers-game"
 			playerID := "player-1"
 			impressionID := uuid.NewV4().String()

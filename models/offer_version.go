@@ -2,6 +2,8 @@ package models
 
 import (
 	"context"
+	"fmt"
+	"strings"
 	"time"
 
 	edat "github.com/topfreegames/extensions/dat"
@@ -49,12 +51,52 @@ func getOfferToReturn(
 			QueryStruct(&offerVersion)
 	})
 
-	err = HandleNotFoundError("OfferVersion", map[string]interface{}{
+	if err != nil && IsNoRowsInResultSetError(err) {
+		// TODO: Test this
+		err = mr.WithDatastoreSegment("offer_instances", SegmentSelect, func() error {
+			builder := db.
+				Select("oi.id, oi.product_id, oi.contents, oi.cost, o.metadata, o.trigger#>>'{to}' AS expire_at")
+			builder.Execer = edat.NewExecer(builder.Execer).WithContext(ctx)
+			return builder.From("offer_instances oi JOIN offers o ON (oi.offer_id=o.id)").
+				Where("oi.id=$1 AND oi.game_id=$2", offerID, gameID).
+				QueryStruct(&offerVersion)
+		})
+	}
+	err = handleNotFoundError("OfferInstance", map[string]interface{}{
 		"GameID": gameID,
 		"ID":     offerID,
 	}, err)
 
 	return &offerVersion, err
+}
+
+func findOfferVersions(
+	ctx context.Context,
+	db runner.Connection,
+	offerVersions []*OfferVersion,
+	mr *MixedMetricsReporter,
+) ([]*OfferVersion, error) {
+	resOfferInstances := make([]*OfferVersion, 0, len(offerVersions))
+	var err error
+
+	whereClause := make([]string, 0, len(offerVersions))
+	for _, o := range offerVersions {
+		whereClause = append(whereClause, fmt.Sprintf("(offer_id='%s' AND offer_version=%d)",
+			o.OfferID, o.OfferVersion))
+	}
+
+	query := fmt.Sprintf(`
+	SELECT * FROM (SELECT id, offer_id FROM offer_versions
+	WHERE game_id=$1 AND (%s)) AS sel
+	`, strings.Join(whereClause, " OR "))
+
+	err = mr.WithDatastoreSegment("offer_versions", SegmentInsect, func() error {
+		builder := db.SQL(query, offerVersions[0].GameID)
+		builder.Execer = edat.NewExecer(builder.Execer).WithContext(ctx)
+		return builder.QueryStructs(&resOfferInstances)
+	})
+
+	return resOfferInstances, err
 }
 
 //GetOfferInfo returns the offers that match the criteria of enabled offer templates
@@ -72,4 +114,64 @@ func GetOfferInfo(
 	}
 
 	return offer, nil
+}
+
+func getOfferVersionAndOfferEnabled(ctx context.Context, db runner.Connection, gameID, id string, mr *MixedMetricsReporter) (*OfferInstanceOffer, error) {
+	var offerInstance OfferInstanceOffer
+	err := mr.WithDatastoreSegment("offer_versions", SegmentSelect, func() error {
+		builder := db.Select("oi.id, oi.offer_id, oi.contents, o.enabled")
+		builder.Execer = edat.NewExecer(builder.Execer).WithContext(ctx)
+		return builder.From("offer_versions oi JOIN offers o ON (oi.offer_id=o.id)").
+			Where("oi.id=$1 AND oi.game_id=$2", id, gameID).
+			QueryStruct(&offerInstance)
+	})
+
+	err = handleNotFoundError("OfferInstance", map[string]interface{}{
+		"GameID": gameID,
+		"ID":     id,
+	}, err)
+
+	return &offerInstance, err
+}
+
+func getOfferVersionByID(ctx context.Context, db runner.Connection, gameID, id string, mr *MixedMetricsReporter) (*OfferVersion, error) {
+	var offerInstance OfferVersion
+	err := mr.WithDatastoreSegment("offer_versions", SegmentSelect, func() error {
+		builder := db.Select("id, offer_id, contents")
+		builder.Execer = edat.NewExecer(builder.Execer).WithContext(ctx)
+		return builder.From("offer_versions").
+			Where("id=$1 AND game_id=$2", id, gameID).
+			QueryStruct(&offerInstance)
+	})
+
+	err = handleNotFoundError("OfferInstance", map[string]interface{}{
+		"GameID": gameID,
+		"ID":     id,
+	}, err)
+
+	return &offerInstance, err
+}
+
+func getLastOfferInstanceByPlayerIDAndProductID(ctx context.Context, db runner.Connection, gameID, playerID, productID string, timestamp int64, mr *MixedMetricsReporter) (*OfferVersion, error) {
+	var offerInstance OfferVersion
+	err := mr.WithDatastoreSegment("offer_players", SegmentSelect, func() error {
+		builder := db.SQL(`
+		SELECT ov.id, ov.offer_id, ov.contents
+			FROM offer_players op JOIN offer_versions ov ON ov.offer_id=op.offer_id
+			WHERE op.game_id=$1 AND op.player_id=$2 AND op.view_timestamp < to_timestamp($4)
+				AND ov.game_id=$1 AND ov.product_id=$3
+			ORDER BY op.view_timestamp DESC FETCH FIRST 1 ROW ONLY`,
+			gameID, playerID, productID, timestamp,
+		)
+		builder.Execer = edat.NewExecer(builder.Execer).WithContext(ctx)
+		return builder.QueryStruct(&offerInstance)
+	})
+
+	err = handleNotFoundError("OfferInstance", map[string]interface{}{
+		"GameID":    gameID,
+		"PlayerID":  playerID,
+		"ProductID": productID,
+	}, err)
+
+	return &offerInstance, err
 }

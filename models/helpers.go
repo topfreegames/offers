@@ -43,11 +43,6 @@ func GetEnabledOffersKey(gameID string) string {
 	return fmt.Sprintf("offers:enabled:%s", gameID)
 }
 
-//GetOfferInstancesKey returns the key of the players available offer instances
-func GetOfferInstancesKey(offerInstanceID, gameID string) string {
-	return fmt.Sprintf("offers:instances:%s:%s", gameID, offerInstanceID)
-}
-
 //GetDB Connection using the given properties
 func GetDB(
 	host string, user string, port int, sslmode string,
@@ -126,8 +121,7 @@ func ShouldPing(db *sql.DB, timeout time.Duration) error {
 	return fmt.Errorf("could not ping database")
 }
 
-//HandleNotFoundError returns the proper error if nothing happens
-func HandleNotFoundError(model string, filters map[string]interface{}, err error) error {
+func handleNotFoundError(model string, filters map[string]interface{}, err error) error {
 	if err != nil {
 		if IsNoRowsInResultSetError(err) {
 			return errors.NewModelNotFoundError(model, filters)
@@ -138,8 +132,7 @@ func HandleNotFoundError(model string, filters map[string]interface{}, err error
 	return nil
 }
 
-//HandleForeignKeyViolationError returns the proper error if nothing happens
-func HandleForeignKeyViolationError(model string, err error) error {
+func handleForeignKeyViolationError(model string, err error) error {
 	if err != nil {
 		if pqErr, ok := IsForeignKeyViolationError(err); ok {
 			return errors.NewInvalidModelError(model, pqErr.Message)

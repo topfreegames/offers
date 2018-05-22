@@ -115,7 +115,7 @@ func GetOfferByID(ctx context.Context, db runner.Connection, gameID, id string, 
 			QueryStruct(&offer)
 	})
 
-	err = HandleNotFoundError("Offer", map[string]interface{}{
+	err = handleNotFoundError("Offer", map[string]interface{}{
 		"ID":     id,
 		"GameID": gameID,
 	}, err)
@@ -157,7 +157,7 @@ func GetEnabledOffers(ctx context.Context, db runner.Connection, gameID string, 
 			Scope(scope, gameID, currentTime.Unix()).
 			QueryStructs(&offers)
 	})
-	err = HandleNotFoundError("Offer", map[string]interface{}{"enabled": true}, err)
+	err = handleNotFoundError("Offer", map[string]interface{}{"enabled": true}, err)
 
 	if err == nil && len(filterAttrs) == 0 {
 		offersCache.Set(enabledOffersKey, offers, expireDuration)
@@ -254,7 +254,7 @@ func InsertOffer(ctx context.Context, db runner.Connection, offer *Offer, offers
 		return nil
 	})
 
-	foreignKeyErr := HandleForeignKeyViolationError("Offer", err)
+	foreignKeyErr := handleForeignKeyViolationError("Offer", err)
 	if err == nil {
 		enabledOffersKey := GetEnabledOffersKey(offer.GameID)
 		offersCache.Delete(enabledOffersKey)
@@ -338,7 +338,7 @@ func SetEnabledOffer(ctx context.Context, db runner.Connection, gameID, id strin
 			QueryStruct(&offerTemplate)
 	})
 
-	err = HandleNotFoundError("Offer", map[string]interface{}{
+	err = handleNotFoundError("Offer", map[string]interface{}{
 		"ID":     id,
 		"GameID": gameID,
 	}, err)
