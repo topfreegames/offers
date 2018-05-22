@@ -51,8 +51,8 @@ func getOfferToReturn(
 			QueryStruct(&offerVersion)
 	})
 
+	// This part was left to be backwards compatible with previously existing offer instances
 	if err != nil && IsNoRowsInResultSetError(err) {
-		// TODO: Test this
 		err = mr.WithDatastoreSegment("offer_instances", SegmentSelect, func() error {
 			builder := db.
 				Select("oi.id, oi.product_id, oi.contents, oi.cost, o.metadata, o.trigger#>>'{to}' AS expire_at")
