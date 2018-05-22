@@ -1,0 +1,17 @@
+#offers api
+#https://github.com/topfreegames/offers
+
+#Licensed under the MIT license:
+#http://www.opensource.org/licenses/mit-license
+#Copyright © 2018 Top Free Games <backend@tfgco.com>
+
+-
+    id: eb7e8d2a-2739-4da3-aa31-7970b63bdad7
+    game_id: offers-game
+    player_id: player-1
+    offer_id: dd21ec96-2890-4ba0-b8e2-40ea67196990
+    view_timestamp: 2017-02-09T22:06:35Z
+    transactions: '[]'
+    impressions: '[]'
+    claim_counter: 0
+    view_counter: 0

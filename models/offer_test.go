@@ -29,6 +29,7 @@ const (
 
 var _ = Describe("Offer Models", func() {
 	currentTime := time.Unix(1486678000, 0)
+
 	Describe("Get offer id", func() {
 		It("should load an offer from existent id", func() {
 			id := defaultOfferID
@@ -83,6 +84,17 @@ var _ = Describe("Offer Models", func() {
 			Expect(offer.ID).NotTo(Equal(""))
 			Expect(offer.Enabled).To(BeTrue())
 			Expect(offer.Version).To(Equal(1))
+
+			offerVersion := models.OfferVersion{}
+			err = db.
+				Select("id, offer_id, offer_version").
+				From("offer_versions").
+				Where("offer_id=$1", offer.ID).
+				QueryStruct(&offerVersion)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(offerVersion.ID).NotTo(BeEmpty())
+			Expect(offerVersion.OfferID).To(Equal(offer.ID))
+			Expect(offerVersion.OfferVersion).To(Equal(1))
 		})
 
 		It("should succeed and reset offers cache", func() {
@@ -523,6 +535,14 @@ var _ = Describe("Offer Models", func() {
 			Expect(dbOffer.Trigger).To(Equal(offerUpdate.Trigger))
 			Expect(dbOffer.Placement).To(Equal(offerUpdate.Placement))
 			Expect(dbOffer.Version).To(Equal(createdOffer.Version + 1))
+
+			offerVersion := models.OfferVersion{}
+			builder = db.Select("*")
+			builder.Execer = edat.NewExecer(builder.Execer)
+			err = builder.From("offer_versions").Where("offer_id=$1 AND offer_version=$2", dbOffer.ID, dbOffer.Version).QueryStruct(&offerVersion)
+			Expect(offerVersion.ID).NotTo(BeEmpty())
+			Expect(offerVersion.OfferID).To(Equal(offerUpdate.ID))
+			Expect(offerVersion.OfferVersion).To(Equal(dbOffer.Version))
 		})
 
 		It("should update the offer and increment the version with valid parameters, including filters and metadata", func() {
@@ -774,7 +794,6 @@ var _ = Describe("Offer Models", func() {
 		})
 
 		It("should fail and not reset offers cache", func() {
-
 			id := uuid.NewV4().String()
 			offerUpdate := &models.Offer{
 				ID:        id,

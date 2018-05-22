@@ -11,11 +11,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/pmylund/go-cache"
-	edat "github.com/topfreegames/extensions/dat"
 	"gopkg.in/mgutz/dat.v2/dat"
 	runner "gopkg.in/mgutz/dat.v2/sqlx-runner"
 )
@@ -56,44 +54,6 @@ type OfferToReturn struct {
 type FrequencyOrPeriod struct {
 	Every string
 	Max   int
-}
-
-//GetOfferInstanceAndOfferEnabled returns a offer by its pk
-func GetOfferInstanceAndOfferEnabled(ctx context.Context, db runner.Connection, gameID, id string, mr *MixedMetricsReporter) (*OfferInstanceOffer, error) {
-	var offerInstance OfferInstanceOffer
-	err := mr.WithDatastoreSegment("offer_instances", SegmentSelect, func() error {
-		builder := db.Select("oi.id, oi.offer_id, oi.contents, o.enabled")
-		builder.Execer = edat.NewExecer(builder.Execer).WithContext(ctx)
-		return builder.From("offer_instances oi JOIN offers o ON (oi.offer_id=o.id)").
-			Where("oi.id=$1 AND oi.game_id=$2", id, gameID).
-			QueryStruct(&offerInstance)
-	})
-
-	err = HandleNotFoundError("OfferInstance", map[string]interface{}{
-		"GameID": gameID,
-		"ID":     id,
-	}, err)
-
-	return &offerInstance, err
-}
-
-//GetOfferInstanceByID returns a offer by its pk
-func GetOfferInstanceByID(ctx context.Context, db runner.Connection, gameID, id string, mr *MixedMetricsReporter) (*OfferInstance, error) {
-	var offerInstance OfferInstance
-	err := mr.WithDatastoreSegment("offer_instances", SegmentSelect, func() error {
-		builder := db.Select("id, offer_id, contents")
-		builder.Execer = edat.NewExecer(builder.Execer).WithContext(ctx)
-		return builder.From("offer_instances").
-			Where("id=$1 AND game_id=$2", id, gameID).
-			QueryStruct(&offerInstance)
-	})
-
-	err = HandleNotFoundError("OfferInstance", map[string]interface{}{
-		"GameID": gameID,
-		"ID":     id,
-	}, err)
-
-	return &offerInstance, err
 }
 
 func getClaimedOfferNextAt(
@@ -150,20 +110,19 @@ func ClaimOffer(
 	t time.Time,
 	mr *MixedMetricsReporter,
 ) (dat.JSON, bool, int64, error) {
-
 	// If an offer instance id is sent
-	var offerInstance *OfferInstance
+	var offerInstance *OfferVersion
 	var previousOfferPlayer bool
 	var err error
 	var nextAt int64
 
 	if offerInstanceID != "" {
-		offerInstance, err = GetOfferInstanceByID(ctx, db, gameID, offerInstanceID, mr)
+		offerInstance, err = getOfferVersionByID(ctx, db, gameID, offerInstanceID, mr)
 		if err != nil {
 			return nil, false, 0, err
 		}
 	} else {
-		offerInstance, err = GetLastOfferInstanceByPlayerIDAndProductID(ctx, db, gameID, playerID, productID, timestamp, mr)
+		offerInstance, err = getLastOfferInstanceByPlayerIDAndProductID(ctx, db, gameID, playerID, productID, timestamp, mr)
 		if err != nil {
 			return nil, false, 0, err
 		}
@@ -235,56 +194,6 @@ func ClaimOffer(
 	return offerInstance.Contents, false, nextAt, nil
 }
 
-//GetLastOfferInstanceByPlayerIDAndProductID returns a offer by gameId, playerId and productId
-func GetLastOfferInstanceByPlayerIDAndProductID(ctx context.Context, db runner.Connection, gameID, playerID, productID string, timestamp int64, mr *MixedMetricsReporter) (*OfferInstance, error) {
-	var offerInstance OfferInstance
-	err := mr.WithDatastoreSegment("offer_instances", SegmentSelect, func() error {
-		builder := db.SQL("SELECT id, offer_id, contents "+
-			"FROM offer_instances "+
-			"WHERE game_id=$1 AND player_id=$2 AND product_id=$3 AND created_at < to_timestamp($4) "+
-			"ORDER BY created_at DESC FETCH FIRST 1 ROW ONLY", gameID, playerID, productID, timestamp)
-		builder.Execer = edat.NewExecer(builder.Execer).WithContext(ctx)
-		return builder.QueryStruct(&offerInstance)
-	})
-
-	err = HandleNotFoundError("offerInstance", map[string]interface{}{
-		"GameID":    gameID,
-		"PlayerID":  playerID,
-		"ProductID": productID,
-	}, err)
-
-	return &offerInstance, err
-}
-
-func getViewedOfferNextAt(
-	ctx context.Context,
-	db runner.Connection,
-	gameID, offerID string,
-	viewCounter int,
-	t time.Time,
-	mr *MixedMetricsReporter,
-) (int64, error) {
-	offer, err := GetOfferByID(ctx, db, gameID, offerID, mr)
-	if err != nil {
-		return 0, err
-	}
-	var f FrequencyOrPeriod
-
-	json.Unmarshal(offer.Frequency, &f)
-	if f.Max != 0 && viewCounter >= f.Max {
-		return 0, nil
-	}
-
-	if f.Every != "" {
-		duration, err := time.ParseDuration(f.Every)
-		if err != nil {
-			return 0, err
-		}
-		return t.Add(duration).Unix(), nil
-	}
-	return t.Unix(), nil
-}
-
 //ViewOffer views the offer
 func ViewOffer(
 	ctx context.Context,
@@ -296,7 +205,7 @@ func ViewOffer(
 	var nextAt int64
 	var previousOfferPlayer bool
 
-	offerInstance, err := GetOfferInstanceAndOfferEnabled(ctx, db, gameID, offerInstanceID, mr)
+	offerInstance, err := getOfferVersionAndOfferEnabled(ctx, db, gameID, offerInstanceID, mr)
 	if err != nil {
 		return false, 0, err
 	}
@@ -414,28 +323,24 @@ func GetAvailableOffers(
 		return offersByPlacement, nil
 	}
 
-	var offerInstances []*OfferInstance
+	var offerVersions []*OfferVersion
 	offers := make(map[string]*Offer)
 
 	for _, offer := range filteredOffers {
 		offers[offer.ID] = offer
-		offerInstances = append(offerInstances, &OfferInstance{
+		offerVersions = append(offerVersions, &OfferVersion{
 			GameID:       offer.GameID,
-			PlayerID:     playerID,
 			OfferID:      offer.ID,
 			OfferVersion: offer.Version,
-			Contents:     offer.Contents,
-			ProductID:    offer.ProductID,
-			Cost:         offer.Cost,
 		})
 	}
 
-	offerInstances, err = findOrCreateOfferInstance(ctx, db, offerInstances, t, mr)
+	offerVersions, err = findOfferVersions(ctx, db, offerVersions, mr)
 	if err != nil {
 		return nil, err
 	}
 
-	for _, offerInstance := range offerInstances {
+	for _, offerInstance := range offerVersions {
 		offer := offers[offerInstance.OfferID]
 
 		var trigger Times
@@ -457,65 +362,6 @@ func GetAvailableOffers(
 	}
 
 	return offersByPlacement, nil
-}
-
-func findOrCreateOfferInstance(
-	ctx context.Context,
-	db runner.Connection,
-	offerInstances []*OfferInstance,
-	t time.Time,
-	mr *MixedMetricsReporter,
-) ([]*OfferInstance, error) {
-	resOfferInstances := make([]*OfferInstance, 0, len(offerInstances))
-	var err error
-
-	whereClause := make([]string, 0, len(offerInstances))
-	valueArgs := make([]string, 0, len(offerInstances))
-
-	for _, o := range offerInstances {
-		whereClause = append(whereClause,
-			fmt.Sprintf("(game_id='%s' AND player_id='%s' AND offer_id='%s' AND offer_version=%d)",
-				o.GameID,
-				o.PlayerID,
-				o.OfferID,
-				o.OfferVersion))
-		valueArgs = append(valueArgs,
-			fmt.Sprintf("('%s', '%s', '%s', '%d', '%s'::jsonb, '%s', '%s'::jsonb)", o.GameID, o.PlayerID, o.OfferID, o.OfferVersion, o.Contents, o.ProductID, o.Cost))
-	}
-
-	query := fmt.Sprintf(`
-	WITH
-		sel AS (SELECT id, offer_id FROM offer_instances WHERE %s),
-		ins AS (INSERT INTO offer_instances(game_id, player_id, offer_id, offer_version, contents, product_id, cost)
-						VALUES %s
-						ON CONFLICT DO NOTHING
-						RETURNING id, offer_id)
-	SELECT * FROM ins UNION ALL SELECT * FROM sel
-	`, strings.Join(whereClause, " OR "), strings.Join(valueArgs, ","))
-
-	err = mr.WithDatastoreSegment("offer_instances", SegmentInsect, func() error {
-		builder := db.SQL(query)
-		builder.Execer = edat.NewExecer(builder.Execer).WithContext(ctx)
-		return builder.QueryStructs(&resOfferInstances)
-	})
-
-	return resOfferInstances, err
-}
-
-func filterTemplatesByTrigger(trigger Trigger, offers []*Offer, t time.Time) ([]*Offer, error) {
-	var (
-		filteredOffers []*Offer
-		times          Times
-	)
-	for _, ot := range offers {
-		if err := json.Unmarshal(ot.Trigger, &times); err != nil {
-			return nil, err
-		}
-		if trigger.IsTriggered(times, t) {
-			filteredOffers = append(filteredOffers, ot)
-		}
-	}
-	return filteredOffers, nil
 }
 
 func filterOffersByFrequencyAndPeriod(
@@ -576,47 +422,4 @@ func filterOffersByFrequencyAndPeriod(
 	}
 
 	return filteredOffers, nil
-}
-
-func getOfferToReturn(
-	ctx context.Context,
-	db runner.Connection,
-	gameID, playerID, offerID string,
-	mr *MixedMetricsReporter,
-) (*OfferToReturn, error) {
-	var offerInstance OfferToReturn
-
-	err := mr.WithDatastoreSegment("offer_instances", SegmentSelect, func() error {
-		builder := db.
-			Select("oi.id, oi.product_id, oi.contents, oi.cost, o.metadata, o.trigger#>>'{to}' AS expire_at")
-		builder.Execer = edat.NewExecer(builder.Execer).WithContext(ctx)
-		return builder.From("offer_instances oi JOIN offers o ON (oi.offer_id=o.id)").
-			Where("oi.id=$1 AND oi.game_id=$2 AND oi.player_id=$3", offerID, gameID, playerID).
-			QueryStruct(&offerInstance)
-	})
-
-	err = HandleNotFoundError("OfferInstance", map[string]interface{}{
-		"GameID":   gameID,
-		"ID":       offerID,
-		"PlayerID": playerID,
-	}, err)
-
-	return &offerInstance, err
-}
-
-//GetOfferInfo returns the offers that match the criteria of enabled offer templates
-func GetOfferInfo(
-	ctx context.Context,
-	db runner.Connection,
-	gameID, playerID, offerInstanceID string,
-	expireDuration time.Duration,
-	mr *MixedMetricsReporter,
-) (*OfferToReturn, error) {
-	offer, err := getOfferToReturn(ctx, db, gameID, playerID, offerInstanceID, mr)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return offer, nil
 }

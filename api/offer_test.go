@@ -995,7 +995,7 @@ var _ = Describe("Offer Template Handler", func() {
 		})
 
 		It("should update offer", func() {
-			id := "dd21ec96-2890-4ba0-b8e2-40ea67196990"
+			id := "a411fbcf-dddc-4153-b42b-3f9b2684c965"
 			request, _ := http.NewRequest("PUT", fmt.Sprintf("/offers/%s", id), offerReader)
 
 			app.Router.ServeHTTP(recorder, request)
@@ -1029,7 +1029,7 @@ var _ = Describe("Offer Template Handler", func() {
 				"placement": placement,
 				"filters":   dat.JSON([]byte(filters)),
 			})
-			id := "dd21ec96-2890-4ba0-b8e2-40ea67196990"
+			id := "a411fbcf-dddc-4153-b42b-3f9b2684c965"
 			request, _ := http.NewRequest("PUT", fmt.Sprintf("/offers/%s", id), offerReader)
 
 			app.Router.ServeHTTP(recorder, request)

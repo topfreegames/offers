@@ -14,7 +14,6 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/satori/go.uuid"
 	edat "github.com/topfreegames/extensions/dat"
-	"github.com/topfreegames/offers/errors"
 	"github.com/topfreegames/offers/models"
 	. "github.com/topfreegames/offers/testing"
 	"gopkg.in/mgutz/dat.v2/dat"
@@ -31,49 +30,6 @@ var _ = Describe("Offer Instance Model", func() {
 		filterGameID           string        = "another-game-with-filters"
 		expireDuration         time.Duration = 300 * time.Second
 	)
-
-	Describe("Offer Instance", func() {
-		It("Should load a offer", func() {
-			//Given
-			gameID := defaultGameID
-			offerInstanceID := defaultOfferInstanceID
-
-			//When
-			offerInstance, err := models.GetOfferInstanceByID(nil, db, gameID, offerInstanceID, nil)
-
-			//Then
-			Expect(err).NotTo(HaveOccurred())
-			Expect(offerInstance.ID).To(Equal(offerInstanceID))
-			Expect(offerInstance.OfferID).To(Equal(defaultOfferID))
-			Expect(offerInstance.Contents).To(Equal(dat.JSON([]byte(`{"gems": 5, "gold": 100}`))))
-		})
-
-		It("Should return error if instance id doesn't exist", func() {
-			//Given
-			gameID := defaultGameID
-			offerInstanceID := uuid.NewV4().String()
-
-			//When
-			_, err := models.GetOfferInstanceByID(nil, db, gameID, offerInstanceID, nil)
-
-			//Then
-			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(Equal("OfferInstance was not found with specified filters."))
-		})
-
-		It("Should return error if game id doesn't exist", func() {
-			//Given
-			gameID := "non-existing-game-id"
-			offerInstanceID := defaultOfferInstanceID
-
-			//When
-			_, err := models.GetOfferInstanceByID(nil, db, gameID, offerInstanceID, nil)
-
-			//Then
-			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(Equal("OfferInstance was not found with specified filters."))
-		})
-	})
 
 	Describe("Claim offer", func() {
 		var from, to int64 = 1486678000, 148669000
@@ -370,37 +326,6 @@ var _ = Describe("Offer Instance Model", func() {
 		})
 	})
 
-	Describe("Get offer by productId and playerId", func() {
-		It("Should load offer by product id and player id", func() {
-			//Given
-
-			//When
-			offer, err := models.GetLastOfferInstanceByPlayerIDAndProductID(nil, db, "offers-game", defaultPlayerID, defaultProductID, time.Now().Unix(), nil)
-			//Then
-			Expect(err).NotTo(HaveOccurred())
-			Expect(offer.ID).To(Equal("eb7e8d2a-2739-4da3-aa31-7970b63bdad7"))
-		})
-
-		It("Should return error if offer not found", func() {
-			//Given
-			productID := uuid.NewV4().String()
-			playerID := uuid.NewV4().String()
-			expectedError := errors.NewModelNotFoundError("offerInstance", map[string]interface{}{
-				"GameID":    "offers-game",
-				"PlayerID":  playerID,
-				"ProductID": productID,
-			})
-
-			//When
-			offer, err := models.GetLastOfferInstanceByPlayerIDAndProductID(nil, db, "offers-game", playerID, productID, time.Now().Unix(), nil)
-
-			//Then
-			Expect(offer.ID).To(Equal(""))
-			Expect(err).To(HaveOccurred())
-			Expect(err).To(MatchError(expectedError))
-		})
-	})
-
 	Describe("View offer", func() {
 		It("should view offer instance", func() {
 			//Given
@@ -589,7 +514,7 @@ var _ = Describe("Offer Instance Model", func() {
 	Describe("Get available offers", func() {
 		It("should return a list of offer templates for each available placement", func() {
 			//Given
-			playerID := "player-1"
+			playerID := "player-9"
 			gameID := defaultGameID
 			currentTime := time.Unix(1486678000, 0)
 			filterAttrs := make(map[string]string)
@@ -611,17 +536,25 @@ var _ = Describe("Offer Instance Model", func() {
 
 			Expect(offerInstances).To(HaveKey("store"))
 			Expect(offerInstances["store"]).To(HaveLen(2))
-			Expect(offerInstances["store"][0].ID).NotTo(BeNil())
-			Expect(offerInstances["store"][0].ProductID).To(Equal("com.tfg.sample.2"))
-			Expect(offerInstances["store"][0].Contents).To(Equal(dat.JSON([]byte(`{"gems": 100, "gold": 5}`))))
-			Expect(offerInstances["store"][0].Metadata).To(Equal(dat.JSON([]byte(`{"meta": "data"}`))))
-			Expect(offerInstances["store"][0].ExpireAt).To(Equal(int64(1486679200)))
+			i1, i2 := -1, -1
+			if offerInstances["store"][0].ID == "35df52e7-3161-446f-975b-92f32871e37c" {
+				i1 = 1
+				i2 = 0
+			} else {
+				i1 = 0
+				i2 = 1
+			}
+			Expect(offerInstances["store"][i1].ID).NotTo(BeNil())
+			Expect(offerInstances["store"][i1].ProductID).To(Equal("com.tfg.sample.2"))
+			Expect(offerInstances["store"][i1].Contents).To(Equal(dat.JSON([]byte(`{"gems": 100, "gold": 5}`))))
+			Expect(offerInstances["store"][i1].Metadata).To(Equal(dat.JSON([]byte(`{"meta": "data"}`))))
+			Expect(offerInstances["store"][i1].ExpireAt).To(Equal(int64(1486679200)))
 
-			Expect(offerInstances["store"][1].ID).To(Equal("6c4a79f2-24b8-4be9-93d4-12413b789823"))
-			Expect(offerInstances["store"][1].ProductID).To(Equal("com.tfg.sample.3"))
-			Expect(offerInstances["store"][1].Contents).To(Equal(dat.JSON([]byte(`{"gems": 5, "gold": 100}`))))
-			Expect(offerInstances["store"][1].Metadata).To(Equal(dat.JSON([]byte(`{}`))))
-			Expect(offerInstances["store"][1].ExpireAt).To(Equal(int64(1486679100)))
+			Expect(offerInstances["store"][i2].ID).To(Equal("35df52e7-3161-446f-975b-92f32871e37c"))
+			Expect(offerInstances["store"][i2].ProductID).To(Equal("com.tfg.sample.3"))
+			Expect(offerInstances["store"][i2].Contents).To(Equal(dat.JSON([]byte(`{"gems": 5, "gold": 100}`))))
+			Expect(offerInstances["store"][i2].Metadata).To(Equal(dat.JSON([]byte(`{}`))))
+			Expect(offerInstances["store"][i2].ExpireAt).To(Equal(int64(1486679100)))
 		})
 
 		It("should return a list of offer templates for each available placement when with interval filters and allow inneficient queries", func() {
@@ -691,7 +624,7 @@ var _ = Describe("Offer Instance Model", func() {
 
 		It("should return a list of offer templates for each available placement when with filters but offer has no filters and inneficient queries allowed", func() {
 			//Given
-			playerID := "player-1"
+			playerID := "player-9"
 			gameID := defaultGameID
 			currentTime := time.Unix(1486678000, 0)
 			filterAttrs := map[string]string{
@@ -717,17 +650,25 @@ var _ = Describe("Offer Instance Model", func() {
 
 			Expect(offerInstances).To(HaveKey("store"))
 			Expect(offerInstances["store"]).To(HaveLen(2))
-			Expect(offerInstances["store"][0].ID).NotTo(BeNil())
-			Expect(offerInstances["store"][0].ProductID).To(Equal("com.tfg.sample.2"))
-			Expect(offerInstances["store"][0].Contents).To(Equal(dat.JSON([]byte(`{"gems": 100, "gold": 5}`))))
-			Expect(offerInstances["store"][0].Metadata).To(Equal(dat.JSON([]byte(`{"meta": "data"}`))))
-			Expect(offerInstances["store"][0].ExpireAt).To(Equal(int64(1486679200)))
+			i1, i2 := -1, -1
+			if offerInstances["store"][0].ID == "35df52e7-3161-446f-975b-92f32871e37c" {
+				i1 = 1
+				i2 = 0
+			} else {
+				i1 = 0
+				i2 = 1
+			}
+			Expect(offerInstances["store"][i1].ID).NotTo(BeNil())
+			Expect(offerInstances["store"][i1].ProductID).To(Equal("com.tfg.sample.2"))
+			Expect(offerInstances["store"][i1].Contents).To(Equal(dat.JSON([]byte(`{"gems": 100, "gold": 5}`))))
+			Expect(offerInstances["store"][i1].Metadata).To(Equal(dat.JSON([]byte(`{"meta": "data"}`))))
+			Expect(offerInstances["store"][i1].ExpireAt).To(Equal(int64(1486679200)))
 
-			Expect(offerInstances["store"][1].ID).To(Equal("6c4a79f2-24b8-4be9-93d4-12413b789823"))
-			Expect(offerInstances["store"][1].ProductID).To(Equal("com.tfg.sample.3"))
-			Expect(offerInstances["store"][1].Contents).To(Equal(dat.JSON([]byte(`{"gems": 5, "gold": 100}`))))
-			Expect(offerInstances["store"][1].Metadata).To(Equal(dat.JSON([]byte(`{}`))))
-			Expect(offerInstances["store"][1].ExpireAt).To(Equal(int64(1486679100)))
+			Expect(offerInstances["store"][i2].ID).To(Equal("35df52e7-3161-446f-975b-92f32871e37c"))
+			Expect(offerInstances["store"][i2].ProductID).To(Equal("com.tfg.sample.3"))
+			Expect(offerInstances["store"][i2].Contents).To(Equal(dat.JSON([]byte(`{"gems": 5, "gold": 100}`))))
+			Expect(offerInstances["store"][i2].Metadata).To(Equal(dat.JSON([]byte(`{}`))))
+			Expect(offerInstances["store"][i2].ExpireAt).To(Equal(int64(1486679100)))
 		})
 
 		It("should return no offer templates when with filters but offer has no filters and inneficient queries not allowed", func() {
@@ -921,12 +862,29 @@ var _ = Describe("Offer Instance Model", func() {
 	Describe("Get offer info", func() {
 		It("should return offer info for an already seen offer", func() {
 			//Given
-			playerID := "player-1"
 			gameID := defaultGameID
 			offerInstanceID := "eb7e8d2a-2739-4da3-aa31-7970b63bdad7"
 
 			//When
-			offerInstance, err := models.GetOfferInfo(nil, db, gameID, playerID, offerInstanceID, expireDuration, nil)
+			offerInstance, err := models.GetOfferInfo(nil, db, gameID, offerInstanceID, expireDuration, nil)
+
+			//Then
+			Expect(err).NotTo(HaveOccurred())
+			Expect(offerInstance.ID).To(Equal(offerInstanceID))
+			Expect(offerInstance.ProductID).To(Equal("com.tfg.sample"))
+			Expect(offerInstance.Contents).To(Equal(dat.JSON([]byte(`{"gems": 5, "gold": 100}`))))
+			Expect(offerInstance.Cost).To(Equal(dat.JSON([]byte(`{"gems": 500}`))))
+			Expect(offerInstance.Metadata).To(Equal(dat.JSON([]byte(`{}`))))
+			Expect(offerInstance.ExpireAt).To(Equal(int64(1486679000)))
+		})
+
+		It("should return offer info for an offer instance not in offer versions", func() {
+			//Given
+			gameID := defaultGameID
+			offerInstanceID := "abcd8d2a-2739-4da3-aa31-8970b63bdad7"
+
+			//When
+			offerInstance, err := models.GetOfferInfo(nil, db, gameID, offerInstanceID, expireDuration, nil)
 
 			//Then
 			Expect(err).NotTo(HaveOccurred())
@@ -940,12 +898,11 @@ var _ = Describe("Offer Instance Model", func() {
 
 		It("should error if gameID doesn't exist", func() {
 			//Given
-			playerID := "player-1"
 			gameID := "non-existing-game"
 			offerInstanceID := "eb7e8d2a-2739-4da3-aa31-7970b63bdad7"
 
 			//When
-			_, err := models.GetOfferInfo(nil, db, gameID, playerID, offerInstanceID, expireDuration, nil)
+			_, err := models.GetOfferInfo(nil, db, gameID, offerInstanceID, expireDuration, nil)
 
 			//Then
 			Expect(err).To(HaveOccurred())
@@ -954,7 +911,6 @@ var _ = Describe("Offer Instance Model", func() {
 
 		It("should fail if some error in the database", func() {
 			//Given
-			playerID := "player-1"
 			gameID := "non-existing-game"
 			offerInstanceID := "eb7e8d2a-2739-4da3-aa31-7970b63bdad7"
 
@@ -967,7 +923,7 @@ var _ = Describe("Offer Instance Model", func() {
 			db.(*runner.DB).DB.Close() // make DB connection unavailable
 
 			//When
-			_, err = models.GetOfferInfo(nil, db, gameID, playerID, offerInstanceID, expireDuration, nil)
+			_, err = models.GetOfferInfo(nil, db, gameID, offerInstanceID, expireDuration, nil)
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(Equal("sql: database is closed"))
 		})

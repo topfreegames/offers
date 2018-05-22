@@ -9,6 +9,7 @@ package models
 
 import (
 	"context"
+	"encoding/json"
 	"time"
 
 	edat "github.com/topfreegames/extensions/dat"
@@ -105,4 +106,33 @@ func ViewOfferPlayer(ctx context.Context, db runner.Connection, offerPlayer *Off
 			Returning("view_counter, view_timestamp, impressions").
 			QueryStruct(offerPlayer)
 	})
+}
+
+func getViewedOfferNextAt(
+	ctx context.Context,
+	db runner.Connection,
+	gameID, offerID string,
+	viewCounter int,
+	t time.Time,
+	mr *MixedMetricsReporter,
+) (int64, error) {
+	offer, err := GetOfferByID(ctx, db, gameID, offerID, mr)
+	if err != nil {
+		return 0, err
+	}
+	var f FrequencyOrPeriod
+
+	json.Unmarshal(offer.Frequency, &f)
+	if f.Max != 0 && viewCounter >= f.Max {
+		return 0, nil
+	}
+
+	if f.Every != "" {
+		duration, err := time.ParseDuration(f.Every)
+		if err != nil {
+			return 0, err
+		}
+		return t.Add(duration).Unix(), nil
+	}
+	return t.Unix(), nil
 }

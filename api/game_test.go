@@ -224,6 +224,8 @@ var _ = Describe("Game Handler", func() {
 			Expect(err).NotTo(HaveOccurred())
 			_, err = app.DB.DeleteFrom("offer_instances").Exec()
 			Expect(err).NotTo(HaveOccurred())
+			_, err = app.DB.DeleteFrom("offer_versions").Exec()
+			Expect(err).NotTo(HaveOccurred())
 			_, err = app.DB.DeleteFrom("offers").Exec()
 			Expect(err).NotTo(HaveOccurred())
 			_, err = app.DB.DeleteFrom("games").Exec()

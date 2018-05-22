@@ -62,8 +62,10 @@ var _ = BeforeEach(func() {
 })
 
 var _ = AfterEach(func() {
-	err := app.DB.(*runner.Tx).Rollback()
-	Expect(err).NotTo(HaveOccurred())
+	if !app.DB.(*runner.Tx).IsRollbacked {
+		err := app.DB.(*runner.Tx).Rollback()
+		Expect(err).NotTo(HaveOccurred())
+	}
 	app.DB = db
 	app.Clock = oTesting.MockClock{
 		CurrentTime: 1486678000,

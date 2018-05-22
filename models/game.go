@@ -45,7 +45,7 @@ func GetGameByID(ctx context.Context, db runner.Connection, id string, mr *Mixed
 			QueryStruct(&game)
 	})
 
-	err = HandleNotFoundError("Game", map[string]interface{}{"ID": id}, err)
+	err = handleNotFoundError("Game", map[string]interface{}{"ID": id}, err)
 	return &game, err
 }
 

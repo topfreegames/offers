@@ -10,6 +10,7 @@
 // migrations/0008-AddCostToOffers.sql
 // migrations/0009-AddCostToOfferInstances.sql
 // migrations/0010-CreateOfferPlayerTable.sql
+// migrations/0011-CreateOfferVersionTable.sql
 // DO NOT EDIT!
 
 package migrations
@@ -277,6 +278,26 @@ func migrations0010CreateofferplayertableSql() (*asset, error) {
 	return a, nil
 }
 
+var _migrations0011CreateofferversiontableSql = []byte("\x1f\x8b\x08\x00\x00\x00\x00\x00\x00\xff\x7c\x91\x31\x6f\xea\x30\x14\x85\xf7\xfc\x8a\x23\x16\x12\x89\xb7\xbc\xf7\xe8\x00\x53\x80\x8b\xea\x36\x38\x6d\xe2\x08\xe8\x12\x59\x89\xa1\x1e\x48\x90\x6d\x58\xaa\xfe\xf7\xaa\x21\x81\x22\xda\xce\x3e\xdf\xe7\x7b\xcf\x9d\x26\x14\x0a\x02\xad\x04\xf1\x94\xc5\x1c\x6c\x0e\x1e\x0b\xd0\x8a\xa5\x22\x45\xef\x70\xd0\xe5\x9f\xda\xda\x7d\x6f\xec\x79\x6d\x58\x84\x93\x88\x50\x6f\x36\xca\xe4\x47\x65\xac\xae\x2b\x0b\xdf\x03\x00\x5d\xa2\x78\x95\xc6\xff\x77\x17\xe0\x29\x61\x8b\x30\x59\xe3\x91\xd6\x98\xd1\x3c\xcc\x22\x81\x4f\x5d\xbe\x55\x95\x32\xd2\xa9\xfc\xf8\xdf\x0f\x06\x0d\xb7\x95\x3b\x95\xeb\x12\x47\x69\x1a\xfe\xef\x70\x18\x34\x73\xf0\x2c\x8a\x90\xd0\x9c\x12\xe2\x53\x4a\x9b\xa0\xf5\x75\xd9\x72\xa7\x21\xbe\xfe\xfa\x1d\xd4\xa4\x6e\xa8\x76\x74\xe8\xca\xa9\xad\x32\x67\xf2\x94\x29\xea\xca\xa9\xca\x59\x3c\xa4\x31\x9f\x5c\xb4\xdd\x26\xfd\xb7\xf7\x3e\x46\xa3\xe6\xf5\x44\xec\x4d\x5d\x1e\x0a\xf7\xe3\x1a\x9d\xd7\xba\xdf\x9c\x57\xca\xc2\x28\xe9\x54\x99\x4b\x07\xa7\x77\xca\x3a\xb9\xdb\x63\xc9\xc4\x3d\x04\x5b\x10\x5e\x62\x4e\xb7\x16\x1e\x2f\xfd\xc0\x0b\x2e\xf7\xca\x38\x7b\xce\x08\x8c\xcf\x68\xd5\x35\x9d\x77\xcd\xe5\xd7\x65\xc4\xfc\xe6\xb0\x2d\x31\x38\x97\x3d\xb8\x8e\x04\x63\xef\x23\x00\x00\xff\xff\x10\x97\xce\x68\x46\x02\x00\x00")
+
+func migrations0011CreateofferversiontableSqlBytes() ([]byte, error) {
+	return bindataRead(
+		_migrations0011CreateofferversiontableSql,
+		"migrations/0011-CreateOfferVersionTable.sql",
+	)
+}
+
+func migrations0011CreateofferversiontableSql() (*asset, error) {
+	bytes, err := migrations0011CreateofferversiontableSqlBytes()
+	if err != nil {
+		return nil, err
+	}
+
+	info := bindataFileInfo{name: "migrations/0011-CreateOfferVersionTable.sql", size: 582, mode: os.FileMode(420), modTime: time.Unix(1526685655, 0)}
+	a := &asset{bytes: bytes, info: info}
+	return a, nil
+}
+
 // Asset loads and returns the asset for the given name.
 // It returns an error if the asset could not be found or
 // could not be loaded.
@@ -339,6 +360,7 @@ var _bindata = map[string]func() (*asset, error){
 	"migrations/0008-AddCostToOffers.sql": migrations0008AddcosttooffersSql,
 	"migrations/0009-AddCostToOfferInstances.sql": migrations0009AddcosttoofferinstancesSql,
 	"migrations/0010-CreateOfferPlayerTable.sql": migrations0010CreateofferplayertableSql,
+	"migrations/0011-CreateOfferVersionTable.sql": migrations0011CreateofferversiontableSql,
 }
 
 // AssetDir returns the file names below a certain
@@ -392,6 +414,7 @@ var _bintree = &bintree{nil, map[string]*bintree{
 		"0008-AddCostToOffers.sql": &bintree{migrations0008AddcosttooffersSql, map[string]*bintree{}},
 		"0009-AddCostToOfferInstances.sql": &bintree{migrations0009AddcosttoofferinstancesSql, map[string]*bintree{}},
 		"0010-CreateOfferPlayerTable.sql": &bintree{migrations0010CreateofferplayertableSql, map[string]*bintree{}},
+		"0011-CreateOfferVersionTable.sql": &bintree{migrations0011CreateofferversiontableSql, map[string]*bintree{}},
 	}},
 }}
 

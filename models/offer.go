@@ -96,11 +96,7 @@ func buildEfficientScope(enabledOffers string, filterAttrs map[string]string) st
 			subQueries = []string{enabledOffers}
 			break
 		}
-		rawSubQuery := `
-		AND (
-			filters @> '{"%[1]s": {"eq": "%[2]s"}}' OR
-			filters @> '{"%[1]s": {"neq": "%[2]s"}}'
-		)`
+		rawSubQuery := `AND filters @> '{"%[1]s": {"eq": "%[2]s"}}'`
 		subQuery := fmt.Sprintf(rawSubQuery, k, v)
 		subQueries = append(subQueries, subQuery)
 	}
@@ -119,7 +115,7 @@ func GetOfferByID(ctx context.Context, db runner.Connection, gameID, id string, 
 			QueryStruct(&offer)
 	})
 
-	err = HandleNotFoundError("Offer", map[string]interface{}{
+	err = handleNotFoundError("Offer", map[string]interface{}{
 		"ID":     id,
 		"GameID": gameID,
 	}, err)
@@ -161,7 +157,7 @@ func GetEnabledOffers(ctx context.Context, db runner.Connection, gameID string, 
 			Scope(scope, gameID, currentTime.Unix()).
 			QueryStructs(&offers)
 	})
-	err = HandleNotFoundError("Offer", map[string]interface{}{"enabled": true}, err)
+	err = handleNotFoundError("Offer", map[string]interface{}{"enabled": true}, err)
 
 	if err == nil && len(filterAttrs) == 0 {
 		offersCache.Set(enabledOffersKey, offers, expireDuration)
@@ -230,15 +226,35 @@ func InsertOffer(ctx context.Context, db runner.Connection, offer *Offer, offers
 		offer.Cost = dat.JSON([]byte(`{}`))
 	}
 	err := mr.WithDatastoreSegment("offers", SegmentInsert, func() error {
-		builder := db.InsertInto("offers")
+		tx, errInt := db.Begin()
+		if errInt != nil {
+			return errInt
+		}
+		defer tx.AutoRollback()
+		builder := tx.InsertInto("offers")
 		builder.Execer = edat.NewExecer(builder.Execer).WithContext(ctx)
-		return builder.Columns("game_id", "name", "period", "frequency", "trigger", "placement", "metadata", "product_id", "contents", "filters", "cost").
+		errInt = builder.Columns("game_id", "name", "period", "frequency", "trigger", "placement", "metadata", "product_id", "contents", "filters", "cost").
 			Record(offer).
 			Returning("id, enabled, version").
 			QueryStruct(offer)
+		if errInt != nil {
+			return errInt
+		}
+		offerVersion := offerVersionFromOffer(offer)
+		builder = tx.InsertInto("offer_versions")
+		builder.Execer = edat.NewExecer(builder.Execer).WithContext(ctx)
+		errInt = builder.Columns("game_id", "offer_id", "offer_version", "contents", "product_id", "cost").
+			Record(offerVersion).
+			Returning("id").
+			QueryStruct(offerVersion)
+		if errInt != nil {
+			return errInt
+		}
+		tx.Commit()
+		return nil
 	})
 
-	foreignKeyErr := HandleForeignKeyViolationError("Offer", err)
+	foreignKeyErr := handleForeignKeyViolationError("Offer", err)
 	if err == nil {
 		enabledOffersKey := GetEnabledOffersKey(offer.GameID)
 		offersCache.Delete(enabledOffersKey)
@@ -276,12 +292,32 @@ func UpdateOffer(ctx context.Context, db runner.Connection, offer *Offer, offers
 	}
 	offer.Version = prevOffer.Version + 1
 	err = mr.WithDatastoreSegment("offers", SegmentUpdate, func() error {
-		builder := db.Update("offers")
+		tx, errInt := db.Begin()
+		if errInt != nil {
+			return errInt
+		}
+		defer tx.AutoRollback()
+		builder := tx.Update("offers")
 		builder.Execer = edat.NewExecer(builder.Execer).WithContext(ctx)
-		return builder.SetMap(offersMap).
+		errInt = builder.SetMap(offersMap).
 			Where("id = $1 AND game_id = $2", offer.ID, offer.GameID).
 			Returning("id, version").
 			QueryStruct(offer)
+		if errInt != nil {
+			return errInt
+		}
+		offerVersion := offerVersionFromOffer(offer)
+		builderInsert := tx.InsertInto("offer_versions")
+		builderInsert.Execer = edat.NewExecer(builderInsert.Execer).WithContext(ctx)
+		errInt = builderInsert.Columns("game_id", "offer_id", "offer_version", "contents", "product_id", "cost").
+			Record(offerVersion).
+			Returning("id").
+			QueryStruct(offerVersion)
+		if errInt != nil {
+			return errInt
+		}
+		tx.Commit()
+		return nil
 	})
 	if err == nil {
 		enabledOffersKey := GetEnabledOffersKey(offer.GameID)
@@ -302,7 +338,7 @@ func SetEnabledOffer(ctx context.Context, db runner.Connection, gameID, id strin
 			QueryStruct(&offerTemplate)
 	})
 
-	err = HandleNotFoundError("Offer", map[string]interface{}{
+	err = handleNotFoundError("Offer", map[string]interface{}{
 		"ID":     id,
 		"GameID": gameID,
 	}, err)
