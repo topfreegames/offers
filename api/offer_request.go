@@ -130,7 +130,7 @@ func (h *OfferRequestHandler) getOffers(w http.ResponseWriter, r *http.Request) 
 
 	w.Header().Set("Cache-Control", fmt.Sprintf("max-age=%d", maxAge))
 
-	logger.Info("Retrieved player offers successfully")
+	logger.Debug("Retrieved player offers successfully")
 	WriteBytes(w, http.StatusOK, bytes)
 }
 
@@ -221,7 +221,7 @@ func (h *OfferRequestHandler) viewOffer(w http.ResponseWriter, r *http.Request) 
 		h.App.HandleError(w, http.StatusInternalServerError, err.Error(), err)
 		return
 	}
-	logger.Info("Updated offer impressions successfully")
+	logger.Debug("Updated offer impressions successfully")
 	res := map[string]interface{}{}
 	if nextAt != 0 {
 		res["nextAt"] = nextAt
