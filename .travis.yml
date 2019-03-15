@@ -22,5 +22,4 @@ script:
 after_success:
   - $HOME/gopath/bin/goveralls -coverprofile _build/coverage-all.out -service=travis-ci
   - /bin/bash -c '[ "$TRAVIS_BRANCH" == "master" ] && make build-linux-64'
-  - /bin/bash -c '[ "$TRAVIS_BRANCH" == "master" ] && ./push_to_docker.sh'
-  #- /bin/bash -c '[ "$TRAVIS_BRANCH" == "master" ] && [ "$TRAVIS_EVENT_TYPE" == "push" ] && curl -H POST $TEST_FARM_URL'
+  - /bin/bash -c '[ "$TRAVIS_BRANCH" == "master" ] && ./push_to_docker.sh && && curl -H POST $TEST_FARM_URL'
