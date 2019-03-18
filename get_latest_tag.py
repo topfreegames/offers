@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # Offers
 # https://github.com/topfreegames/offers
@@ -5,52 +6,32 @@
 # http://www.opensource.org/licenses/mit-license
 # Copyright © 2016 Top Free Games <backend@tfgco.com>
 
-import urllib
-import urllib2
+import datetime
 import json
+import urllib.request
+
 
 def main():
-    url = "https://auth.docker.io/token?service=registry.docker.io&scope=repository:tfgco/offers:pull,push"
-    response = urllib.urlopen(url)
-    token = json.loads(response.read())['token']
-
-    url = "https://registry-1.docker.io/v2/tfgco/offers/tags/list"
-    req = urllib2.Request(url, None, {
-        "Authorization": "Bearer %s" % token,
-    })
-    response = urllib2.urlopen(req)
-    tags = json.loads(response.read())
-    last_tag = get_last_tag(tags['tags'])
-    print last_tag
+    url = "https://registry.hub.docker.com/v2/repositories/tfgco/offers/tags?page_size=100"
+    with urllib.request.urlopen(url) as response:
+        res = json.loads(response.read())
+        last_tag = get_last_tag(res['results'])
+        print(last_tag)
 
 
 def get_tag_value(tag):
-    if tag[0] == "latest":
-        return 0
-
-    while len(tag) < 4:
-        tag.append('0')
-
-    total_value = 0
-    for index, tag_part in enumerate(tag):
-        power = pow(100, len(tag) - index)
-        try:
-            total_value += int(tag_part) * power
-        except:
-            total_value = 0
-            return
-
-    return total_value
+    # format should be $BUILD_NUMBER-$GIT_TAG-$GIT_COMMIT
+    if len(tag['name'].split('-')) < 3:
+        return {'tag': tag['name'], 'value': 0}
+    d = datetime.datetime.strptime(tag['last_updated'], '%Y-%m-%dT%H:%M:%S.%fZ').timestamp()
+    return {'tag': tag['name'], 'value': d}
 
 
 def get_last_tag(tags):
-    return '.'.join(
-        max([
-            (get_tag_value(tag), tag) for tag in
-                [t.split('.') for t in tags]
-            ], key=lambda i: i[0]
-        )[1]
-    )
+    return max(
+        [get_tag_value(t) for t in tags],
+        key=lambda t: t['value']
+    )['tag']
 
 
 if __name__ == "__main__":
