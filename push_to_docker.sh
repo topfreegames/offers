@@ -30,6 +30,7 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
+DOCKERHUB_LATEST=$(python3 get_latest_tag.py)
 if [ "$DOCKERHUB_LATEST" != "$TRAVIS_BUILD_NUMBER-v$VERSION-$COMMIT" ]; then
     echo "Last version is not in docker hub!"
     echo "docker hub: $DOCKERHUB_LATEST, expected: $TRAVIS_BUILD_NUMBER-v$VERSION-$COMMIT"
