@@ -14,7 +14,7 @@ import urllib.request
 def main():
     url = "https://registry.hub.docker.com/v2/repositories/tfgco/offers/tags?page_size=100"
     with urllib.request.urlopen(url) as response:
-        res = json.loads(response.read())
+        res = json.loads(response.read().decode('utf-8'))
         last_tag = get_last_tag(res['results'])
         print(last_tag)
 
