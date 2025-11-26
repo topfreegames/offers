@@ -19,12 +19,16 @@
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
 
-FROM golang:1.8.1-alpine
+FROM alpine:latest
 
 MAINTAINER TFG Co <backend@tfgco.com>
 
+RUN apk --no-cache add ca-certificates
+
 RUN mkdir /app
-ADD ./bin/offers-linux-x86_64 /app/offers
+
+ARG TARGETARCH
+ADD ./bin/offers-linux-${TARGETARCH} /app/offers
 ADD ./config /app/config
 
 WORKDIR /app

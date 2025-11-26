@@ -22,7 +22,12 @@ build:
 	@go build -o ./bin/offers main.go
 
 assets:
-	@go-bindata -o migrations/migrations.go -pkg migrations migrations/*.sql
+	@if [ ! -f migrations/migrations.go ]; then \
+		echo "Generating migrations.go..."; \
+		go-bindata -o migrations/migrations.go -pkg migrations migrations/*.sql; \
+	else \
+		echo "migrations.go already exists, skipping generation."; \
+	fi
 
 migrate: assets
 	@go run main.go migrate -c ./config/local.yaml
@@ -127,6 +132,19 @@ build-linux-64: assets
 	@echo "Building for linux-x86_64..."
 	@env GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o ./bin/offers-linux-x86_64
 	@chmod +x bin/*
+
+build-multiarch: assets
+	@if [ ! -d vendor ]; then \
+		echo "Installing dependencies with dep..."; \
+		dep ensure; \
+	fi
+	@mkdir -p ./bin
+	@echo "Building for linux-amd64..."
+	@env GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o ./bin/offers-linux-amd64 main.go
+	@echo "Building for linux-arm64..."
+	@env GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build -o ./bin/offers-linux-arm64 main.go
+	@chmod +x bin/*
+	@echo "Multi-arch binaries built successfully!"
 
 cross: assets
 	@mkdir -p ./bin
